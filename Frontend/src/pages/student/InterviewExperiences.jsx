@@ -10,7 +10,9 @@ import {
   User,
   Briefcase,
   ChevronUp,
-  ChevronRight
+  ChevronRight,
+  Plus,
+  Trash2
 } from "lucide-react";
 
 export default function InterviewExperiences() {
@@ -26,11 +28,32 @@ export default function InterviewExperiences() {
     experience: ""
   });
 
+  const [problems, setProblems] = useState([
+    { link: "", description: "" }
+  ]);
+
+  const handleAddProblem = () => {
+    setProblems([...problems, { link: "", description: "" }]);
+  };
+
+  const handleRemoveProblem = (index) => {
+    const updatedProblems = [...problems];
+    updatedProblems.splice(index, 1);
+    setProblems(updatedProblems);
+  };
+
+  const handleProblemChange = (index, field, value) => {
+    const updatedProblems = [...problems];
+    updatedProblems[index][field] = value;
+    setProblems(updatedProblems);
+  };
+
   const handlePublish = (e) => {
     e.preventDefault();
     alert("Experience submitted for approval!");
     setActiveTab("browse");
     setFormData({ company: "", role: "", status: "Selected", difficulty: "Medium", experience: "" });
+    setProblems([{ link: "", description: "" }]);
   };
 
   const toggleExpand = (id) => {
@@ -168,7 +191,6 @@ export default function InterviewExperiences() {
               
               <div className="grid md:grid-cols-2 gap-6">
                 
-                {/* UPDATED: Generic Company Input with Datalist */}
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Company Name</label>
                   <input 
@@ -180,7 +202,6 @@ export default function InterviewExperiences() {
                     onChange={(e) => setFormData({...formData, company: e.target.value})}
                     required
                   />
-                  {/* Suggestions list but accepts any input */}
                   <datalist id="company-list">
                     {MOCK_COMPANIES.map(c => <option key={c.id} value={c.name} />)}
                   </datalist>
@@ -248,6 +269,64 @@ export default function InterviewExperiences() {
                 <p className="mt-2 text-xs text-slate-400">
                   Tip: Be specific about the coding problems.
                 </p>
+              </div>
+
+              {/* --- DYNAMIC INTERVIEW QUESTIONS SECTION --- */}
+              <div className="pt-2">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-semibold uppercase text-slate-500">Coding Problems & Links</label>
+                  <span className="text-xs text-slate-400">Optional</span>
+                </div>
+
+                <div className="space-y-4">
+                  {problems.map((problem, index) => (
+                    <div key={index} className="p-4 rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800/50">
+                      
+                      <div className="space-y-3">
+                        {/* Row 1: Link input and the inline remove button */}
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="url"
+                            value={problem.link}
+                            onChange={(e) => handleProblemChange(index, "link", e.target.value)}
+                            placeholder="Link to problem (e.g., LeetCode, Codeforces, CSES)"
+                            className="flex-grow rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                          />
+                          
+                          {problems.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveProblem(index)}
+                              className="p-2.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-950/30 transition-colors flex-shrink-0"
+                              title="Remove this problem"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Row 2: Description textarea */}
+                        <div>
+                          <textarea
+                            value={problem.description}
+                            onChange={(e) => handleProblemChange(index, "description", e.target.value)}
+                            rows={2}
+                            placeholder="Notes (e.g., Expected time complexity, topics like Segment Trees or Math)"
+                            className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-white resize-none"
+                          ></textarea>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddProblem}
+                  className="mt-3 flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+                >
+                  <Plus size={14} /> Add Another Problem
+                </button>
               </div>
 
               <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">

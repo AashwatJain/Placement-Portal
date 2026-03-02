@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
-  FileUser // Resume ke liye naya icon
+  FileUser,
+  Briefcase // <-- Imported Briefcase icon
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -29,16 +30,16 @@ export default function Sidebar() {
       { to: "/student", label: "Dashboard", icon: LayoutDashboard },
       { to: "/student/profile", label: "My Profile", icon: User },
       { to: "/student/coding-profiles", label: "Coding Stats", icon: Code },
-      // Naya Link Added 👇
       { to: "/student/resume-builder", label: "Resume Vault", icon: FileUser },
       { to: "/student/applications", label: "My Applications", icon: FileText },
       { to: "/student/company", label: "Companies", icon: Building2 },
-      { to: "/student/interview-experiences", label: "Interview Exp.", icon: FileQuestion }, // New
+      { to: "/student/interview-experiences", label: "Interview Exp.", icon: FileQuestion }, 
       { to: "/calendar", label: "Calendar", icon: CalendarDays },
     ],
     admin: [
-      { to: "/admin/students", label: "Student Mgmt", icon: Users },
-      { to: "/admin/company-add", label: "Add Company", icon: Building2 },
+      { to: "/admin/students", label: "Student Management", icon: Users },
+      // 👇 Updated Label and Icon here
+      { to: "/admin/company-add", label: "Manage Companies", icon: Briefcase }, 
       { to: "/admin/questions", label: "Question Bank", icon: FileQuestion },
       { to: "/calendar", label: "Calendar", icon: CalendarDays },
     ],
