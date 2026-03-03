@@ -1,7 +1,9 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const { addStudent } = require("../controllers/studentController");
 
-router.post("/add-student", addStudent);
+// Sample Route
+router.get("/test", (req, res) => {
+    res.json({ message: "Student routes are working!" });
+});
 
-module.exports = router;
+export default router;

@@ -1,58 +1,101 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import { auth, db } from "../firebase"; // Aapki firebase config file
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from "firebase/auth";
+import { ref, set, get } from "firebase/database";
 
 const AuthContext = createContext(null);
 
-const ROLE_PROFILES = {
-  student: { name: "Student User", email: "student@nitkkr.ac.in" },
-  admin: { name: "Admin User", email: "admin@nitkkr.ac.in" },
-  recruiter: { name: "Recruiter", email: "recruiter@company.com" },
-};
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("user");
-    return saved
-      ? JSON.parse(saved)
-      : { role: "student", name: ROLE_PROFILES.student.name, email: ROLE_PROFILES.student.email };
-  });
+  const [user, setUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true); // Firebase sync hone tak wait karne ke liye
 
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return !!localStorage.getItem("user");
-  });
+  // 1. Session Persistence: Page refresh hone par user ko wapas fetch karna
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // User login hai, database se uska data (role, details) nikalein
+        const userRef = ref(db, `users/${firebaseUser.uid}`);
+        const snapshot = await get(userRef);
+        
+        if (snapshot.exists()) {
+          setUser({ uid: firebaseUser.uid, ...snapshot.val() });
+          setIsLoggedIn(true);
+        }
+      } else {
+        setUser(null);
+        setIsLoggedIn(false);
+      }
+      setLoading(false);
+    });
 
-  const login = (email, password, role = "student") => {
-    const profile = ROLE_PROFILES[role] || ROLE_PROFILES.student;
-    const newUser = {
-      role,
-      name: profile.name,
-      email: email || profile.email,
-    };
-    setUser(newUser);
-    setIsLoggedIn(true);
-    localStorage.setItem("user", JSON.stringify(newUser));
+    return () => unsubscribe();
+  }, []);
+
+  // 2. Signup: Firebase Auth + Realtime DB
+  const signup = async (userData) => {
+    const { email, password, role, ...studentDetails } = userData;
+    try {
+      // Auth mein account banayein
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const newUser = userCredential.user;
+
+      // Realtime Database mein saara data (CGPA, Branch, etc.) save karein
+      const profileData = {
+        email,
+        role,
+        ...(role === "student" ? studentDetails : {}), // Sirf student ke liye extra fields
+        createdAt: new Date().toISOString(),
+      };
+
+      await set(ref(db, `users/${newUser.uid}`), profileData);
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Signup Error:", error.message);
+      throw error;
+    }
   };
 
-  const logout = () => {
-    setIsLoggedIn(false);
-    const defaultUser = {
-      role: "student",
-      name: ROLE_PROFILES.student.name,
-      email: ROLE_PROFILES.student.email,
-    };
-    setUser(defaultUser);
-    localStorage.removeItem("user");
+  // 3. Login: Simple Email/Password
+  const login = async (email, password) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
+
+      // Database se user ka role aur profile fetch karein
+      const snapshot = await get(ref(db, `users/${firebaseUser.uid}`));
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        setUser({ uid: firebaseUser.uid, ...userData });
+        setIsLoggedIn(true);
+        return userData; // Navigation ke liye role return karein
+      }
+    } catch (error) {
+      console.error("Login Error:", error.message);
+      throw error;
+    }
   };
 
-  const setRole = (role) => {
-    const profile = ROLE_PROFILES[role] || ROLE_PROFILES.student;
-    const updatedUser = { ...user, role, name: profile.name, email: profile.email };
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+  // 4. Logout
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      setIsLoggedIn(false);
+    } catch (error) {
+      console.error("Logout Error:", error.message);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn, login, logout, setRole }}>
-      {children}
+    <AuthContext.Provider value={{ user, isLoggedIn, login, signup, logout }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 }

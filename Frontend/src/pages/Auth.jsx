@@ -11,11 +11,11 @@ const ROLES = [
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false); // Loading state add kiya hai
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("student");
 
-  // Additional Student Fields
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -33,23 +33,40 @@ export default function Auth() {
   const { login, signup, isLoggedIn, user } = useAuth();
   const navigate = useNavigate();
 
+  // Redirect if already logged in
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && user) {
       const path = user.role === "student" ? "/student" : user.role === "admin" ? "/admin/students" : "/recruiter";
       navigate(path, { replace: true });
     }
-  }, [isLoggedIn, user?.role, navigate]);
+  }, [isLoggedIn, user, navigate]);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLogin) {
-      login(email, password, role);
-    } else {
-      signup({ email, password, role, ...formData });
+    setLoading(true);
+    
+    try {
+      if (isLogin) {
+        // Login Logic
+        const loggedInUser = await login(email, password);
+        // Role based redirect
+        const path = loggedInUser.role === "student" ? "/student" : loggedInUser.role === "admin" ? "/admin/students" : "/recruiter";
+        navigate(path);
+      } else {
+        // Signup Logic: Pura data bhej rahe hain
+        await signup({ email, password, role, ...formData });
+        alert("Account Created Successfully!");
+        // Signup ke baad automatic redirect logic AuthContext handle kar lega ya hum navigate use kar sakte hain
+      }
+    } catch (error) {
+      console.error(error);
+      alert(error.message || "Something went wrong!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -98,6 +115,7 @@ export default function Auth() {
               </div>
             </div>
 
+            {/* Role Switcher */}
             <div>
               <div className="flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-600 dark:bg-slate-700">
                 {ROLES.map((r) => (
@@ -127,8 +145,6 @@ export default function Auth() {
                   <InputField label="Location" name="location" value={formData.location} onChange={handleInputChange} placeholder="Hostel/City" />
                   <InputField label="Branch" name="branch" value={formData.branch} onChange={handleInputChange} placeholder="Computer Engineering" />
                   <InputField label="Year" name="year" value={formData.year} onChange={handleInputChange} placeholder="1st/2nd/3rd/4th" />
-                  
-                  {/* CGPA with specific placeholder */}
                   <InputField 
                     label="CGPA" 
                     name="cgpa" 
@@ -151,9 +167,10 @@ export default function Auth() {
 
             <button
               type="submit"
-              className="mt-4 w-full rounded-lg bg-amber-500 py-3 font-medium text-white hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700"
+              disabled={loading}
+              className="mt-4 w-full rounded-lg bg-amber-500 py-3 font-medium text-white hover:bg-amber-600 disabled:opacity-50 dark:bg-amber-600 dark:hover:bg-amber-700"
             >
-              {isLogin ? "Sign in" : "Complete Registration"}
+              {loading ? "Processing..." : isLogin ? "Sign in" : "Complete Registration"}
             </button>
           </form>
 
