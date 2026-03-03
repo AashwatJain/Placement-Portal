@@ -120,8 +120,7 @@ export default function Footer() {
               &copy; {currentYear} NIT Kurukshetra. All rights reserved.
             </p>
             <p className="flex items-center gap-1 text-slate-500 dark:text-slate-500">
-              Designed & Developed with <Heart size={14} className="fill-red-500 text-red-500" /> by 
-              <span className="font-medium text-slate-900 dark:text-slate-300">Mickey</span>
+              Designed & Developed with <Heart size={14} className="fill-red-500 text-red-500" />
             </p>
           </div>
         </div>
