@@ -41,6 +41,14 @@ export default function Auth() {
     }
   }, [isLoggedIn, user, navigate]);
 
+  const handleRoleChange = (newRole) => {
+    setRole(newRole);
+    if (newRole !== "student") {
+      setIsLogin(true);
+    }
+  };
+
+//   const handleSubmit = (e) => {
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -114,26 +122,28 @@ export default function Auth() {
                 />
               </div>
             </div>
-
-            {/* Role Switcher */}
-            <div>
-              <div className="flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-600 dark:bg-slate-700">
-                {ROLES.map((r) => (
-                  <button
-                    key={r.value}
-                    type="button"
-                    onClick={() => setRole(r.value)}
-                    className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
-                      role === r.value
-                        ? "bg-white text-amber-700 shadow-sm dark:bg-slate-600 dark:text-amber-300"
-                        : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
-                    }`}
-                  >
-                    {r.label}
-                  </button>
-                ))}
+            
+            {isLogin && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Login as</label>
+                <div className="flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-600 dark:bg-slate-700">
+                  {ROLES.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() => handleRoleChange(r.value)}
+                      className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
+                        role === r.value
+                          ? "bg-white text-amber-700 shadow-sm dark:bg-slate-600 dark:text-amber-300"
+                          : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Student Sign-Up Fields */}
             {!isLogin && role === "student" && (
@@ -174,16 +184,18 @@ export default function Auth() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
-            <button
-              type="button"
-              onClick={() => setIsLogin((x) => !x)}
-              className="font-medium text-amber-600 hover:underline dark:text-amber-400"
-            >
-              {isLogin ? "Sign up" : "Sign in"}
-            </button>
-          </p>
+          {role === "student" && (
+            <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+              {isLogin ? "Don't have an account? " : "Already have an account? "}
+              <button
+                type="button"
+                onClick={() => setIsLogin((x) => !x)}
+                className="font-medium text-amber-600 hover:underline dark:text-amber-400"
+              >
+                {isLogin ? "Sign up" : "Sign in"}
+              </button>
+            </p>
+          )}
         </div>
       </div>
     </div>
