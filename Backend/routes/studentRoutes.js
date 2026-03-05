@@ -1,9 +1,8 @@
-import express from "express";
+const express = require("express");
 const router = express.Router();
+const studentController = require("../controllers/studentController");
 
-// Sample Route
-router.get("/test", (req, res) => {
-    res.json({ message: "Student routes are working!" });
-});
+// Yeh path bilkul exact hona chahiye jo Axios use kar raha hai
+router.put("/update-profile", studentController.updateStudentProfile);
 
-export default router;
+module.exports = router;
