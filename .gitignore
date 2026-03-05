@@ -1,4 +1,4 @@
 Backend/.env
-Backend/placement-portal-c0bdf-firebase-adminsdk-fbsvc-a8b1e29dbf.json
+Backend/config/serviceAccountKey.json
 Backend/node_modules/
 Frontend/.env

@@ -1,8 +1,9 @@
-const express = require("express");
+import express from "express";
+import studentController from "../controllers/studentController.js";
+
 const router = express.Router();
-const studentController = require("../controllers/studentController");
 
 // Yeh path bilkul exact hona chahiye jo Axios use kar raha hai
 router.put("/update-profile", studentController.updateStudentProfile);
 
-module.exports = router;
+export default router;

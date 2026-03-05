@@ -1,6 +1,6 @@
-const db = require("../config/firebaseAdmin");
+import db from "../config/firebaseAdmin.js";
 
-exports.updateStudentProfile = async (req, res) => {
+const updateStudentProfile = async (req, res) => {
   try {
     const { 
       uid, fullName, phone, location, branch, 
@@ -13,17 +13,17 @@ exports.updateStudentProfile = async (req, res) => {
 
     // Firebase Realtime DB Update Logic
     await db.ref("users/" + uid).update({
-      fullName: fullName || "",
-      phone: phone || "",
-      location: location || "",
-      branch: branch || "",
-      year: year || "",
-      cgpa: cgpa || "",
-      github: github || "",
-      linkedin: linkedin || "",
-      codolio: codolio || "", // Nayi field add kari
-      about: about || "",     // About Me para store karne ke liye
-      updatedAt: Date.now()
+      fullName:  fullName  || "",
+      phone:     phone     || "",
+      location:  location  || "",
+      branch:    branch    || "",
+      year:      year      || "",
+      cgpa:      cgpa      || "",
+      github:    github    || "",
+      linkedin:  linkedin  || "",
+      codolio:   codolio   || "",
+      about:     about     || "",
+      updatedAt: Date.now(),
     });
 
     res.status(200).json({ message: "Profile updated successfully" });
@@ -32,3 +32,5 @@ exports.updateStudentProfile = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export default { updateStudentProfile };
