@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Middleware
-app.use(cors()); // Frontend (3000) aur Backend (5000) ko connect karne ke liye
+app.use(cors()); // Frontend (3000) aur Backend (5001) ko connect karne ke liye
 app.use(express.json()); // JSON data handle karne ke liye
 app.use(bodyParser.urlencoded({ extended: true }));
 
