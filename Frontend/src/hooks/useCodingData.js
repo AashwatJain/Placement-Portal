@@ -1,33 +1,43 @@
-import { useState, useEffect } from "react";
-import { DASHBOARD_STATS, PLATFORM_DATA } from "../data/mockData";
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 export function useCodingData() {
-  const [stats, setStats] = useState(null);
-  const [platforms, setPlatforms] = useState([]);
+  const { user } = useAuth();
+  const [data, setData] = useState({ stats: null, platforms: [], heatmapData: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // --- SIMULATING API CALL (Replace this block with fetch/axios later) ---
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 sec delay
-        
-        setStats(DASHBOARD_STATS);
-        setPlatforms(PLATFORM_DATA);
-        // ---------------------------------------------------------------------
+  const fetchLiveStats = useCallback(async () => {
+    if (!user) return;
 
-      } catch (err) {
-        setError("Failed to fetch coding data");
-      } finally {
-        setLoading(false);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.get(`http://localhost:5001/api/student/coding-stats/${user.uid}`);
+
+      if (response.data.success) {
+        setData({
+          stats: response.data.stats,
+          platforms: response.data.platforms,
+          heatmapData: response.data.heatmapData
+        });
+      } else {
+        setError("Failed to load dashboard data.");
       }
-    };
+    } catch (err) {
+      console.error("Error fetching coding stats:", err);
+      setError("Critical error syncing external profiles.");
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
-    fetchData();
-  }, []);
 
-  return { stats, platforms, loading, error };
+  useEffect(() => {
+    fetchLiveStats();
+  }, [fetchLiveStats]);
+
+  return { ...data, loading, error, refreshData: fetchLiveStats };
 }

@@ -29,4 +29,8 @@ router.post(
 // 4. Route for Vault Section: Deleting a single target-specific resume
 router.delete("/delete-vault-resume/:uid/:id", studentController.deleteVaultResume);
 
+import codingStatsController from "../controllers/codingStatsController.js";
+// 5. Route for fetching coding platform stats
+router.get("/coding-stats/:uid", codingStatsController.getCodingStats);
+
 export default router;

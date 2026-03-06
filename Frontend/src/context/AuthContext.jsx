@@ -1,10 +1,10 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { auth, db } from "../firebase"; // Aapki firebase config file
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
 } from "firebase/auth";
 import { ref, set, get } from "firebase/database";
 
@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
         // User login hai, database se uska data (role, details) nikalein
         const userRef = ref(db, `users/${firebaseUser.uid}`);
         const snapshot = await get(userRef);
-        
+
         if (snapshot.exists()) {
           setUser({ uid: firebaseUser.uid, ...snapshot.val() });
           setIsLoggedIn(true);
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
       };
 
       await set(ref(db, `users/${newUser.uid}`), profileData);
-      
+
       return { success: true };
     } catch (error) {
       console.error("Signup Error:", error.message);
@@ -82,7 +82,18 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 4. Logout
+  // 4. Refresh user data from DB (e.g., after profile update or navigation)
+  const refreshUser = async () => {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const snapshot = await get(ref(db, `users/${currentUser.uid}`));
+      if (snapshot.exists()) {
+        setUser({ uid: currentUser.uid, ...snapshot.val() });
+      }
+    }
+  };
+
+  // 5. Logout
   const logout = async () => {
     try {
       await signOut(auth);
@@ -94,7 +105,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isLoggedIn, login, signup, logout, refreshUser, token: auth.currentUser?.accessToken }}>
       {!loading && children}
     </AuthContext.Provider>
   );
