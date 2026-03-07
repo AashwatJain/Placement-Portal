@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom"; // Link import kiya
-import { useTheme } from "../context/ThemeContext";
-import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
 import {
   Sun,
   Moon,

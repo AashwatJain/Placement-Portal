@@ -1,53 +1,19 @@
 import { useState, useEffect } from "react";
 import { useOpportunities } from "../../hooks/useOpportunities";
 import { useAuth } from "../../context/AuthContext";
-import { db } from "../../firebase";
-import { ref, set, get } from "firebase/database";
+import { getUserApplications, registerForOpportunity } from "../../services/firebaseDb";
+import { buildTimeline, gCalUrl } from "../../utils/calendarHelpers";
+import { offerBadge, deadlineLabel } from "../../utils/statusHelpers";
+import CardSkeleton from "../../components/ui/CardSkeleton";
+import Toast from "../../components/ui/Toast";
 import {
   Search, MapPin, Calendar, DollarSign, Briefcase,
-  CheckCircle, Loader2, Clock, Filter, X,
+  CheckCircle, Loader2, Clock, X,
   ExternalLink, AlertCircle, Users, GraduationCap,
   Building2, FileText, CalendarPlus,
 } from "lucide-react";
 
-// ── Skeleton ──────────────────────────────────────────────────
-function CardSkeleton() {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 animate-pulse">
-      <div className="mb-4 flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-slate-200 dark:bg-slate-700" />
-          <div className="space-y-2">
-            <div className="h-4 w-28 rounded bg-slate-200 dark:bg-slate-700" />
-            <div className="h-3 w-16 rounded bg-slate-200 dark:bg-slate-700" />
-          </div>
-        </div>
-      </div>
-      <div className="mb-4 grid grid-cols-2 gap-2">
-        <div className="h-10 rounded-lg bg-slate-100 dark:bg-slate-800" />
-        <div className="h-10 rounded-lg bg-slate-100 dark:bg-slate-800" />
-      </div>
-      <div className="h-10 w-full rounded-lg bg-slate-200 dark:bg-slate-700" />
-    </div>
-  );
-}
-
-// ── Toast ─────────────────────────────────────────────────────
-function Toast({ message, onClose }) {
-  return (
-    <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-xl bg-white dark:bg-slate-800 border border-green-200 dark:border-green-800 shadow-2xl px-5 py-4 animate-in slide-in-from-bottom-4 duration-300">
-      <CheckCircle className="text-green-500 shrink-0" size={22} />
-      <div>
-        <p className="font-bold text-slate-900 dark:text-white text-sm">Registered!</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">{message}</p>
-      </div>
-      <button onClick={onClose} className="ml-2 text-slate-400 hover:text-slate-600">✕</button>
-    </div>
-  );
-}
-
-// ── CORRECT PROCESS: the actual placement timeline ────────────
-// These are the steps every company follows. Dates come from Firestore.
+// ── Selection process steps (labels for the timeline) ─────────
 const PROCESS_STEPS = [
   { key: "shortlistDate",       label: "Shortlisted" },
   { key: "oaDate",              label: "Online Assessment (OA)" },
@@ -56,50 +22,6 @@ const PROCESS_STEPS = [
   { key: "interviewResultDate", label: "Interview Result" },
   { key: "finalResultDate",     label: "Final Decision" },
 ];
-
-// Build timeline from opportunity data for saving to Firebase on registration
-function buildTimeline(opp) {
-  const today = new Date().toISOString().slice(0, 10);
-  return [
-    { step: "Applied",           date: today,                          done: true },
-    { step: "Shortlisted",       date: opp.shortlistDate || null,      done: false },
-    { step: "Online Assessment", date: opp.oaDate || null,             done: false },
-    { step: "OA Result",         date: opp.oaResultDate || null,       done: false },
-    { step: "Interview",         date: opp.interviewDate || null,      done: false },
-    { step: "Interview Result",  date: opp.interviewResultDate || null,done: false },
-    { step: "Final Decision",    date: opp.finalResultDate || null,    done: false },
-  ];
-}
-
-// ── Offer-type badge ──────────────────────────────────────────
-function offerBadge(type) {
-  if (type === "Placement")   return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800";
-  if (type === "Internship")  return "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800";
-  return "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800";
-}
-
-// ── Deadline urgency ──────────────────────────────────────────
-function deadlineLabel(lastDate) {
-  if (!lastDate) return null;
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const dl = new Date(lastDate + "T00:00:00");
-  const diff = Math.ceil((dl - today) / 86400000);
-  if (diff < 0)  return { text: "Deadline passed", color: "text-red-600 dark:text-red-400", urgent: true };
-  if (diff === 0) return { text: "Last day!", color: "text-red-600 dark:text-red-400 font-bold", urgent: true };
-  if (diff <= 3)  return { text: `${diff} day${diff > 1 ? "s" : ""} left`, color: "text-amber-600 dark:text-amber-400 font-semibold", urgent: true };
-  return { text: `${diff} days left`, color: "text-slate-600 dark:text-slate-400", urgent: false };
-}
-
-// ── Google Calendar URL for a single date event ───────────────
-function gCalUrl(title, date, details) {
-  const d = (date || "").replace(/-/g, "");
-  if (!d) return "#";
-  const p = new URLSearchParams({
-    action: "TEMPLATE", text: title,
-    dates: `${d}/${d}`, details: details || "",
-  });
-  return `https://calendar.google.com/calendar/render?${p}`;
-}
 
 // ══════════════════════════════════════════════════════════════
 export default function Opportunities() {
@@ -115,12 +37,10 @@ export default function Opportunities() {
 
   useEffect(() => {
     if (!user?.uid) return;
-    get(ref(db, `users/${user.uid}/applications`)).then((snap) => {
-      if (snap.exists()) {
-        const map = {};
-        Object.keys(snap.val()).forEach((k) => (map[k] = true));
-        setRegistered(map);
-      }
+    getUserApplications(user.uid).then((apps) => {
+      const map = {};
+      Object.keys(apps).forEach((k) => (map[k] = true));
+      setRegistered(map);
     });
   }, [user?.uid]);
 
@@ -142,7 +62,7 @@ export default function Opportunities() {
       timeline: buildTimeline(opp),
     };
     try {
-      await set(ref(db, `users/${user.uid}/applications/${opp.id}`), appData);
+      await registerForOpportunity(user.uid, opp.id, appData);
       setRegistered((p) => ({ ...p, [opp.id]: true }));
       setToast(`You've registered for ${opp.name}. Check My Applications.`);
       setTimeout(() => setToast(null), 3500);

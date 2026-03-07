@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import Layout from "./components/Layout";
+import Layout from "./components/layout/Layout";
 import Auth from "./pages/Auth";
 
 // Student Pages

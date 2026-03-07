@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { fsdb as db } from "../firebase";
+import { fsdb as db } from "../config/firebase";
 
 export function useCompanies() {
   const [companies, setCompanies] = useState([]);

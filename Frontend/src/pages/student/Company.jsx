@@ -1,49 +1,12 @@
 import { useState } from "react";
 import { useCompanies } from "../../hooks/useCompanies";
+import CardSkeleton from "../../components/ui/CardSkeleton";
+import Toast from "../../components/ui/Toast";
 import {
   Search, MapPin, Calendar, DollarSign,
   Users, ExternalLink, X, Code, Briefcase,
-  Linkedin, Mail, Terminal, CheckCircle,
+  Linkedin, Mail, Terminal,
 } from "lucide-react";
-
-// ── Loading Skeleton ──────────────────────────────────────────
-function CompanyCardSkeleton() {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 animate-pulse">
-      <div className="mb-4 flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-slate-200 dark:bg-slate-700" />
-          <div className="space-y-2">
-            <div className="h-4 w-28 rounded bg-slate-200 dark:bg-slate-700" />
-            <div className="h-3 w-16 rounded bg-slate-200 dark:bg-slate-700" />
-          </div>
-        </div>
-        <div className="h-8 w-12 rounded bg-slate-200 dark:bg-slate-700" />
-      </div>
-      <div className="mb-4 grid grid-cols-2 gap-2">
-        <div className="h-10 rounded-lg bg-slate-100 dark:bg-slate-800" />
-        <div className="h-10 rounded-lg bg-slate-100 dark:bg-slate-800" />
-      </div>
-      <div className="h-4 w-full rounded bg-slate-100 dark:bg-slate-800" />
-    </div>
-  );
-}
-
-// ── Register Interest Toast ───────────────────────────────────
-function Toast({ company, onClose }) {
-  return (
-    <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-xl bg-white dark:bg-slate-800 border border-green-200 dark:border-green-800 shadow-2xl px-5 py-4 animate-in slide-in-from-bottom-4 duration-300">
-      <CheckCircle className="text-green-500 shrink-0" size={22} />
-      <div>
-        <p className="font-bold text-slate-900 dark:text-white text-sm">Interest Registered!</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">You'll be notified about {company} updates.</p>
-      </div>
-      <button onClick={onClose} className="ml-2 text-slate-400 hover:text-slate-600">
-        <X size={16} />
-      </button>
-    </div>
-  );
-}
 
 // ── Main Component ────────────────────────────────────────────
 export default function Company() {

@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { db } from "../../firebase";
-import { ref, onValue } from "firebase/database";
+import { onUserApplications } from "../../services/firebaseDb";
+import { buildGCalUrl } from "../../utils/calendarHelpers";
+import { stepDotColor, getStatusStyle } from "../../utils/statusHelpers";
+import TableSkeleton from "../../components/ui/TableSkeleton";
 import {
   FileText, Search, X, CheckCircle, Clock, AlertCircle,
   Briefcase, ExternalLink, MapPin, DollarSign,
 } from "lucide-react";
 
-// ── Timeline helpers ──────────────────────────────────────────
+// ── Timeline helpers ────────────────────────────────────────
 const STEP_ICONS = {
   Applied:             CheckCircle,
   Shortlisted:         CheckCircle,
@@ -17,52 +19,6 @@ const STEP_ICONS = {
   "Interview Result":  CheckCircle,
   "Final Decision":    AlertCircle,
 };
-
-function stepDotColor(step, idx, timeline) {
-  if (step.done && step.result === "Rejected")
-    return "bg-red-500 border-red-500 text-white";
-  if (step.done) return "bg-green-500 border-green-500 text-white";
-  const currentIdx = timeline.findIndex((s) => !s.done);
-  if (idx === currentIdx) return "bg-amber-400 border-amber-400 text-white animate-pulse";
-  return "bg-slate-200 border-slate-200 text-slate-400 dark:bg-slate-700 dark:border-slate-700";
-}
-
-function buildGCalUrl(company, step) {
-  const d = (step.date || "").replace(/-/g, "");
-  if (!d) return "#";
-  const p = new URLSearchParams({
-    action: "TEMPLATE",
-    text: `${company} — ${step.step}`,
-    dates: `${d}/${d}`,
-    details: `Company: ${company}\nStep: ${step.step}`,
-  });
-  return `https://calendar.google.com/calendar/render?${p}`;
-}
-
-function getStatusStyle(status) {
-  switch (status) {
-    case "Offered":              return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800";
-    case "Shortlist Result":     return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800";
-    case "Interview":            return "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800";
-    case "Online Assessment":
-    case "OA Result":            return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800";
-    case "Rejected":             return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800";
-    case "Resume Shortlisting":  return "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-800";
-    default:                     return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
-  }
-}
-
-function TableSkeleton() {
-  return Array.from({ length: 4 }).map((_, i) => (
-    <tr key={i} className="animate-pulse">
-      <td className="px-6 py-4"><div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700" /></td>
-      <td className="px-6 py-4"><div className="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700" /></td>
-      <td className="px-6 py-4"><div className="h-4 w-16 rounded bg-slate-200 dark:bg-slate-700" /></td>
-      <td className="px-6 py-4"><div className="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700" /></td>
-      <td className="px-6 py-4 text-right"><div className="h-4 w-16 rounded bg-slate-200 dark:bg-slate-700 ml-auto" /></td>
-    </tr>
-  ));
-}
 
 // ══════════════════════════════════════════════════════════════
 export default function Applications() {
@@ -74,12 +30,8 @@ export default function Applications() {
 
   useEffect(() => {
     if (!user?.uid) return;
-    const unsub = onValue(ref(db, `users/${user.uid}/applications`), (snap) => {
-      if (snap.exists()) {
-        setApplications(Object.entries(snap.val()).map(([id, v]) => ({ id, ...v })));
-      } else {
-        setApplications([]);
-      }
+    const unsub = onUserApplications(user.uid, (apps) => {
+      setApplications(apps);
       setLoading(false);
     });
     return () => unsub();

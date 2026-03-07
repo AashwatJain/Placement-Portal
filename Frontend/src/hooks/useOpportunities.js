@@ -2,7 +2,7 @@
 // Real-time listener on Firestore "opportunities" collection.
 import { useState, useEffect } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { fsdb as db } from "../firebase";
+import { fsdb as db } from "../config/firebase";
 
 export function useOpportunities() {
   const [opportunities, setOpportunities] = useState([]);

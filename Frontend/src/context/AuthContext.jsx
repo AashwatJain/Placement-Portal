@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { auth, db } from "../firebase"; // Aapki firebase config file
+import { auth, db } from "../config/firebase"; // Aapki firebase config file
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
