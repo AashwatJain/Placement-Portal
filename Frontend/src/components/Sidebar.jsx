@@ -33,6 +33,7 @@ export default function Sidebar() {
       { to: "/student/resume-builder", label: "Resume Vault", icon: FileUser },
       { to: "/student/applications", label: "My Applications", icon: FileText },
       { to: "/student/company", label: "Companies", icon: Building2 },
+      { to: "/student/opportunities", label: "Opportunities", icon: Briefcase },
       { to: "/student/interview-experiences", label: "Interview Exp.", icon: FileQuestion }, 
       { to: "/calendar", label: "Calendar", icon: CalendarDays },
     ],

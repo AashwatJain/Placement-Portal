@@ -1,38 +1,108 @@
-import { useState } from "react";
-import { MOCK_APPLICATIONS } from "../../data/mockData";
-import { 
-  FileText, 
-  Search, 
-  Filter, 
-  X, 
-  CheckCircle, 
-  Clock, 
-  AlertCircle, 
-  MapPin, 
-  Briefcase 
+import { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { db } from "../../firebase";
+import { ref, onValue } from "firebase/database";
+import {
+  FileText, Search, X, CheckCircle, Clock, AlertCircle,
+  Briefcase, ExternalLink, MapPin, DollarSign,
 } from "lucide-react";
 
-export default function Applications() {
-  // State for Modal
-  const [selectedApp, setSelectedApp] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+// ── Timeline helpers ──────────────────────────────────────────
+const STEP_ICONS = {
+  Applied:             CheckCircle,
+  Shortlisted:         CheckCircle,
+  "Online Assessment": FileText,
+  "OA Result":         CheckCircle,
+  Interview:           Briefcase,
+  "Interview Result":  CheckCircle,
+  "Final Decision":    AlertCircle,
+};
 
-  // Filter Logic
-  const filteredApps = MOCK_APPLICATIONS.filter(app => 
-    app.company.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    app.role.toLowerCase().includes(searchTerm.toLowerCase())
+function stepDotColor(step, idx, timeline) {
+  if (step.done && step.result === "Rejected")
+    return "bg-red-500 border-red-500 text-white";
+  if (step.done) return "bg-green-500 border-green-500 text-white";
+  const currentIdx = timeline.findIndex((s) => !s.done);
+  if (idx === currentIdx) return "bg-amber-400 border-amber-400 text-white animate-pulse";
+  return "bg-slate-200 border-slate-200 text-slate-400 dark:bg-slate-700 dark:border-slate-700";
+}
+
+function buildGCalUrl(company, step) {
+  const d = (step.date || "").replace(/-/g, "");
+  if (!d) return "#";
+  const p = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `${company} — ${step.step}`,
+    dates: `${d}/${d}`,
+    details: `Company: ${company}\nStep: ${step.step}`,
+  });
+  return `https://calendar.google.com/calendar/render?${p}`;
+}
+
+function getStatusStyle(status) {
+  switch (status) {
+    case "Offered":              return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800";
+    case "Shortlist Result":     return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800";
+    case "Interview":            return "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800";
+    case "Online Assessment":
+    case "OA Result":            return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800";
+    case "Rejected":             return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800";
+    case "Resume Shortlisting":  return "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-800";
+    default:                     return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
+  }
+}
+
+function TableSkeleton() {
+  return Array.from({ length: 4 }).map((_, i) => (
+    <tr key={i} className="animate-pulse">
+      <td className="px-6 py-4"><div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700" /></td>
+      <td className="px-6 py-4"><div className="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700" /></td>
+      <td className="px-6 py-4"><div className="h-4 w-16 rounded bg-slate-200 dark:bg-slate-700" /></td>
+      <td className="px-6 py-4"><div className="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700" /></td>
+      <td className="px-6 py-4 text-right"><div className="h-4 w-16 rounded bg-slate-200 dark:bg-slate-700 ml-auto" /></td>
+    </tr>
+  ));
+}
+
+// ══════════════════════════════════════════════════════════════
+export default function Applications() {
+  const { user } = useAuth();
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [selectedApp, setSelectedApp]   = useState(null);
+  const [searchTerm, setSearchTerm]     = useState("");
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = onValue(ref(db, `users/${user.uid}/applications`), (snap) => {
+      if (snap.exists()) {
+        setApplications(Object.entries(snap.val()).map(([id, v]) => ({ id, ...v })));
+      } else {
+        setApplications([]);
+      }
+      setLoading(false);
+    });
+    return () => unsub();
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (selectedApp) {
+      const fresh = applications.find((a) => a.id === selectedApp.id);
+      if (fresh) setSelectedApp(fresh);
+    }
+  }, [applications]);
+
+  const filteredApps = applications.filter(
+    (app) =>
+      (app.company || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (app.role || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Helper for Badge Styles
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case "Offered": return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800";
-      case "Shortlisted": return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800";
-      case "Interview Scheduled": return "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800";
-      case "OA Pending": return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800";
-      case "Rejected": return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800";
-      default: return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
-    }
+  // For a nice progress indicator
+  const getProgress = (timeline) => {
+    if (!timeline) return 0;
+    const doneCount = timeline.filter((s) => s.done).length;
+    return Math.round((doneCount / timeline.length) * 100);
   };
 
   return (
@@ -41,192 +111,183 @@ export default function Applications() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">My Applications</h1>
-          <p className="text-slate-500 dark:text-slate-400">Track status of all your drive applications.</p>
+          <p className="text-slate-500 dark:text-slate-400">Track the selection process of each registration.</p>
         </div>
-        <div className="flex gap-2">
-           <div className="relative">
-             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-             <input 
-               type="text" 
-               placeholder="Search company..." 
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-               className="h-10 rounded-lg border border-slate-200 bg-white pl-9 pr-4 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-all w-full sm:w-64"
-             />
-           </div>
-           <button className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
-             <Filter size={16} /> Filter
-           </button>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input type="text" placeholder="Search company..."
+            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-10 rounded-lg border border-slate-200 bg-white pl-9 pr-4 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white w-full sm:w-64" />
         </div>
       </div>
 
-      {/* Applications Table */}
+      {/* Table */}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
               <tr>
-                <th className="px-6 py-4 font-medium uppercase">Company</th>
-                <th className="px-6 py-4 font-medium uppercase">Profile / Role</th>
-                <th className="px-6 py-4 font-medium uppercase">Applied On</th>
-                <th className="px-6 py-4 font-medium uppercase">Status</th>
-                <th className="px-6 py-4 font-medium uppercase text-right">Action</th>
+                <th className="px-6 py-4 font-medium uppercase text-xs">Company</th>
+                <th className="px-6 py-4 font-medium uppercase text-xs">Role</th>
+                <th className="px-6 py-4 font-medium uppercase text-xs">Applied On</th>
+                <th className="px-6 py-4 font-medium uppercase text-xs">Status</th>
+                <th className="px-6 py-4 font-medium uppercase text-xs">Progress</th>
+                <th className="px-6 py-4 font-medium uppercase text-xs text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredApps.map((app) => (
-                <tr key={app.id} className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-lg font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-                        {app.company.charAt(0)}
+              {loading && <TableSkeleton />}
+              {!loading && filteredApps.map((app) => {
+                const progress = getProgress(app.timeline);
+                return (
+                  <tr key={app.id} className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-bold text-white shadow">
+                          {(app.company || "?").charAt(0)}
+                        </div>
+                        <span className="font-semibold">{app.company}</span>
                       </div>
-                      <span className="font-semibold">{app.company}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{app.role || "SDE Intern"}</td>
-                  <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{app.date}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusStyle(app.status)}`}>
-                      {app.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => setSelectedApp(app)}
-                      className="text-indigo-600 hover:text-indigo-700 hover:underline dark:text-indigo-400 font-medium"
-                    >
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{app.role || "SDE"}</td>
+                    <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{app.appliedOn || "—"}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusStyle(app.status)}`}>
+                        {app.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-20 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                          <div className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-500">{progress}%</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button onClick={() => setSelectedApp(app)}
+                        className="text-indigo-600 hover:text-indigo-700 hover:underline dark:text-indigo-400 font-medium text-xs">
+                        View Timeline →
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
-        
-        {/* Empty State */}
-        {filteredApps.length === 0 && (
+
+        {!loading && filteredApps.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-slate-500">
             <FileText size={48} className="mb-4 text-slate-300 dark:text-slate-600" />
-            <p>No applications found matching "{searchTerm}".</p>
+            <p className="font-medium">No applications yet.</p>
+            <p className="text-sm mt-1">Register for opportunities to see them here.</p>
           </div>
         )}
       </div>
 
-      {/* --- APPLICATION DETAILS MODAL --- */}
+      {/* ══ DETAIL MODAL — READ-ONLY TIMELINE ══ */}
       {selectedApp && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm transition-opacity">
-          <div className="w-full max-w-2xl animate-in fade-in zoom-in-95 duration-200 rounded-2xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
-            
-            {/* Modal Header */}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setSelectedApp(null)}>
+          <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden"
+               onClick={(e) => e.stopPropagation()}>
+
+            {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-800/50">
               <div className="flex items-center gap-3">
-                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white border border-slate-200 text-xl font-bold text-slate-700 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white">
-                    {selectedApp.company.charAt(0)}
-                 </div>
-                 <div>
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">{selectedApp.company}</h2>
-                    <p className="text-sm text-slate-500">{selectedApp.role} • ID: #{selectedApp.id}492</p>
-                 </div>
-              </div>
-              <button 
-                onClick={() => setSelectedApp(null)}
-                className="rounded-full p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-700"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6">
-              
-              {/* Status Badge */}
-              <div className="mb-6 flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
-                 <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${selectedApp.status === "Rejected" ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}`}>
-                       {selectedApp.status === "Rejected" ? <AlertCircle size={20}/> : <CheckCircle size={20}/>}
-                    </div>
-                    <div>
-                       <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Current Status</p>
-                       <p className="text-base font-bold text-slate-900 dark:text-white">{selectedApp.status}</p>
-                    </div>
-                 </div>
-                 <div className="text-right">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Applied On</p>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{selectedApp.date}</p>
-                 </div>
-              </div>
-
-              {/* Details Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                 <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800">
-                    <p className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-                      <MapPin size={14} /> Location
-                    </p>
-                    <p className="font-medium text-slate-900 dark:text-white">Bangalore / Hybrid</p>
-                 </div>
-                 <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800">
-                    <p className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-                      <Briefcase size={14} /> Job Type
-                    </p>
-                    <p className="font-medium text-slate-900 dark:text-white">Full Time + 6m Intern</p>
-                 </div>
-              </div>
-
-              {/* Timeline (Fake Visualization) */}
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">Application Timeline</h3>
-                <div className="relative border-l-2 border-slate-200 dark:border-slate-700 ml-3 space-y-6">
-                  
-                  {/* Step 1 */}
-                  <div className="relative pl-6">
-                    <span className="absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white bg-green-500 dark:border-slate-900"></span>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">Applied Successfully</p>
-                    <p className="text-xs text-slate-500">{selectedApp.date}</p>
-                  </div>
-
-                  {/* Step 2 */}
-                  <div className="relative pl-6">
-                    <span className={`absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white dark:border-slate-900 ${
-                       selectedApp.status === "Applied" ? "bg-slate-300" : "bg-green-500"
-                    }`}></span>
-                    <p className={`text-sm font-bold ${selectedApp.status === "Applied" ? "text-slate-400" : "text-slate-900 dark:text-white"}`}>Resume Shortlisting</p>
-                    {selectedApp.status !== "Applied" && <p className="text-xs text-slate-500">Completed</p>}
-                  </div>
-
-                  {/* Step 3 (Dynamic) */}
-                  <div className="relative pl-6">
-                     <span className={`absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-white dark:border-slate-900 ${
-                       ["Interview Scheduled", "Offered"].includes(selectedApp.status) ? "bg-green-500" : 
-                       selectedApp.status === "Rejected" ? "bg-red-500" : "bg-slate-300"
-                    }`}></span>
-                     <p className={`text-sm font-bold ${
-                        ["Applied", "Shortlisted", "OA Pending"].includes(selectedApp.status) ? "text-slate-400" : "text-slate-900 dark:text-white"
-                     }`}>
-                        {selectedApp.status === "Rejected" ? "Rejected" : "Technical Interview"}
-                     </p>
-                  </div>
-
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-xl font-bold text-white shadow">
+                  {(selectedApp.company || "?").charAt(0)}
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">{selectedApp.company}</h2>
+                  <p className="text-sm text-slate-500">{selectedApp.role} • {selectedApp.offerType || "Placement"}</p>
                 </div>
               </div>
+              <button onClick={() => setSelectedApp(null)} className="rounded-full p-2 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"><X size={20} /></button>
             </div>
 
-            {/* Footer Buttons */}
-            <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 dark:border-slate-800 dark:bg-slate-800/50">
-               <button 
-                 className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
-                 onClick={() => setSelectedApp(null)}
-               >
-                 Close
-               </button>
-               {selectedApp.status !== "Rejected" && (
-                 <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-                   View Job Description
-                 </button>
-               )}
+            {/* Body */}
+            <div className="p-6 max-h-[65vh] overflow-y-auto">
+
+              {/* Info cards row */}
+              <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/30">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Status</p>
+                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold ${getStatusStyle(selectedApp.status)}`}>{selectedApp.status}</span>
+                </div>
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/30">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Applied</p>
+                  <p className="text-xs font-bold text-slate-800 dark:text-white">{selectedApp.appliedOn}</p>
+                </div>
+                {selectedApp.ctc && (
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/30">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">CTC</p>
+                    <p className="text-xs font-bold text-green-600 dark:text-green-400">{selectedApp.ctc}</p>
+                  </div>
+                )}
+                {selectedApp.location && (
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/30">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Location</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{selectedApp.location}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Progress bar */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase">Overall Progress</span>
+                  <span className="text-xs font-bold text-indigo-600">{getProgress(selectedApp.timeline)}%</span>
+                </div>
+                <div className="h-2.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                  <div className="h-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700"
+                       style={{ width: `${getProgress(selectedApp.timeline)}%` }} />
+                </div>
+              </div>
+
+              {/* TIMELINE — read-only, dates from backend */}
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">Selection Timeline</h3>
+              <div className="relative ml-3 space-y-1">
+                {(selectedApp.timeline || []).map((step, idx) => {
+                  const Icon = STEP_ICONS[step.step] || Clock;
+                  const isLast = idx === (selectedApp.timeline || []).length - 1;
+                  return (
+                    <div key={idx} className="relative flex items-start gap-4 pb-5">
+                      {!isLast && (
+                        <div className={`absolute left-[15px] top-8 w-0.5 h-[calc(100%-10px)] ${step.done ? "bg-green-500" : "bg-slate-200 dark:bg-slate-700"}`} />
+                      )}
+                      <div className={`relative z-10 shrink-0 flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${stepDotColor(step, idx, selectedApp.timeline || [])}`}>
+                        <Icon size={14} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className={`text-sm font-bold ${step.done ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>{step.step}</p>
+                          {step.done && <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium">✓ Done</span>}
+                        </div>
+                        <div className="mt-1 flex items-center gap-3">
+                          {step.date ? (
+                            <>
+                              <span className="text-xs text-slate-500 font-medium">{step.date}</span>
+                              <a href={buildGCalUrl(selectedApp.company, step)}
+                                 target="_blank" rel="noopener noreferrer"
+                                 className="text-[10px] font-bold text-blue-500 hover:underline flex items-center gap-0.5">
+                                <ExternalLink size={9} /> Google Cal
+                              </a>
+                            </>
+                          ) : (
+                            <span className="text-xs text-slate-400 italic">To be announced</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
+            <div className="flex justify-end border-t border-slate-100 bg-slate-50 px-6 py-4 dark:border-slate-800 dark:bg-slate-800/50">
+              <button onClick={() => setSelectedApp(null)} className="rounded-lg px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700">Close</button>
+            </div>
           </div>
         </div>
       )}

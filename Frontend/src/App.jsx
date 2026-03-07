@@ -9,7 +9,8 @@ import StudentHome from "./pages/student/StudentHome";
 import Profile from "./pages/student/Profile";
 import Applications from "./pages/student/Applications";
 import Company from "./pages/student/Company";
-import InterviewExperiences from "./pages/student/InterviewExperiences"; // New
+import InterviewExperiences from "./pages/student/InterviewExperiences";
+import Opportunities from "./pages/student/Opportunities";
 import CodingProfiles from "./pages/student/CodingProfiles";
 import ResumeBuilder from "./pages/student/ResumeBuilder"; // <--- NEW IMPORT
 
@@ -61,6 +62,7 @@ function AppRoutes() {
         <Route path="student/resume-builder" element={<ResumeBuilder />} />{" "}
         {/* <--- NEW ROUTE ADDED HERE */}
         <Route path="student/applications" element={<Applications />} />
+        <Route path="student/opportunities" element={<Opportunities />} />
         <Route path="student/company" element={<Company />} />
         <Route path="student/company/:id" element={<Company />} />
         <Route
