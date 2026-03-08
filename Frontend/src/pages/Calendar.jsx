@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
-import { ref, onValue } from "firebase/database";
+import { onUserApplications } from "../services/firebaseDb";
 import {
   ChevronLeft, ChevronRight, Calendar as CalendarIcon,
   Clock, ExternalLink, Loader2,
@@ -29,20 +29,20 @@ function buildGCalUrl(company, stepName, date) {
 
 // ── Event chip colour by step name ───────────────────────────
 function getChipColor(step) {
-  if (step.includes("OA"))        return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800";
+  if (step.includes("OA")) return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800";
   if (step.includes("Interview")) return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
-  if (step.includes("Decision"))  return "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800";
-  if (step.includes("Final"))     return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800";
+  if (step.includes("Decision")) return "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800";
+  if (step.includes("Final")) return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800";
   if (step.includes("Shortlist")) return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800";
   return "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800";
 }
 
 // ── Sidebar accent bar ───────────────────────────────────────
 function getBarColor(step) {
-  if (step.includes("OA"))        return "bg-amber-500";
+  if (step.includes("OA")) return "bg-amber-500";
   if (step.includes("Interview")) return "bg-blue-500";
-  if (step.includes("Final"))     return "bg-green-500";
-  if (step.includes("Decision"))  return "bg-purple-500";
+  if (step.includes("Final")) return "bg-green-500";
+  if (step.includes("Decision")) return "bg-purple-500";
   return "bg-indigo-500";
 }
 
@@ -81,16 +81,11 @@ export default function Calendar() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Live listener on user's applications
+  // Fetch user's applications
   useEffect(() => {
     if (!user?.uid) { setLoading(false); return; }
-    const unsub = onValue(ref(db, `users/${user.uid}/applications`), (snap) => {
-      if (snap.exists()) {
-        const data = snap.val();
-        setApplications(Object.entries(data).map(([id, v]) => ({ id, ...v })));
-      } else {
-        setApplications([]);
-      }
+    const unsub = onUserApplications(user.uid, (apps) => {
+      setApplications(apps || []);
       setLoading(false);
     });
     return () => unsub();
@@ -98,9 +93,9 @@ export default function Calendar() {
 
   const events = extractEvents(applications);
 
-  const year  = currentDate.getFullYear();
+  const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-  const daysInMonth    = new Date(year, month + 1, 0).getDate();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
 
   const fmtKey = (d) => `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -121,9 +116,9 @@ export default function Calendar() {
   const sidebarEvents = upcoming.length >= 3
     ? upcoming
     : [
-        ...upcoming,
-        ...[...events].filter((e) => e.date < todayStr).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6 - upcoming.length),
-      ];
+      ...upcoming,
+      ...[...events].filter((e) => e.date < todayStr).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6 - upcoming.length),
+    ];
 
   return (
     <div className="space-y-6">

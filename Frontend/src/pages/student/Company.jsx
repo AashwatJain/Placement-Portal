@@ -3,24 +3,24 @@ import { useCompanies } from "../../hooks/useCompanies";
 import CardSkeleton from "../../components/ui/CardSkeleton";
 import Toast from "../../components/ui/Toast";
 import {
-  Search, MapPin, Calendar, DollarSign,
+  Search, MapPin, Calendar, IndianRupee,
   Users, ExternalLink, X, Code, Briefcase,
-  Linkedin, Mail, Terminal,
+  Linkedin, Mail, Terminal, CheckCircle
 } from "lucide-react";
 
 // ── Main Component ────────────────────────────────────────────
 export default function Company() {
   const { companies, loading, error } = useCompanies();
 
-  const [searchTerm,      setSearchTerm]      = useState("");
-  const [filterType,      setFilterType]      = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("All");
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [toast,           setToast]           = useState(null);
-  const [registered,      setRegistered]      = useState({}); // track which companies registered
+  const [toast, setToast] = useState(null);
+  const [registered, setRegistered] = useState({}); // track which companies registered
 
   const filteredCompanies = companies.filter((company) => {
     const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType   = filterType === "All" || company.type === filterType;
+    const matchesType = filterType === "All" || company.type === filterType;
     return matchesSearch && matchesType;
   });
 
@@ -30,13 +30,13 @@ export default function Company() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const getContactIcon  = (link) => link.includes("@") || link.startsWith("mailto:") ? <Mail size={16} /> : <Linkedin size={16} />;
+  const getContactIcon = (link) => link.includes("@") || link.startsWith("mailto:") ? <Mail size={16} /> : <Linkedin size={16} />;
   const getContactLabel = (link) => link.includes("@") || link.startsWith("mailto:") ? "Email Senior" : "Connect on LinkedIn";
 
   // Platform → button style
   const platformStyle = (platform) => {
-    if (platform === "LeetCode")     return "bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/40";
-    if (platform === "GFG")          return "bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40";
+    if (platform === "LeetCode") return "bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/40";
+    if (platform === "GFG") return "bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40";
     if (platform === "System Design") return "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40";
     return "bg-purple-50 text-purple-600 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/40";
   };
@@ -85,7 +85,7 @@ export default function Company() {
 
       {/* Company Grid */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {loading && Array.from({ length: 6 }).map((_, i) => <CompanyCardSkeleton key={i} />)}
+        {loading && Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
 
         {!loading && filteredCompanies.map((company) => (
           <div
@@ -100,11 +100,10 @@ export default function Company() {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">{company.name}</h3>
-                  <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide border ${
-                    company.type === "On-Campus"
-                      ? "bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800"
-                      : "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
-                  }`}>
+                  <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide border ${company.type === "On-Campus"
+                    ? "bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800"
+                    : "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
+                    }`}>
                     {company.type}
                   </span>
                 </div>
@@ -117,7 +116,7 @@ export default function Company() {
 
             <div className="mb-4 grid grid-cols-2 gap-2 text-sm">
               <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-2.5 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                <DollarSign size={16} className="text-green-600" />
+                <IndianRupee size={16} className="text-green-600" />
                 <span className="font-bold">{company.ctc}</span>
               </div>
               <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-2.5 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
@@ -188,11 +187,10 @@ export default function Company() {
                           <div key={idx} className="rounded-lg border border-slate-200 bg-white p-4 hover:border-indigo-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-700 transition-all">
                             <div className="flex justify-between items-start mb-2">
                               <span className="text-xs font-bold uppercase text-slate-400 tracking-wider">{q.topic}</span>
-                              <span className={`text-[10px] px-2 py-0.5 rounded font-medium border ${
-                                q.difficulty === "Hard"   ? "bg-red-50 text-red-700 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/50" :
+                              <span className={`text-[10px] px-2 py-0.5 rounded font-medium border ${q.difficulty === "Hard" ? "bg-red-50 text-red-700 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/50" :
                                 q.difficulty === "Medium" ? "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/50" :
-                                                            "bg-green-50 text-green-700 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900/50"
-                              }`}>{q.difficulty}</span>
+                                  "bg-green-50 text-green-700 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900/50"
+                                }`}>{q.difficulty}</span>
                             </div>
                             <p className="font-medium text-slate-900 dark:text-white mb-3 text-lg">{q.question}</p>
                             {/* ✅ Working link button */}
@@ -257,7 +255,7 @@ export default function Company() {
                   {/* CTC Card */}
                   <div className="rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 p-5 text-white shadow-xl">
                     <div className="flex items-center gap-2 mb-4 opacity-90">
-                      <DollarSign size={20} />
+                      <IndianRupee size={20} />
                       <h4 className="font-bold text-lg">Compensation</h4>
                     </div>
                     <div className="text-4xl font-black mb-1">{selectedCompany.ctc}</div>
@@ -290,11 +288,10 @@ export default function Company() {
               <button
                 onClick={() => handleRegisterInterest(selectedCompany.name)}
                 disabled={registered[selectedCompany.name]}
-                className={`px-6 py-2 rounded-lg text-sm font-bold shadow-lg transition-all transform active:scale-95 flex items-center gap-2 ${
-                  registered[selectedCompany.name]
-                    ? "bg-green-500 text-white shadow-green-500/20 cursor-default"
-                    : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20"
-                }`}
+                className={`px-6 py-2 rounded-lg text-sm font-bold shadow-lg transition-all transform active:scale-95 flex items-center gap-2 ${registered[selectedCompany.name]
+                  ? "bg-green-500 text-white shadow-green-500/20 cursor-default"
+                  : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20"
+                  }`}
               >
                 {registered[selectedCompany.name] ? (
                   <><CheckCircle size={16} /> Registered!</>

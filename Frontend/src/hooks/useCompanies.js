@@ -6,40 +6,27 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { fsdb as db } from "../config/firebase";
+import { fetchCompanies } from "../services/studentApi";
 
 export function useCompanies() {
   const [companies, setCompanies] = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Real-time listener — updates UI instantly when DB changes
-    const q = query(
-      collection(db, "companies"),
-      orderBy("score", "desc") // highest score first, same visual order
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,       // Firestore document ID (string)
-          ...doc.data(),
-        }));
+    async function getCompanies() {
+      try {
+        const data = await fetchCompanies();
         setCompanies(data);
-        setLoading(false);
-      },
-      (err) => {
-        console.error("Firestore fetch error:", err);
-        setError(err.message);
+      } catch (err) {
+        console.error("API fetch error:", err);
+        setError(err.message || "Failed to fetch companies");
+      } finally {
         setLoading(false);
       }
-    );
+    }
 
-    // Cleanup listener on unmount
-    return () => unsubscribe();
+    getCompanies();
   }, []);
 
   return { companies, loading, error };

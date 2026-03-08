@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { db } from "../../firebase";
-import { ref, onValue } from "firebase/database";
+// Replaced direct firebase/database imports with proxy methods
+import { onUserApplications } from "../../services/firebaseDb";
 import {
   Briefcase, FileText, CheckCircle, Clock,
   AlertCircle, ChevronRight, TrendingUp,
@@ -14,31 +14,27 @@ export default function StudentHome() {
   const { companies } = useCompanies();
   const [applications, setApplications] = useState([]);
 
-  // Live listener
+  // Fetch user applications
   useEffect(() => {
     if (!user?.uid) return;
-    const unsub = onValue(ref(db, `users/${user.uid}/applications`), (snap) => {
-      if (snap.exists()) {
-        setApplications(Object.entries(snap.val()).map(([id, v]) => ({ id, ...v })));
-      } else {
-        setApplications([]);
-      }
+    const unsub = onUserApplications(user.uid, (apps) => {
+      setApplications(apps || []);
     });
     return () => unsub();
   }, [user?.uid]);
 
   const totalApplied = applications.length;
-  const shortlisted  = applications.filter((a) => a.status === "Shortlisted" || a.status === "Offered").length;
-  const pending      = applications.filter((a) => !["Offered", "Rejected", "Final Decision"].includes(a.status)).length;
+  const shortlisted = applications.filter((a) => a.status === "Shortlisted" || a.status === "Offered").length;
+  const pending = applications.filter((a) => !["Offered", "Rejected", "Final Decision"].includes(a.status)).length;
   const recommendations = companies.slice(0, 3);
 
   const getStatusStyle = (status) => {
     switch (status) {
       case "Shortlisted": return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800";
-      case "Applied":     return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
-      case "Rejected":    return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800";
-      case "Offered":     return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800";
-      default:            return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600";
+      case "Applied": return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
+      case "Rejected": return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800";
+      case "Offered": return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800";
+      default: return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600";
     }
   };
 

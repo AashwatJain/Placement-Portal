@@ -1,31 +1,27 @@
 // src/hooks/useOpportunities.js
 // Real-time listener on Firestore "opportunities" collection.
 import { useState, useEffect } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { fsdb as db } from "../config/firebase";
+import { fetchOpportunities } from "../services/studentApi";
 
 export function useOpportunities() {
   const [opportunities, setOpportunities] = useState([]);
-  const [loading, setLoading]             = useState(true);
-  const [error, setError]                 = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const q = query(collection(db, "opportunities"), orderBy("createdAt", "desc"));
-
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        setOpportunities(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-        setLoading(false);
-      },
-      (err) => {
-        console.error("Firestore opportunities error:", err);
-        setError(err.message);
+    async function getOpportunities() {
+      try {
+        const data = await fetchOpportunities();
+        setOpportunities(data);
+      } catch (err) {
+        console.error("API fetch opportunities error:", err);
+        setError(err.message || "Failed to fetch opportunities");
+      } finally {
         setLoading(false);
       }
-    );
+    }
 
-    return () => unsub();
+    getOpportunities();
   }, []);
 
   return { opportunities, loading, error };

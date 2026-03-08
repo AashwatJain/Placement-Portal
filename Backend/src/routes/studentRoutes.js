@@ -33,4 +33,21 @@ import codingStatsController from "../controllers/codingStatsController.js";
 // 5. Route for fetching coding platform stats
 router.get("/coding-stats/:uid", codingStatsController.getCodingStats);
 
+import * as dataController from "../controllers/dataController.js";
+// 6. Routes for fetching centralized data (Companies, Opportunities, Applications)
+router.get("/companies", dataController.getCompanies);
+router.get("/opportunities", dataController.getOpportunities);
+router.get("/applications/:uid", dataController.getUserApplications);
+router.post("/applications/:uid/register", dataController.registerUserApplication);
+
+// 7. Routes for Interview Experiences
+router.get("/experiences", dataController.getExperiences);
+router.post("/experiences", dataController.addExperience);
+
+// 8. Routes for Notifications
+router.get("/notifications", dataController.getNotifications);
+router.post("/notifications", dataController.addNotification);
+router.put("/notifications/mark-read", dataController.markAllNotificationsRead);
+router.delete("/notifications/:id", dataController.deleteNotification);
+
 export default router;

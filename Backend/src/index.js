@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import studentRoutes from "./routes/studentRoutes.js"; // .js extension required in ESM
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -13,6 +14,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Route Mounting
 app.use("/api/student", studentRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

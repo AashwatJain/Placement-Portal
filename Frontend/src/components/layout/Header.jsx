@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom"; // Link import kiya
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
@@ -16,6 +16,7 @@ import {
   LogOut,     // New Icon
   Settings    // New Icon
 } from "lucide-react";
+import { fetchNotifications, markNotificationsRead, deleteNotificationApi } from "../../services/studentApi";
 
 export default function Header({ toggleSidebar }) {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -23,44 +24,84 @@ export default function Header({ toggleSidebar }) {
 
   // States for Dropdowns
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false); // New State for Profile
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setIsNotifOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // --- Notification Data ---
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "Google OA Reminder",
-      message: "Online Assessment scheduled for tomorrow at 10 AM.",
-      time: "2 hours ago",
-      type: "alert",
-      read: false
-    },
-    {
-      id: 2,
-      title: "Resume Shortlisted",
-      message: "Microsoft has shortlisted your resume for the Interview round.",
-      time: "5 hours ago",
-      type: "success",
-      read: false
-    },
-    {
-      id: 3,
-      title: "Profile Incomplete",
-      message: "Please add your Codeforces handle to improve visibility.",
-      time: "1 day ago",
-      type: "warning",
-      read: true
+  const [notifications, setNotifications] = useState([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+
+  // Fetch notifications from API when bell is opened
+  const loadNotifications = async () => {
+    setNotifLoading(true);
+    try {
+      const data = await fetchNotifications();
+      // Map backend fields to the UI format
+      setNotifications(data.map(n => ({
+        id: n.id,
+        title: n.text?.split(":")[0] || n.text,
+        message: n.text,
+        time: n.createdAt?._seconds
+          ? getRelativeTime(n.createdAt._seconds * 1000)
+          : "just now",
+        type: n.type === "deadline" ? "alert"
+          : n.type === "shortlist" ? "success"
+            : n.type === "reminder" ? "warning"
+              : "info",
+        read: n.read || false
+      })));
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    } finally {
+      setNotifLoading(false);
     }
-  ]);
+  };
+
+  // Simple relative time helper
+  const getRelativeTime = (timestamp) => {
+    const diff = Date.now() - timestamp;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     setNotifications(notifications.map(n => ({ ...n, read: true })));
+    try {
+      await markNotificationsRead();
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
+    }
   };
 
-  const deleteNotification = (id) => {
+  const deleteNotification = async (id) => {
     setNotifications(notifications.filter(n => n.id !== id));
+    try {
+      await deleteNotificationApi(id);
+    } catch (err) {
+      console.error("Failed to delete notification:", err);
+    }
   };
 
   const getIcon = (type) => {
@@ -97,9 +138,9 @@ export default function Header({ toggleSidebar }) {
         </button>
 
         {/* --- NOTIFICATION BELL --- */}
-        <div className="relative">
+        <div className="relative" ref={notifRef}>
           <button
-            onClick={() => { setIsNotifOpen(!isNotifOpen); setIsProfileOpen(false); }}
+            onClick={() => { const willOpen = !isNotifOpen; setIsNotifOpen(willOpen); setIsProfileOpen(false); if (willOpen) loadNotifications(); }}
             className={`relative rounded-full p-2 transition-colors ${isNotifOpen ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400" : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"}`}
           >
             <Bell size={20} />
@@ -112,66 +153,68 @@ export default function Header({ toggleSidebar }) {
           </button>
 
           {isNotifOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setIsNotifOpen(false)}></div>
-              <div className="absolute right-0 top-12 z-20 w-80 sm:w-96 animate-in fade-in zoom-in-95 duration-100 origin-top-right rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
-                {/* Notif Header */}
-                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Recent Alerts</h3>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllAsRead}
-                      className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
-                    >
-                      <CheckCheck size={14} /> Mark read
-                    </button>
-                  )}
-                </div>
-                {/* Notif List */}
-                <div className="max-h-[350px] overflow-y-auto py-1">
-                  {notifications.length > 0 ? (
-                    notifications.map((notif) => (
-                      <div
-                        key={notif.id}
-                        className={`relative flex gap-3 border-b border-slate-50 px-4 py-3 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-800/50 dark:hover:bg-slate-800/50 ${!notif.read ? "bg-indigo-50/30 dark:bg-indigo-900/10" : ""}`}
-                      >
-                        <div className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800`}>
-                          {getIcon(notif.type)}
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className={`text-sm font-medium ${!notif.read ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-300"}`}>
-                              {notif.title}
-                            </p>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); deleteNotification(notif.id); }}
-                              className="text-slate-400 hover:text-red-500 transition-colors"
-                            >
-                              <X size={14} />
-                            </button>
-                          </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{notif.message}</p>
-                          <p className="text-[10px] text-slate-400">{notif.time}</p>
-                        </div>
-                        {!notif.read && (
-                          <div className="absolute right-4 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-indigo-500"></div>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-8 text-slate-500">
-                      <Bell size={32} className="mb-2 opacity-20" />
-                      <p className="text-sm">No new alerts</p>
-                    </div>
-                  )}
-                </div>
+            <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 animate-in fade-in zoom-in-95 duration-100 origin-top-right rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
+              {/* Notif Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <h3 className="font-semibold text-slate-900 dark:text-white">Recent Alerts</h3>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                  >
+                    <CheckCheck size={14} /> Mark read
+                  </button>
+                )}
               </div>
-            </>
+              {/* Notif List */}
+              <div className="max-h-[350px] overflow-y-auto py-1">
+                {notifLoading ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent mb-2"></div>
+                    <p className="text-xs">Loading...</p>
+                  </div>
+                ) : notifications.length > 0 ? (
+                  notifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      className={`relative flex gap-3 border-b border-slate-50 px-4 py-3 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-800/50 dark:hover:bg-slate-800/50 ${!notif.read ? "bg-indigo-50/30 dark:bg-indigo-900/10" : ""}`}
+                    >
+                      <div className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800`}>
+                        {getIcon(notif.type)}
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={`text-sm font-medium ${!notif.read ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-300"}`}>
+                            {notif.title}
+                          </p>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteNotification(notif.id); }}
+                            className="text-slate-400 hover:text-red-500 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{notif.message}</p>
+                        <p className="text-[10px] text-slate-400">{notif.time}</p>
+                      </div>
+                      {!notif.read && (
+                        <div className="absolute right-4 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-indigo-500"></div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+                    <Bell size={32} className="mb-2 opacity-20" />
+                    <p className="text-sm">No new alerts</p>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
 
         {/* --- USER PROFILE DROPDOWN --- */}
-        <div className="relative">
+        <div className="relative" ref={profileRef}>
           <button
             onClick={() => { setIsProfileOpen(!isProfileOpen); setIsNotifOpen(false); }}
             className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all overflow-hidden ${isProfileOpen
@@ -187,50 +230,45 @@ export default function Header({ toggleSidebar }) {
           </button>
 
           {isProfileOpen && (
-            <>
-              {/* Backdrop to close */}
-              <div className="fixed inset-0 z-10" onClick={() => setIsProfileOpen(false)}></div>
+            <div className="absolute right-0 top-12 z-50 w-56 animate-in fade-in zoom-in-95 duration-100 origin-top-right rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 p-1.5">
 
-              <div className="absolute right-0 top-12 z-20 w-56 animate-in fade-in zoom-in-95 duration-100 origin-top-right rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 p-1.5">
+              {/* User Info */}
+              <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
+                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
+              </div>
 
-                {/* User Info */}
-                <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
-                </div>
+              {/* Menu Items */}
+              <div className="space-y-0.5">
+                <Link
+                  to="/student/profile"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+                >
+                  <User size={16} /> My Profile
+                </Link>
 
-                {/* Menu Items */}
-                <div className="space-y-0.5">
-                  <Link
-                    to="/student/profile"
-                    onClick={() => setIsProfileOpen(false)}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
-                  >
-                    <User size={16} /> My Profile
-                  </Link>
-
-                  {/* Optional: Settings Link */}
-                  {/* <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-colors">
+                {/* Optional: Settings Link */}
+                {/* <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-colors">
                      <Settings size={16} /> Settings
                    </button> */}
-                </div>
-
-                {/* Logout */}
-                <div className="mt-1 border-t border-slate-100 dark:border-slate-800 pt-1">
-                  <button
-                    onClick={logout}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                  >
-                    <LogOut size={16} /> Sign Out
-                  </button>
-                </div>
-
               </div>
-            </>
+
+              {/* Logout */}
+              <div className="mt-1 border-t border-slate-100 dark:border-slate-800 pt-1">
+                <button
+                  onClick={logout}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <LogOut size={16} /> Sign Out
+                </button>
+              </div>
+
+            </div>
           )}
         </div>
 
-      </div>
-    </header>
+      </div >
+    </header >
   );
 }

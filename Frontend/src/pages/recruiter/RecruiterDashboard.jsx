@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
-import { MOCK_STUDENTS } from "../../data/mockData";
-import { Search, X, FileText, ExternalLink, Code2, Award, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { fetchAllStudents } from "../../services/adminApi";
+import { Search, X, FileText, ExternalLink, Code2, Award, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 
 // Custom priority ranking for branches
 const BRANCH_PRIORITY = {
@@ -12,6 +12,10 @@ const BRANCH_PRIORITY = {
 };
 
 export default function RecruiterDashboard() {
+  // --- Data State ---
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   // --- Filter States ---
   const [search, setSearch] = useState("");
   const [branch, setBranch] = useState("All");
@@ -26,6 +30,21 @@ export default function RecruiterDashboard() {
   // --- Modal State ---
   const [selectedStudent, setSelectedStudent] = useState(null);
 
+  // Fetch students from API on mount
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await fetchAllStudents();
+        setStudents(data);
+      } catch (err) {
+        console.error("Failed to fetch students:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
   // --- Sorting Handler ---
   const handleSort = (key) => {
     let direction = "desc"; // Default to descending on first click
@@ -37,7 +56,7 @@ export default function RecruiterDashboard() {
 
   // --- Filtering & Sorting Logic ---
   const filteredAndSorted = useMemo(() => {
-    let list = [...MOCK_STUDENTS];
+    let list = [...students];
 
     // 1. Search
     if (search) {
@@ -92,7 +111,7 @@ export default function RecruiterDashboard() {
 
   // UI Component for Column Headers
   const SortableHeader = ({ label, columnKey }) => (
-    <th 
+    <th
       onClick={() => handleSort(columnKey)}
       className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors group select-none"
     >
@@ -113,7 +132,7 @@ export default function RecruiterDashboard() {
 
   return (
     <div className="space-y-6 pb-10">
-      
+
       {/* HEADER */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white transition-colors">Candidate Search</h1>
@@ -205,74 +224,82 @@ export default function RecruiterDashboard() {
         </div>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        </div>
+      )}
+
       {/* RESULTS TABLE */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm transition-colors">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-            <thead className="bg-slate-50 dark:bg-slate-800/50 transition-colors">
-              <tr>
-                <SortableHeader label="Name" columnKey="name" />
-                <SortableHeader label="Branch" columnKey="branch" />
-                <SortableHeader label="Role" columnKey="role" />
-                <SortableHeader label="CGPA" columnKey="cgpa" />
-                <SortableHeader label="Coding Profile" columnKey="cfRating" />
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-900 transition-colors">
-              {filteredAndSorted.length === 0 ? (
+      {!loading && (
+        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm transition-colors">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 transition-colors">
                 <tr>
-                  <td colSpan="6" className="px-4 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
-                    <Search className="mx-auto mb-3 h-8 w-8 opacity-20" />
-                    No candidates found matching your filters.
-                  </td>
+                  <SortableHeader label="Name" columnKey="name" />
+                  <SortableHeader label="Branch" columnKey="branch" />
+                  <SortableHeader label="Role" columnKey="role" />
+                  <SortableHeader label="CGPA" columnKey="cgpa" />
+                  <SortableHeader label="Coding Profile" columnKey="cfRating" />
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Action</th>
                 </tr>
-              ) : (
-                filteredAndSorted.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900 dark:text-white">
-                      {s.name}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                      {s.branch} • {s.year}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                        (s.role || "Placement") === "Placement" 
-                          ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400" 
-                          : "bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400"
-                      }`}>
-                        {s.role || "Placement"}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white">
-                      {s.cgpa}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                      <Code2 size={14} className="text-amber-500" />
-                      {s.cfRating ? `${s.cfRating} Rating` : "Unrated"}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right">
-                      <button 
-                        onClick={() => setSelectedStudent(s)}
-                        className="text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-500 dark:hover:text-amber-400 hover:underline transition-colors"
-                      >
-                        View profile
-                      </button>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-900 transition-colors">
+                {filteredAndSorted.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-4 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+                      <Search className="mx-auto mb-3 h-8 w-8 opacity-20" />
+                      No candidates found matching your filters.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredAndSorted.map((s) => (
+                    <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900 dark:text-white">
+                        {s.name}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        {s.branch} • {s.year}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${(s.role || "Placement") === "Placement"
+                          ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400"
+                          : "bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400"
+                          }`}>
+                          {s.role || "Placement"}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white">
+                        {s.cgpa}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                        <Code2 size={14} className="text-amber-500" />
+                        {s.cfRating ? `${s.cfRating} Rating` : "Unrated"}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right">
+                        <button
+                          onClick={() => setSelectedStudent(s)}
+                          className="text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-500 dark:hover:text-amber-400 hover:underline transition-colors"
+                        >
+                          View profile
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* STUDENT DETAILS MODAL */}
       {selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-700 animate-in zoom-in-95 duration-200">
-            
+
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
               <div className="flex items-center gap-4">
@@ -286,7 +313,7 @@ export default function RecruiterDashboard() {
                   </p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedStudent(null)}
                 className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
               >
@@ -296,7 +323,7 @@ export default function RecruiterDashboard() {
 
             {/* Modal Body */}
             <div className="p-6 space-y-6">
-              
+
               {/* Quick Stats */}
               <div className="grid grid-cols-3 gap-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4 border border-slate-100 dark:border-slate-800">
                 <div>
@@ -363,7 +390,7 @@ export default function RecruiterDashboard() {
                 View & Download Resume
               </button>
             </div>
-            
+
           </div>
         </div>
       )}

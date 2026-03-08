@@ -5,35 +5,31 @@
 // components now lives here.
 // ─────────────────────────────────────────────────────────────
 
-import { ref, set, get, onValue } from "firebase/database";
-import { db } from "../config/firebase";
+import { fetchUserApplications, registerForOpportunity as apiRegisterForOpportunity } from "./studentApi";
 
 // ── Read user's registered applications (one‑shot) ──────────
 
 export async function getUserApplications(uid) {
-  const snap = await get(ref(db, `users/${uid}/applications`));
-  if (!snap.exists()) return {};
-  return snap.val();
+  return fetchUserApplications(uid);
 }
 
 // ── Live listener on user's applications ────────────────────
-// Returns the unsubscribe function (call it in cleanup).
+// Now replaced with a one-time API fetch to match backend.
+// Returns a dummy unsubscribe function to avoid breaking `useEffect` cleanup.
 
 export function onUserApplications(uid, callback) {
-  return onValue(ref(db, `users/${uid}/applications`), (snap) => {
-    if (snap.exists()) {
-      const data = snap.val();
-      callback(
-        Object.entries(data).map(([id, v]) => ({ id, ...v }))
-      );
-    } else {
+  fetchUserApplications(uid)
+    .then((data) => callback(data))
+    .catch((err) => {
+      console.error("Fetch user applications error:", err);
       callback([]);
-    }
-  });
+    });
+
+  return () => { }; // dummy unsubscribe
 }
 
 // ── Register for an opportunity ─────────────────────────────
 
 export async function registerForOpportunity(uid, oppId, appData) {
-  await set(ref(db, `users/${uid}/applications/${oppId}`), appData);
+  return apiRegisterForOpportunity(uid, oppId, appData);
 }

@@ -7,7 +7,7 @@ import { offerBadge, deadlineLabel } from "../../utils/statusHelpers";
 import CardSkeleton from "../../components/ui/CardSkeleton";
 import Toast from "../../components/ui/Toast";
 import {
-  Search, MapPin, Calendar, DollarSign, Briefcase,
+  Search, MapPin, Calendar, IndianRupee, Briefcase,
   CheckCircle, Loader2, Clock, X,
   ExternalLink, AlertCircle, Users, GraduationCap,
   Building2, FileText, CalendarPlus,
@@ -15,12 +15,12 @@ import {
 
 // ── Selection process steps (labels for the timeline) ─────────
 const PROCESS_STEPS = [
-  { key: "shortlistDate",       label: "Shortlisted" },
-  { key: "oaDate",              label: "Online Assessment (OA)" },
-  { key: "oaResultDate",        label: "OA Result" },
-  { key: "interviewDate",       label: "Interview" },
+  { key: "shortlistDate", label: "Shortlisted" },
+  { key: "oaDate", label: "Online Assessment (OA)" },
+  { key: "oaResultDate", label: "OA Result" },
+  { key: "interviewDate", label: "Interview" },
   { key: "interviewResultDate", label: "Interview Result" },
-  { key: "finalResultDate",     label: "Final Decision" },
+  { key: "finalResultDate", label: "Final Decision" },
 ];
 
 // ══════════════════════════════════════════════════════════════
@@ -28,18 +28,18 @@ export default function Opportunities() {
   const { opportunities, loading, error } = useOpportunities();
   const { user } = useAuth();
 
-  const [searchTerm, setSearchTerm]   = useState("");
-  const [filterType, setFilterType]   = useState("All");
-  const [toast, setToast]             = useState(null);
-  const [registered, setRegistered]   = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("All");
+  const [toast, setToast] = useState(null);
+  const [registered, setRegistered] = useState({});
   const [registering, setRegistering] = useState(null);
   const [selectedOpp, setSelectedOpp] = useState(null);
 
   useEffect(() => {
     if (!user?.uid) return;
-    getUserApplications(user.uid).then((apps) => {
+    getUserApplications(user.uid).then((appsArray) => {
       const map = {};
-      Object.keys(apps).forEach((k) => (map[k] = true));
+      appsArray.forEach((app) => (map[app.id] = true));
       setRegistered(map);
     });
   }, [user?.uid]);
@@ -162,7 +162,7 @@ export default function Opportunities() {
       {selectedOpp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setSelectedOpp(null)}>
           <div className="flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
-               onClick={(e) => e.stopPropagation()}>
+            onClick={(e) => e.stopPropagation()}>
 
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-5 dark:border-slate-800 dark:bg-slate-800/50">
@@ -233,9 +233,9 @@ export default function Opportunities() {
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-xs text-slate-500 font-medium">{date}</span>
                                   <a href={gCalUrl(`${selectedOpp.name} — ${ps.label}`, date, `${ps.label} for ${selectedOpp.name}`)}
-                                     target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                                     className="text-[10px] font-bold text-blue-500 hover:underline flex items-center gap-0.5"
-                                     title="Add to Google Calendar">
+                                    target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                                    className="text-[10px] font-bold text-blue-500 hover:underline flex items-center gap-0.5"
+                                    title="Add to Google Calendar">
                                     <ExternalLink size={9} /> Calendar
                                   </a>
                                 </div>
@@ -284,7 +284,7 @@ export default function Opportunities() {
                   {/* CTC Card */}
                   {selectedOpp.ctc && (
                     <div className="rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 p-5 text-white shadow-xl">
-                      <div className="flex items-center gap-2 mb-2 opacity-90"><DollarSign size={18} /> <h4 className="font-bold">Compensation</h4></div>
+                      <div className="flex items-center gap-2 mb-2 opacity-90"><IndianRupee size={18} /> <h4 className="font-bold">Compensation</h4></div>
                       <div className="text-3xl font-black mb-1">{selectedOpp.ctc}</div>
                       <p className="text-indigo-200 text-sm mb-4">Cost to Company</p>
                       {selectedOpp.stipend && (
@@ -337,16 +337,15 @@ export default function Opportunities() {
               <button
                 onClick={() => handleRegister(selectedOpp)}
                 disabled={registered[selectedOpp.id] || registering === selectedOpp.id}
-                className={`px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg transition-all active:scale-95 flex items-center gap-2 ${
-                  registered[selectedOpp.id]
-                    ? "bg-green-500 text-white shadow-green-500/20 cursor-default"
-                    : registering === selectedOpp.id
+                className={`px-6 py-2.5 rounded-lg text-sm font-bold shadow-lg transition-all active:scale-95 flex items-center gap-2 ${registered[selectedOpp.id]
+                  ? "bg-green-500 text-white shadow-green-500/20 cursor-default"
+                  : registering === selectedOpp.id
                     ? "bg-indigo-400 text-white cursor-wait"
                     : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20"
-                }`}>
+                  }`}>
                 {registering === selectedOpp.id ? <><Loader2 size={16} className="animate-spin" /> Registering...</> :
-                 registered[selectedOpp.id] ? <><CheckCircle size={16} /> Update Registration</> :
-                 "Register for this Drive"}
+                  registered[selectedOpp.id] ? <><CheckCircle size={16} /> Update Registration</> :
+                    "Register for this Drive"}
               </button>
             </div>
           </div>

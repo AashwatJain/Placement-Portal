@@ -6,27 +6,27 @@ import { stepDotColor, getStatusStyle } from "../../utils/statusHelpers";
 import TableSkeleton from "../../components/ui/TableSkeleton";
 import {
   FileText, Search, X, CheckCircle, Clock, AlertCircle,
-  Briefcase, ExternalLink, MapPin, DollarSign,
+  Briefcase, ExternalLink, MapPin, IndianRupee,
 } from "lucide-react";
 
 // ── Timeline helpers ────────────────────────────────────────
 const STEP_ICONS = {
-  Applied:             CheckCircle,
-  Shortlisted:         CheckCircle,
+  Applied: CheckCircle,
+  Shortlisted: CheckCircle,
   "Online Assessment": FileText,
-  "OA Result":         CheckCircle,
-  Interview:           Briefcase,
-  "Interview Result":  CheckCircle,
-  "Final Decision":    AlertCircle,
+  "OA Result": CheckCircle,
+  Interview: Briefcase,
+  "Interview Result": CheckCircle,
+  "Final Decision": AlertCircle,
 };
 
 // ══════════════════════════════════════════════════════════════
 export default function Applications() {
   const { user } = useAuth();
   const [applications, setApplications] = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [selectedApp, setSelectedApp]   = useState(null);
-  const [searchTerm, setSearchTerm]     = useState("");
+  const [loading, setLoading] = useState(true);
+  const [selectedApp, setSelectedApp] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -142,7 +142,7 @@ export default function Applications() {
       {selectedApp && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setSelectedApp(null)}>
           <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden"
-               onClick={(e) => e.stopPropagation()}>
+            onClick={(e) => e.stopPropagation()}>
 
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-800/50">
@@ -193,7 +193,7 @@ export default function Applications() {
                 </div>
                 <div className="h-2.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                   <div className="h-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700"
-                       style={{ width: `${getProgress(selectedApp.timeline)}%` }} />
+                    style={{ width: `${getProgress(selectedApp.timeline)}%` }} />
                 </div>
               </div>
 
@@ -221,8 +221,8 @@ export default function Applications() {
                             <>
                               <span className="text-xs text-slate-500 font-medium">{step.date}</span>
                               <a href={buildGCalUrl(selectedApp.company, step)}
-                                 target="_blank" rel="noopener noreferrer"
-                                 className="text-[10px] font-bold text-blue-500 hover:underline flex items-center gap-0.5">
+                                target="_blank" rel="noopener noreferrer"
+                                className="text-[10px] font-bold text-blue-500 hover:underline flex items-center gap-0.5">
                                 <ExternalLink size={9} /> Google Cal
                               </a>
                             </>
