@@ -149,6 +149,53 @@ export const addExperience = async (req, res) => {
     }
 };
 
+// ── Toggle Like on Interview Experience ───────────────────
+
+export const toggleExperienceLike = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { userId } = req.body;
+
+        if (!id || !userId) {
+            return res.status(400).json({ error: "Experience ID and User ID are required" });
+        }
+
+        const firestore = admin.firestore();
+        const docRef = firestore.collection("experiences").doc(id);
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: "Experience not found" });
+        }
+
+        const data = doc.data();
+        const likedBy = data.likedBy || [];
+        const hasLiked = likedBy.includes(userId);
+
+        if (hasLiked) {
+            // Unlike
+            await docRef.update({
+                likedBy: admin.firestore.FieldValue.arrayRemove(userId),
+                likes: Math.max((data.likes || 1) - 1, 0),
+            });
+        } else {
+            // Like
+            await docRef.update({
+                likedBy: admin.firestore.FieldValue.arrayUnion(userId),
+                likes: (data.likes || 0) + 1,
+            });
+        }
+
+        res.status(200).json({
+            liked: !hasLiked,
+            likes: hasLiked ? Math.max((data.likes || 1) - 1, 0) : (data.likes || 0) + 1,
+        });
+    } catch (error) {
+        console.error("Error toggling experience like:", error);
+        res.status(500).json({ error: "Failed to toggle like" });
+    }
+};
+
 // ── Notifications ─────────────────────────────────────────────
 
 export const getNotifications = async (req, res) => {
@@ -229,5 +276,74 @@ export const deleteNotification = async (req, res) => {
     } catch (error) {
         console.error("Error deleting notification:", error);
         res.status(500).json({ error: "Failed to delete notification" });
+    }
+};
+
+// ── Practice Page: Approved Questions ─────────────────────────
+
+export const getApprovedQuestions = async (req, res) => {
+    try {
+        const firestore = admin.firestore();
+        const snapshot = await firestore.collection("questions")
+            .where("status", "==", "approved")
+            .get();
+
+        const questions = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        res.status(200).json(questions);
+    } catch (error) {
+        console.error("Error fetching approved questions:", error);
+        res.status(500).json({ error: "Failed to fetch approved questions" });
+    }
+};
+
+// ── Practice Page: Solved Questions Tracking ──────────────────
+
+export const getSolvedQuestions = async (req, res) => {
+    try {
+        const { uid } = req.params;
+        if (!uid) return res.status(400).json({ error: "UID is required" });
+
+        const db = admin.database();
+        const snapshot = await db.ref(`users/${uid}/solvedQuestions`).once("value");
+
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            // Return array of solved question IDs
+            res.status(200).json(Object.keys(data));
+        } else {
+            res.status(200).json([]);
+        }
+    } catch (error) {
+        console.error("Error fetching solved questions:", error);
+        res.status(500).json({ error: "Failed to fetch solved questions" });
+    }
+};
+
+export const toggleSolvedQuestion = async (req, res) => {
+    try {
+        const { uid } = req.params;
+        const { questionId, solved } = req.body;
+
+        if (!uid || !questionId) {
+            return res.status(400).json({ error: "UID and Question ID are required" });
+        }
+
+        const db = admin.database();
+        const solvedRef = db.ref(`users/${uid}/solvedQuestions/${questionId}`);
+
+        if (solved) {
+            await solvedRef.set({ solvedAt: Date.now() });
+        } else {
+            await solvedRef.remove();
+        }
+
+        res.status(200).json({ message: solved ? "Marked as solved" : "Unmarked", questionId, solved });
+    } catch (error) {
+        console.error("Error toggling solved question:", error);
+        res.status(500).json({ error: "Failed to toggle solved status" });
     }
 };

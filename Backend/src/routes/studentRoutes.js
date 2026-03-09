@@ -29,6 +29,9 @@ router.post(
 // 4. Route for Vault Section: Deleting a single target-specific resume
 router.delete("/delete-vault-resume/:uid/:id", studentController.deleteVaultResume);
 
+// 4b. Route for setting a vault resume as primary
+router.put("/set-primary-resume", studentController.setPrimaryResume);
+
 import codingStatsController from "../controllers/codingStatsController.js";
 // 5. Route for fetching coding platform stats
 router.get("/coding-stats/:uid", codingStatsController.getCodingStats);
@@ -43,11 +46,17 @@ router.post("/applications/:uid/register", dataController.registerUserApplicatio
 // 7. Routes for Interview Experiences
 router.get("/experiences", dataController.getExperiences);
 router.post("/experiences", dataController.addExperience);
+router.post("/experiences/:id/toggle-like", dataController.toggleExperienceLike);
 
 // 8. Routes for Notifications
 router.get("/notifications", dataController.getNotifications);
 router.post("/notifications", dataController.addNotification);
 router.put("/notifications/mark-read", dataController.markAllNotificationsRead);
 router.delete("/notifications/:id", dataController.deleteNotification);
+
+// 9. Routes for Practice Page (Student-facing)
+router.get("/questions", dataController.getApprovedQuestions);
+router.get("/solved-questions/:uid", dataController.getSolvedQuestions);
+router.post("/solved-questions/:uid", dataController.toggleSolvedQuestion);
 
 export default router;

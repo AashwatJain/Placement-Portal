@@ -225,7 +225,7 @@ export default function Header({ toggleSidebar }) {
             {(user?.avatarUrl || user?.avatar) ? (
               <img src={user.avatarUrl || user.avatar} alt="Profile" className="h-full w-full object-cover" />
             ) : (
-              "M"
+              (user?.name || user?.fullName || "U")[0].toUpperCase()
             )}
           </button>
 

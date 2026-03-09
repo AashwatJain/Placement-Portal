@@ -10,18 +10,20 @@ import {
   BarChart,
   X,
   Target,
-  ArrowUpRight,
   ExternalLink,
-  Clock
+  Clock,
+  Star
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import axios from "axios"; // API call ke liye
+import { API_BASE_URL } from "../../config/api";
+import { setPrimaryResume as setPrimaryResumeApi } from "../../services/studentApi";
+import axios from "axios";
 
 export default function ResumeBuilder() {
-  // Token aur refreshUser fetch kiya
   const { user, token, refreshUser } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+  const [settingPrimary, setSettingPrimary] = useState(null);
   const fileInputRef = useRef(null);
 
   const [resumes, setResumes] = useState([]);
@@ -29,11 +31,8 @@ export default function ResumeBuilder() {
   useEffect(() => {
     let allResumes = [];
 
-    // Agar user ne vault mein resumes dale hain (jo object form mein DB se aayenge)
     if (user && user.resumes) {
-      // Object ko Array mein convert karo
       const vaultResumes = Object.values(user.resumes);
-      // Sort karo taaki naye resumes upar aayen
       vaultResumes.sort((a, b) => b.id - a.id);
       allResumes = [...allResumes, ...vaultResumes];
     }
@@ -53,24 +52,20 @@ export default function ResumeBuilder() {
 
     try {
       const formData = new FormData();
-      // Router "vaultResume" naam expect kar raha hai
       formData.append("vaultResume", file);
       formData.append("uid", user.uid);
 
-      // Asli endpoint par hit karo
-      const response = await axios.post("http://localhost:5001/api/student/upload-vault", formData, {
+      const response = await axios.post(`${API_BASE_URL}/api/student/upload-vault`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
         }
       });
 
-      // DB se data pull karo taaki naya uploaded resume list mein aajaye
       if (refreshUser) {
         await refreshUser();
       }
 
-      // Update local state directly so it appears instantly without refresh
       if (response.data && response.data.resume) {
         setResumes(prevResumes => [response.data.resume, ...prevResumes]);
       }
@@ -86,12 +81,11 @@ export default function ResumeBuilder() {
 
   const deleteResume = async (id) => {
     try {
-      await axios.delete(`http://localhost:5001/api/student/delete-vault-resume/${user.uid}/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/student/delete-vault-resume/${user.uid}/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setResumes(resumes.filter(r => r.id !== id));
 
-      // Optionally run refreshUser to ensure background sync
       if (refreshUser) {
         refreshUser();
       }
@@ -101,12 +95,28 @@ export default function ResumeBuilder() {
     }
   };
 
+  const handleSetPrimary = async (resumeId) => {
+    setSettingPrimary(resumeId);
+    try {
+      await setPrimaryResumeApi(user.uid, resumeId, token);
+      if (refreshUser) await refreshUser();
+      alert("Primary resume set successfully! It will now show on your Profile page.");
+    } catch (error) {
+      console.error("Set Primary Error:", error);
+      alert("Failed to set primary resume. " + (error.response?.data?.error || ""));
+    } finally {
+      setSettingPrimary(null);
+    }
+  };
+
   const getScoreColor = (score) => {
     if (score == null) return "text-slate-400 bg-slate-200";
     if (score >= 80) return "text-emerald-500 bg-emerald-500";
     if (score >= 60) return "text-amber-500 bg-amber-500";
     return "text-red-500 bg-red-500";
   };
+
+  const isPrimary = (resumeId) => user?.primaryResumeId === resumeId;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 relative">
@@ -150,7 +160,18 @@ export default function ResumeBuilder() {
           </div>
         ) : (
           resumes.map((resume) => (
-            <div key={resume.id} className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-indigo-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-900">
+            <div key={resume.id} className={`group relative overflow-hidden rounded-xl border p-5 shadow-sm transition-all hover:shadow-md dark:bg-slate-900 ${
+              isPrimary(resume.id)
+                ? "border-indigo-400 bg-indigo-50/30 ring-1 ring-indigo-400/50 dark:border-indigo-600 dark:bg-indigo-900/10"
+                : "border-slate-200 bg-white hover:border-indigo-200 dark:border-slate-800 dark:hover:border-indigo-900"
+            }`}>
+
+              {/* Primary Badge */}
+              {isPrimary(resume.id) && (
+                <div className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-full bg-indigo-600 px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                  <Star size={10} className="fill-current" /> Primary
+                </div>
+              )}
 
               <div className="mb-4 flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -172,10 +193,25 @@ export default function ResumeBuilder() {
                 </button>
               </div>
 
-              <div className="mb-6">
+              <div className="mb-4 flex items-center justify-between">
                 <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                   Target: {resume.target}
                 </span>
+
+                {!isPrimary(resume.id) && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleSetPrimary(resume.id); }}
+                    disabled={settingPrimary === resume.id}
+                    className="relative z-20 flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-100 transition-all disabled:opacity-60 dark:border-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+                  >
+                    {settingPrimary === resume.id ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Star size={12} />
+                    )}
+                    Set Primary
+                  </button>
+                )}
               </div>
 
               <div>
@@ -209,20 +245,20 @@ export default function ResumeBuilder() {
                 </div>
               </div>
 
-              <div className="absolute inset-0 flex items-center justify-center bg-white/90 opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100 dark:bg-slate-900/90 gap-2">
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/90 opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100 dark:bg-slate-900/90 gap-2">
                 {resume.url && (
                   <a
                     href={resume.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-slate-900 hover:scale-105 transition-all"
+                    className="pointer-events-auto flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-slate-900 hover:scale-105 transition-all"
                   >
                     <ExternalLink size={16} /> Open
                   </a>
                 )}
                 <button
                   onClick={() => setSelectedAnalysis(resume)}
-                  className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-indigo-700 hover:scale-105 transition-all"
+                  className="pointer-events-auto flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-indigo-700 hover:scale-105 transition-all"
                 >
                   <Eye size={16} /> Metrics
                 </button>

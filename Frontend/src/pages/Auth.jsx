@@ -11,7 +11,7 @@ const ROLES = [
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
-  const [loading, setLoading] = useState(false); // Loading state add kiya hai
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("student");
@@ -33,7 +33,6 @@ export default function Auth() {
   const { login, signup, isLoggedIn, user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already logged in
   useEffect(() => {
     if (isLoggedIn && user) {
       const path = user.role === "student" ? "/student" : user.role === "admin" ? "/admin/students" : "/recruiter";
@@ -43,12 +42,9 @@ export default function Auth() {
 
   const handleRoleChange = (newRole) => {
     setRole(newRole);
-    if (newRole !== "student") {
-      setIsLogin(true);
-    }
+    if (newRole !== "student") setIsLogin(true);
   };
 
-//   const handleSubmit = (e) => {
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -56,19 +52,17 @@ export default function Auth() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       if (isLogin) {
-        // Login Logic
         const loggedInUser = await login(email, password);
-        // Role based redirect
         const path = loggedInUser.role === "student" ? "/student" : loggedInUser.role === "admin" ? "/admin/students" : "/recruiter";
         navigate(path);
       } else {
-        // Signup Logic: Pura data bhej rahe hain
         await signup({ email, password, role, ...formData });
-        alert("Account Created Successfully!");
-        // Signup ke baad automatic redirect logic AuthContext handle kar lega ya hum navigate use kar sakte hain
+        alert("Account created successfully!");
+        const path = role === "student" ? "/student" : role === "admin" ? "/admin/students" : "/recruiter";
+        navigate(path);
       }
     } catch (error) {
       console.error(error);
@@ -80,9 +74,7 @@ export default function Auth() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-12 dark:bg-slate-900">
-      <div className="absolute right-4 top-4">
-        <ThemeToggle />
-      </div>
+      <div className="absolute right-4 top-4"><ThemeToggle /></div>
       <div className={`w-full transition-all duration-300 ${!isLogin && role === 'student' ? 'max-w-2xl' : 'max-w-md'}`}>
         <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-lg dark:border-slate-700 dark:bg-slate-800">
           <div className="mb-8 text-center">
@@ -101,10 +93,7 @@ export default function Auth() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className={isLogin ? "sm:col-span-2" : ""}>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
+                <input type="email" required value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@nitkkr.ac.in"
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
@@ -112,25 +101,20 @@ export default function Auth() {
               </div>
               <div className={isLogin ? "sm:col-span-2" : ""}>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={password}
+                <input type="password" required value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
                 />
               </div>
             </div>
-            
+
             {isLogin && (
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Login as</label>
                 <div className="flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-600 dark:bg-slate-700">
                   {ROLES.map((r) => (
-                    <button
-                      key={r.value}
-                      type="button"
+                    <button key={r.value} type="button"
                       onClick={() => handleRoleChange(r.value)}
                       className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
                         role === r.value
@@ -155,13 +139,7 @@ export default function Auth() {
                   <InputField label="Location" name="location" value={formData.location} onChange={handleInputChange} placeholder="Hostel/City" />
                   <InputField label="Branch" name="branch" value={formData.branch} onChange={handleInputChange} placeholder="Computer Engineering" />
                   <InputField label="Year" name="year" value={formData.year} onChange={handleInputChange} placeholder="1st/2nd/3rd/4th" />
-                  <InputField 
-                    label="CGPA" 
-                    name="cgpa" 
-                    value={formData.cgpa} 
-                    onChange={handleInputChange} 
-                    placeholder="Enter 0.0 if Fresher" 
-                  />
+                  <InputField label="CGPA" name="cgpa" value={formData.cgpa} onChange={handleInputChange} placeholder="Enter 0.0 if Fresher" />
                 </div>
 
                 <h3 className="mt-6 text-sm font-semibold uppercase tracking-wider text-slate-500">Profiles & Coding Handles</h3>
@@ -175,9 +153,7 @@ export default function Auth() {
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
+            <button type="submit" disabled={loading}
               className="mt-4 w-full rounded-lg bg-amber-500 py-3 font-medium text-white hover:bg-amber-600 disabled:opacity-50 dark:bg-amber-600 dark:hover:bg-amber-700"
             >
               {loading ? "Processing..." : isLogin ? "Sign in" : "Complete Registration"}
@@ -187,8 +163,7 @@ export default function Auth() {
           {role === "student" && (
             <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button
-                type="button"
+              <button type="button"
                 onClick={() => setIsLogin((x) => !x)}
                 className="font-medium text-amber-600 hover:underline dark:text-amber-400"
               >
@@ -206,13 +181,7 @@ function InputField({ label, name, value, onChange, placeholder, className = "" 
   return (
     <div className={className}>
       <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-      <input
-        type="text"
-        name={name}
-        required
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
+      <input type="text" name={name} required value={value} onChange={onChange} placeholder={placeholder}
         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
       />
     </div>

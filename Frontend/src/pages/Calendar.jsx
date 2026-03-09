@@ -47,14 +47,22 @@ function getBarColor(step) {
 }
 
 // ── Extract calendar events from applications ────────────────
-// Smart rule: only show step N's date if steps 0..N-1 are all done.
+// Smart rules:
+// 1. Skip rejected applications entirely.
+// 2. Only show upcoming steps (not done) whose predecessors are all done.
 function extractEvents(applications) {
   const events = [];
   for (const app of applications) {
+    // Skip rejected applications
+    if (app.status === "Rejected") continue;
+
     const tl = app.timeline || [];
     for (let i = 0; i < tl.length; i++) {
       const step = tl[i];
       if (!step.date) continue;
+
+      // Skip already-done steps — only show upcoming
+      if (step.done) continue;
 
       // Check all previous steps are done
       const prevAllDone = tl.slice(0, i).every((s) => s.done);

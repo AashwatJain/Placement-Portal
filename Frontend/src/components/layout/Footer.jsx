@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
-import { 
-  MapPin, 
-  Mail, 
-  Phone, 
-  Linkedin, 
-  Twitter, 
-  Instagram, 
-  Heart 
+import {
+  MapPin,
+  Mail,
+  Phone,
+  Linkedin,
+  Twitter,
+  Instagram,
+  Heart
 } from "lucide-react";
 
 export default function Footer() {
@@ -15,10 +15,10 @@ export default function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white pt-12 text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400 transition-colors duration-300">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        
+
         {/* Top Section: 4 Columns Grid */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 pb-12">
-          
+
           {/* Column 1: Branding & Intro */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -33,13 +33,13 @@ export default function Footer() {
               Bridging the gap between talent and opportunity. The official placement platform for NIT Kurukshetra.
             </p>
             <div className="flex gap-4 pt-2">
-              <a href="#" className="text-slate-400 transition hover:text-blue-600 dark:hover:text-blue-400">
+              <a href="https://www.linkedin.com/school/nit-kurukshetra/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-slate-400 transition hover:text-blue-600 dark:hover:text-blue-400">
                 <Linkedin size={20} />
               </a>
-              <a href="#" className="text-slate-400 transition hover:text-blue-400 dark:hover:text-blue-300">
+              <a href="https://twitter.com/nitkkr_official" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="text-slate-400 transition hover:text-blue-400 dark:hover:text-blue-300">
                 <Twitter size={20} />
               </a>
-              <a href="#" className="text-slate-400 transition hover:text-pink-600 dark:hover:text-pink-400">
+              <a href="https://www.instagram.com/nitkkr_official/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-slate-400 transition hover:text-pink-600 dark:hover:text-pink-400">
                 <Instagram size={20} />
               </a>
             </div>
@@ -52,13 +52,13 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Home</Link>
+                <Link to="/student" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Dashboard</Link>
               </li>
               <li>
-                <Link to="/login" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Student Login</Link>
+                <Link to="/student/opportunities" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Opportunities</Link>
               </li>
               <li>
-                <Link to="/recruiter" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Recruiter Login</Link>
+                <Link to="/student/interview-experiences" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Interview Experiences</Link>
               </li>
               <li>
                 <Link to="/calendar" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Placement Calendar</Link>
@@ -73,16 +73,16 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Placement Policy</a>
+                <a href="https://nitkkr.ac.in/tnp-placement-policy" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Placement Policy</a>
               </li>
               <li>
-                <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Resume Builder</a>
+                <Link to="/student/resume-builder" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Resume Vault</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Past Recruiters</a>
+                <Link to="/student/company" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Companies</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Alumni Network</a>
+                <Link to="/student/coding-profiles" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Coding Profiles</Link>
               </li>
             </ul>
           </div>

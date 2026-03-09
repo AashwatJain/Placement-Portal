@@ -142,5 +142,33 @@ const deleteVaultResume = async (req, res) => {
     res.status(500).json({ error: "Failed to delete resume." });
   }
 };
+// 5. Sets a vault resume as the primary resume (shown on profile)
+const setPrimaryResume = async (req, res) => {
+  try {
+    const { uid, resumeId } = req.body;
+    if (!uid || !resumeId) return res.status(400).json({ error: "UID and Resume ID are required!" });
 
-export default { updateStudentProfile, uploadDocuments, uploadVaultResume, deleteVaultResume };
+    // Fetch the vault resume data
+    const snapshot = await db.ref(`users/${uid}/resumes/${resumeId}`).once("value");
+    if (!snapshot.exists()) {
+      return res.status(404).json({ error: "Resume not found in vault." });
+    }
+
+    const resume = snapshot.val();
+
+    // Set the primary resume fields on the user node
+    await db.ref(`users/${uid}`).update({
+      primaryResumeUrl: resume.url,
+      primaryResumeName: resume.name,
+      primaryResumeId: resumeId,
+      updatedAt: Date.now(),
+    });
+
+    res.status(200).json({ message: "Primary resume set successfully", primaryResumeUrl: resume.url, primaryResumeName: resume.name });
+  } catch (error) {
+    console.error("Set Primary Resume Error:", error);
+    res.status(500).json({ error: "Failed to set primary resume." });
+  }
+};
+
+export default { updateStudentProfile, uploadDocuments, uploadVaultResume, deleteVaultResume, setPrimaryResume };

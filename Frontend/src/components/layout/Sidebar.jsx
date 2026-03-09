@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { 
-  LayoutDashboard, 
-  User, 
-  Building2, 
-  FileQuestion, 
-  CalendarDays, 
-  Users, 
+import {
+  LayoutDashboard,
+  User,
+  Building2,
+  FileQuestion,
+  CalendarDays,
+  Users,
   Code,
   LogOut,
   FileText,
@@ -15,40 +15,39 @@ import {
   ChevronRight,
   GraduationCap,
   FileUser,
-  Briefcase // <-- Imported Briefcase icon
+  Briefcase,
+  BookOpen
 } from "lucide-react";
 
-export default function Sidebar() {
+const roleNav = {
+  student: [
+    { to: "/student", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/student/profile", label: "My Profile", icon: User },
+    { to: "/student/coding-profiles", label: "Coding Stats", icon: Code },
+    { to: "/student/resume-builder", label: "Resume Vault", icon: FileUser },
+    { to: "/student/applications", label: "My Applications", icon: FileText },
+    { to: "/student/company", label: "Companies", icon: Building2 },
+    { to: "/student/opportunities", label: "Opportunities", icon: Briefcase },
+    { to: "/student/interview-experiences", label: "Interview Exp.", icon: FileQuestion },
+    { to: "/student/practice", label: "Practice", icon: BookOpen },
+    { to: "/calendar", label: "Calendar", icon: CalendarDays },
+  ],
+  admin: [
+    { to: "/admin/students", label: "Student Management", icon: Users },
+    { to: "/admin/company-add", label: "Manage Companies", icon: Briefcase },
+    { to: "/admin/questions", label: "Question Bank", icon: FileQuestion },
+    { to: "/calendar", label: "Calendar", icon: CalendarDays },
+  ],
+  recruiter: [
+    { to: "/recruiter", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/calendar", label: "Calendar", icon: CalendarDays },
+  ],
+};
+
+export default function Sidebar({ isMobile = false, onClose }) {
   const { user, logout } = useAuth();
   const location = useLocation();
-  
-  // Default collapsed state
   const [isCollapsed, setIsCollapsed] = useState(false);
-
-  const roleNav = {
-    student: [
-      { to: "/student", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/student/profile", label: "My Profile", icon: User },
-      { to: "/student/coding-profiles", label: "Coding Stats", icon: Code },
-      { to: "/student/resume-builder", label: "Resume Vault", icon: FileUser },
-      { to: "/student/applications", label: "My Applications", icon: FileText },
-      { to: "/student/company", label: "Companies", icon: Building2 },
-      { to: "/student/opportunities", label: "Opportunities", icon: Briefcase },
-      { to: "/student/interview-experiences", label: "Interview Exp.", icon: FileQuestion }, 
-      { to: "/calendar", label: "Calendar", icon: CalendarDays },
-    ],
-    admin: [
-      { to: "/admin/students", label: "Student Management", icon: Users },
-      // 👇 Updated Label and Icon here
-      { to: "/admin/company-add", label: "Manage Companies", icon: Briefcase }, 
-      { to: "/admin/questions", label: "Question Bank", icon: FileQuestion },
-      { to: "/calendar", label: "Calendar", icon: CalendarDays },
-    ],
-    recruiter: [
-      { to: "/recruiter", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/calendar", label: "Calendar", icon: CalendarDays },
-    ],
-  };
 
   const navLinks = roleNav[user?.role] || [];
 
@@ -58,24 +57,31 @@ export default function Sidebar() {
     return false;
   };
 
+  // In mobile mode, render a full-width sidebar without collapse controls
+  const effectiveCollapsed = isMobile ? false : isCollapsed;
+
+  const handleLinkClick = () => {
+    if (isMobile && onClose) onClose();
+  };
+
   return (
-    <aside 
-      className={`hidden flex-col border-r border-slate-200 bg-white transition-all duration-300 ease-in-out dark:border-slate-800 dark:bg-slate-900 md:flex ${
-        isCollapsed ? "w-16" : "w-56"
-      }`}
+    <aside
+      className={
+        isMobile
+          ? "flex h-full w-64 flex-col bg-white dark:bg-slate-900"
+          : `hidden flex-col border-r border-slate-200 bg-white transition-all duration-300 ease-in-out dark:border-slate-800 dark:bg-slate-900 md:flex ${isCollapsed ? "w-16" : "w-56"}`
+      }
     >
       {/* 1. Header & Toggle Button */}
-      <div className={`flex h-14 items-center border-b border-slate-200 px-3 dark:border-slate-800 ${isCollapsed ? "justify-center" : "justify-between"}`}>
-        
+      <div className={`flex h-14 items-center border-b border-slate-200 px-3 dark:border-slate-800 ${effectiveCollapsed ? "justify-center" : "justify-between"}`}>
+
         {/* Logo Section */}
         <div className="flex items-center gap-3 overflow-hidden">
-          {/* Compact Logo */}
           <div className="flex h-8 w-8 min-w-[2rem] items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/20">
             <GraduationCap size={18} />
           </div>
 
-          {/* Text Details */}
-          {!isCollapsed && (
+          {!effectiveCollapsed && (
             <div className="flex flex-col transition-opacity duration-300">
               <span className="whitespace-nowrap text-sm font-bold leading-none text-slate-900 dark:text-white">
                 NIT KKR
@@ -87,9 +93,9 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Collapse Button */}
-        {!isCollapsed && (
-          <button 
+        {/* Collapse Button (desktop only) */}
+        {!isMobile && !isCollapsed && (
+          <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
           >
@@ -98,10 +104,10 @@ export default function Sidebar() {
         )}
       </div>
 
-      {/* Re-open button when collapsed */}
-      {isCollapsed && (
+      {/* Re-open button when collapsed (desktop only) */}
+      {!isMobile && isCollapsed && (
         <div className="flex justify-center py-2 border-b border-slate-200 dark:border-slate-800">
-           <button 
+          <button
             onClick={() => setIsCollapsed(false)}
             className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
           >
@@ -117,16 +123,17 @@ export default function Sidebar() {
             <Link
               key={to}
               to={to}
-              title={isCollapsed ? label : ""}
+              onClick={handleLinkClick}
+              title={effectiveCollapsed ? label : ""}
               className={`flex items-center gap-3 rounded-md px-2.5 py-2 transition-colors ${
                 isActive(to)
                   ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-              } ${isCollapsed ? "justify-center" : ""}`}
+              } ${effectiveCollapsed ? "justify-center" : ""}`}
             >
               <Icon size={20} className="shrink-0" />
-              
-              {!isCollapsed && (
+
+              {!effectiveCollapsed && (
                 <span className="whitespace-nowrap text-sm font-medium transition-opacity duration-300">
                   {label}
                 </span>
@@ -139,14 +146,14 @@ export default function Sidebar() {
       {/* 3. Bottom Actions */}
       <div className="border-t border-slate-200 p-3 dark:border-slate-800">
         <button
-          onClick={logout}
-          title={isCollapsed ? "Sign Out" : ""}
+          onClick={() => { logout(); if (isMobile && onClose) onClose(); }}
+          title={effectiveCollapsed ? "Sign Out" : ""}
           className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors ${
-            isCollapsed ? "justify-center" : ""
+            effectiveCollapsed ? "justify-center" : ""
           }`}
         >
           <LogOut size={20} className="shrink-0" />
-          {!isCollapsed && <span className="whitespace-nowrap">Sign Out</span>}
+          {!effectiveCollapsed && <span className="whitespace-nowrap">Sign Out</span>}
         </button>
       </div>
     </aside>

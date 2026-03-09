@@ -14,6 +14,7 @@ const platformConfig = {
     light: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
     accent: "text-amber-500",
     ring: "ring-amber-500/20",
+    profileUrl: (handle) => `https://leetcode.com/${handle}`,
   },
   codeforces: {
     icon: <TrendingUp size={22} />,
@@ -21,6 +22,7 @@ const platformConfig = {
     light: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
     accent: "text-blue-500",
     ring: "ring-blue-500/20",
+    profileUrl: (handle) => `https://codeforces.com/profile/${handle}`,
   },
   codechef: {
     icon: <Globe size={22} />,
@@ -28,6 +30,7 @@ const platformConfig = {
     light: "bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
     accent: "text-orange-500",
     ring: "ring-orange-500/20",
+    profileUrl: (handle) => `https://www.codechef.com/users/${handle}`,
   },
   github: {
     icon: <Github size={22} />,
@@ -35,6 +38,7 @@ const platformConfig = {
     light: "bg-slate-100 text-slate-600 dark:bg-slate-700/30 dark:text-slate-300",
     accent: "text-slate-600 dark:text-slate-300",
     ring: "ring-slate-500/20",
+    profileUrl: (handle) => `https://github.com/${handle}`,
   },
 };
 
@@ -156,10 +160,14 @@ export default function CodingProfiles() {
             <div className="grid gap-4 sm:grid-cols-2">
               {platforms.map((p) => {
                 const config = platformConfig[p.id] || platformConfig.leetcode;
+                const profileHref = config.profileUrl ? config.profileUrl(p.handle) : "#";
                 return (
-                  <div
+                  <a
                     key={p.id}
-                    className={`group relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-slate-800 dark:bg-slate-900/80 ring-1 ${config.ring}`}
+                    href={profileHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`group relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-slate-800 dark:bg-slate-900/80 ring-1 ${config.ring} block cursor-pointer`}
                   >
                     {/* Top gradient line */}
                     <div className={`absolute top-0 left-4 right-4 h-0.5 rounded-full bg-gradient-to-r ${config.gradient} opacity-60`} />
@@ -204,7 +212,7 @@ export default function CodingProfiles() {
                         </div>
                       </div>
                     )}
-                  </div>
+                  </a>
                 );
               })}
             </div>

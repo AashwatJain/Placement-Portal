@@ -218,9 +218,9 @@ export default function Opportunities() {
                       <Calendar className="text-indigo-500" size={18} /> Selection Process
                     </h3>
                     <div className="relative ml-3">
-                      {PROCESS_STEPS.map((ps, idx) => {
+                      {PROCESS_STEPS.filter((ps) => selectedOpp[ps.key]).map((ps, idx, filteredArr) => {
                         const date = selectedOpp[ps.key];
-                        const isLast = idx === PROCESS_STEPS.length - 1;
+                        const isLast = idx === filteredArr.length - 1;
                         return (
                           <div key={ps.key} className="relative flex items-start gap-4 pb-5">
                             {!isLast && <div className="absolute left-[13px] top-7 w-0.5 h-[calc(100%-10px)] bg-slate-200 dark:bg-slate-700" />}
@@ -229,19 +229,15 @@ export default function Opportunities() {
                             </div>
                             <div className="flex-1">
                               <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{ps.label}</p>
-                              {date ? (
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-xs text-slate-500 font-medium">{date}</span>
-                                  <a href={gCalUrl(`${selectedOpp.name} — ${ps.label}`, date, `${ps.label} for ${selectedOpp.name}`)}
-                                    target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                                    className="text-[10px] font-bold text-blue-500 hover:underline flex items-center gap-0.5"
-                                    title="Add to Google Calendar">
-                                    <ExternalLink size={9} /> Calendar
-                                  </a>
-                                </div>
-                              ) : (
-                                <p className="text-xs text-slate-400 italic mt-0.5">Date to be announced</p>
-                              )}
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-xs text-slate-500 font-medium">{date}</span>
+                                <a href={gCalUrl(`${selectedOpp.name} — ${ps.label}`, date, `${ps.label} for ${selectedOpp.name}`)}
+                                  target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                                  className="text-[10px] font-bold text-blue-500 hover:underline flex items-center gap-0.5"
+                                  title="Add to Google Calendar">
+                                  <ExternalLink size={9} /> Calendar
+                                </a>
+                              </div>
                             </div>
                           </div>
                         );

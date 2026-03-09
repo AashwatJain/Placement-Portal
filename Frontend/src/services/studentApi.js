@@ -91,6 +91,26 @@ export async function submitExperience(data, token) {
   return response.data;
 }
 
+export async function toggleExperienceLike(experienceId, userId, token) {
+  const response = await axios.post(
+    `${API_BASE_URL}/api/student/experiences/${experienceId}/toggle-like`,
+    { userId },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+}
+
+// ── Resume Vault ── Primary Resume ──────────────────────────
+
+export async function setPrimaryResume(uid, resumeId, token) {
+  const response = await axios.put(
+    `${API_BASE_URL}/api/student/set-primary-resume`,
+    { uid, resumeId },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+}
+
 // ── Notifications ───────────────────────────────────────────
 
 export async function fetchNotifications() {
@@ -107,3 +127,25 @@ export async function deleteNotificationApi(id) {
   const response = await axios.delete(`${API_BASE_URL}/api/student/notifications/${id}`);
   return response.data;
 }
+
+// ── Practice Page ───────────────────────────────────────────
+
+export async function fetchApprovedQuestions() {
+  const response = await axios.get(`${API_BASE_URL}/api/student/questions`);
+  return response.data;
+}
+
+export async function fetchSolvedQuestions(uid) {
+  const response = await axios.get(`${API_BASE_URL}/api/student/solved-questions/${uid}`);
+  return response.data;
+}
+
+export async function toggleSolvedQuestion(uid, questionId, solved, token) {
+  const response = await axios.post(
+    `${API_BASE_URL}/api/student/solved-questions/${uid}`,
+    { questionId, solved },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+}
+

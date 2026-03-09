@@ -200,15 +200,17 @@ export default function Applications() {
               {/* TIMELINE — read-only, dates from backend */}
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">Selection Timeline</h3>
               <div className="relative ml-3 space-y-1">
-                {(selectedApp.timeline || []).map((step, idx) => {
+                {(selectedApp.timeline || [])
+                  .filter((step) => step.done || step.date)
+                  .map((step, idx, filteredArr) => {
                   const Icon = STEP_ICONS[step.step] || Clock;
-                  const isLast = idx === (selectedApp.timeline || []).length - 1;
+                  const isLast = idx === filteredArr.length - 1;
                   return (
                     <div key={idx} className="relative flex items-start gap-4 pb-5">
                       {!isLast && (
                         <div className={`absolute left-[15px] top-8 w-0.5 h-[calc(100%-10px)] ${step.done ? "bg-green-500" : "bg-slate-200 dark:bg-slate-700"}`} />
                       )}
-                      <div className={`relative z-10 shrink-0 flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${stepDotColor(step, idx, selectedApp.timeline || [])}`}>
+                      <div className={`relative z-10 shrink-0 flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${stepDotColor(step, idx, filteredArr)}`}>
                         <Icon size={14} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -217,7 +219,7 @@ export default function Applications() {
                           {step.done && <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium">✓ Done</span>}
                         </div>
                         <div className="mt-1 flex items-center gap-3">
-                          {step.date ? (
+                          {step.date && (
                             <>
                               <span className="text-xs text-slate-500 font-medium">{step.date}</span>
                               <a href={buildGCalUrl(selectedApp.company, step)}
@@ -226,8 +228,6 @@ export default function Applications() {
                                 <ExternalLink size={9} /> Google Cal
                               </a>
                             </>
-                          ) : (
-                            <span className="text-xs text-slate-400 italic">To be announced</span>
                           )}
                         </div>
                       </div>

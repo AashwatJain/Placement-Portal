@@ -2,21 +2,20 @@ import { useState, useRef, useEffect } from "react";
 import {
   User, Mail, Phone, MapPin, Book, Award,
   Save, Camera, FileText, Github, Linkedin,
-  UploadCloud, Loader2, ExternalLink,
+  Loader2, ExternalLink,
   Code, TrendingUp, Globe
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
+import { API_BASE_URL } from "../../config/api";
 
 export default function Profile() {
   const { user, token, refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const avatarInputRef = useRef(null);
-  const resumeInputRef = useRef(null);
-
   const [avatarFile, setAvatarFile] = useState(null);
-  const [resumeFile, setResumeFile] = useState(null);
 
   const [formData, setFormData] = useState({
     fullName: "", email: "", phone: "", location: "",
@@ -24,7 +23,7 @@ export default function Profile() {
     linkedin: "", codolio: "", leetcode: "", codeforces: "", codechef: "", about: "", avatar: null
   });
 
-  // Re-fetch user data from DB when component mounts (e.g., navigating back)
+  // Re-fetch user data from DB when component mounts
   useEffect(() => {
     if (refreshUser) refreshUser();
   }, []);
@@ -52,7 +51,16 @@ export default function Profile() {
   }, [user]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    // Clear error for the field being edited
+    if (errors[name]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
   };
 
   const handleAvatarChange = (e) => {
@@ -63,33 +71,44 @@ export default function Profile() {
     }
   };
 
-  const handleResumeChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setResumeFile(file);
+  const validateForm = () => {
+    const requiredFields = {
+      fullName: "Full Name",
+      phone: "Phone",
+      branch: "Branch",
+      year: "Graduation Year",
+      cgpa: "CGPA",
+    };
+
+    const newErrors = {};
+    for (const [key, label] of Object.entries(requiredFields)) {
+      if (!formData[key] || formData[key].toString().trim() === "") {
+        newErrors[key] = `${label} is required`;
+      }
     }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSave = async () => {
+    if (!validateForm()) return;
+
     setLoading(true);
     try {
       // Step 1: Push text data via standard JSON PUT request
       const textPayload = { ...formData, uid: user.uid };
-      await axios.put("http://localhost:5001/api/student/update-profile", textPayload, {
+      await axios.put(`${API_BASE_URL}/api/student/update-profile`, textPayload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       // Step 2: Push binary data via multipart/form-data POST request
-      // We only trigger this if the user actually selected a new avatar or resume
-      if (avatarFile || resumeFile) {
+      if (avatarFile) {
         const filePayload = new FormData();
         filePayload.append("uid", user.uid);
+        filePayload.append("avatar", avatarFile);
 
-        // Dynamically append only the files that exist
-        if (avatarFile) filePayload.append("avatar", avatarFile);
-        if (resumeFile) filePayload.append("resume", resumeFile);
-
-        await axios.post("http://localhost:5001/api/student/upload-docs", filePayload, {
+        await axios.post(`${API_BASE_URL}/api/student/upload-docs`, filePayload, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data"
@@ -97,12 +116,9 @@ export default function Profile() {
         });
       }
 
-      // Step 3: Silently pull the updated permanent database URLs into the UI
+      // Step 3: Refresh user data
       if (refreshUser) await refreshUser();
-
-      // Clear local binary states to prevent re-uploading on next save
       setAvatarFile(null);
-      setResumeFile(null);
 
     } catch (error) {
       console.error("Update failed:", error);
@@ -111,6 +127,10 @@ export default function Profile() {
       setLoading(false);
     }
   };
+
+  // Determine the primary resume from user data
+  const primaryResumeName = user?.primaryResumeName;
+  const primaryResumeUrl = user?.primaryResumeUrl || user?.resumeUrl;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-10 text-slate-900 dark:text-slate-100">
@@ -162,18 +182,18 @@ export default function Profile() {
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              <InputGroup label="Full Name" name="fullName" value={formData.fullName} icon={User} onChange={handleChange} />
+              <InputGroup label="Full Name" name="fullName" value={formData.fullName} icon={User} onChange={handleChange} required error={errors.fullName} />
               <InputGroup label="Email" name="email" value={formData.email} icon={Mail} disabled />
-              <InputGroup label="Phone" name="phone" value={formData.phone} icon={Phone} onChange={handleChange} />
+              <InputGroup label="Phone" name="phone" value={formData.phone} icon={Phone} onChange={handleChange} required error={errors.phone} />
               <InputGroup label="Location" name="location" value={formData.location} icon={MapPin} onChange={handleChange} />
             </div>
 
             <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
               <h4 className="mb-5 text-xs font-bold uppercase tracking-widest text-slate-400">Academic Details</h4>
               <div className="grid gap-6 sm:grid-cols-3">
-                <InputGroup label="Branch" name="branch" value={formData.branch} icon={Book} onChange={handleChange} />
-                <InputGroup label="Grad Year" name="year" value={formData.year} icon={Award} onChange={handleChange} />
-                <InputGroup label="CGPA" name="cgpa" value={formData.cgpa} icon={Award} onChange={handleChange} />
+                <InputGroup label="Branch" name="branch" value={formData.branch} icon={Book} onChange={handleChange} required error={errors.branch} />
+                <InputGroup label="Grad Year" name="year" value={formData.year} icon={Award} onChange={handleChange} required error={errors.year} />
+                <InputGroup label="CGPA" name="cgpa" value={formData.cgpa} icon={Award} onChange={handleChange} required error={errors.cgpa} />
               </div>
             </div>
 
@@ -189,39 +209,27 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Primary Document Upload Section */}
+            {/* Primary Resume (Read-Only Display) */}
             <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
-              <h4 className="mb-5 text-xs font-bold uppercase tracking-widest text-slate-400">Primary Documents</h4>
-              <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
-                <h3 className="mb-4 font-semibold text-sm">Upload Base Resume</h3>
-
-                <div
-                  onClick={() => resumeInputRef.current.click()}
-                  className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 py-8 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/50 cursor-pointer"
-                >
-                  <div className="rounded-full bg-indigo-50 p-3 dark:bg-indigo-900/20">
-                    <UploadCloud className="text-indigo-600 dark:text-indigo-400" size={24} />
+              <h4 className="mb-5 text-xs font-bold uppercase tracking-widest text-slate-400">Primary Resume</h4>
+              {primaryResumeUrl ? (
+                <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-red-50 p-2 dark:bg-red-900/10"><FileText size={18} className="text-red-500" /></div>
+                    <div>
+                      <p className="text-sm font-medium">{primaryResumeName || "Primary_Resume.pdf"}</p>
+                      <p className="text-xs text-slate-500">Set via Resume Vault</p>
+                    </div>
                   </div>
-                  <p className="mt-2 text-sm font-medium">Click to select primary resume</p>
-                  <p className="text-xs text-slate-500 text-center">PDF up to 5MB</p>
+                  <a href={primaryResumeUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
+                    View <ExternalLink size={12} />
+                  </a>
                 </div>
-
-                <input type="file" ref={resumeInputRef} className="hidden" accept="application/pdf" onChange={handleResumeChange} />
-
-                {resumeFile && (
-                  <div className="mt-3 text-sm font-medium text-emerald-600">
-                    Ready to upload on save: {resumeFile.name}
-                  </div>
-                )}
-
-                <div className="mt-6 space-y-2">
-                  {user?.resumeUrl ? (
-                    <FileItem name="Primary_Resume.pdf" date="Stored in Database" url={user.resumeUrl} />
-                  ) : (
-                    <p className="text-xs text-slate-500">No primary resume uploaded to the profile yet.</p>
-                  )}
-                </div>
-              </div>
+              ) : (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  No primary resume set. Go to <a href="/student/resume-builder" className="text-indigo-600 hover:underline dark:text-indigo-400">Resume Vault</a> to upload and set your primary resume.
+                </p>
+              )}
             </div>
 
           </div>
@@ -232,10 +240,13 @@ export default function Profile() {
 }
 
 // Sub-components
-function InputGroup({ label, name, value, onChange, icon: Icon, disabled = false, fullWidth = false }) {
+function InputGroup({ label, name, value, onChange, icon: Icon, disabled = false, required = false, error }) {
   return (
-    <div className={fullWidth ? "sm:col-span-2" : ""}>
-      <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase">{label}</label>
+    <div>
+      <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
       <div className="relative group">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 group-focus-within:text-indigo-500">
           <Icon size={18} />
@@ -243,26 +254,11 @@ function InputGroup({ label, name, value, onChange, icon: Icon, disabled = false
         <input
           type="text" name={name} value={value || ""} onChange={onChange} disabled={disabled}
           className={`block w-full rounded-xl border py-2.5 pl-10 pr-3 text-sm font-medium transition-all
-            ${disabled ? "bg-slate-100 border-slate-200 text-slate-500 dark:bg-slate-950" : "bg-white border-slate-200 text-slate-900 focus:border-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-white"}`}
+            ${disabled ? "bg-slate-100 border-slate-200 text-slate-500 dark:bg-slate-950" : "bg-white border-slate-200 text-slate-900 focus:border-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-white"}
+            ${error ? "border-red-400 ring-1 ring-red-400" : ""}`}
         />
       </div>
-    </div>
-  );
-}
-
-function FileItem({ name, date, url }) {
-  return (
-    <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-800/50">
-      <div className="flex items-center gap-3">
-        <div className="rounded-lg bg-red-50 p-2 dark:bg-red-900/10"><FileText size={18} className="text-red-500" /></div>
-        <div>
-          <p className="text-sm font-medium">{name}</p>
-          <p className="text-xs text-slate-500">{date}</p>
-        </div>
-      </div>
-      <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
-        View <ExternalLink size={12} />
-      </a>
+      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </div>
   );
 }

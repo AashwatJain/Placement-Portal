@@ -12,7 +12,8 @@ import Company from "./pages/student/Company";
 import InterviewExperiences from "./pages/student/InterviewExperiences";
 import Opportunities from "./pages/student/Opportunities";
 import CodingProfiles from "./pages/student/CodingProfiles";
-import ResumeBuilder from "./pages/student/ResumeBuilder"; // <--- NEW IMPORT
+import ResumeBuilder from "./pages/student/ResumeBuilder";
+import Practice from "./pages/student/Practice";
 
 // Admin Pages
 import StudentManagement from "./pages/admin/StudentManagement";
@@ -68,8 +69,8 @@ function AppRoutes() {
         <Route
           path="student/interview-experiences"
           element={<InterviewExperiences />}
-        />{" "}
-        // New
+        />
+        <Route path="student/practice" element={<Practice />} />
         {/* Admin Routes */}
         <Route path="admin/students" element={<StudentManagement />} />
         <Route path="admin/company-add" element={<CompanyAdd />} />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { fetchExperiences, submitExperience } from "../../services/studentApi";
+import { fetchExperiences, submitExperience, toggleExperienceLike } from "../../services/studentApi";
 import { useCompanies } from "../../hooks/useCompanies";
 import {
   PenTool,
@@ -15,8 +15,18 @@ import {
   ChevronRight,
   Plus,
   Trash2,
-  Loader2
+  Loader2,
+  ArrowUpDown
 } from "lucide-react";
+
+const DIFFICULTY_OPTIONS = ["All", "Easy", "Medium", "Hard"];
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest First" },
+  { value: "most_liked", label: "Most Liked" },
+  { value: "difficulty_asc", label: "Difficulty ↑" },
+  { value: "difficulty_desc", label: "Difficulty ↓" },
+];
+const DIFFICULTY_ORDER = { Easy: 1, Medium: 2, Hard: 3 };
 
 export default function InterviewExperiences() {
   const { user, token } = useAuth();
@@ -27,6 +37,8 @@ export default function InterviewExperiences() {
   const [experiences, setExperiences] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [difficultyFilter, setDifficultyFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("newest");
 
   const [formData, setFormData] = useState({
     company: "",
@@ -79,15 +91,13 @@ export default function InterviewExperiences() {
     try {
       await submitExperience({
         ...formData,
-        problems: problems.filter(p => p.link || p.description), // only non-empty
+        problems: problems.filter(p => p.link || p.description),
         author: user?.name || user?.email || "Anonymous Student",
         authorId: user?.uid || "unknown",
       }, token);
-      // Reset form and go back to browse
       setFormData({ company: "", role: "", status: "Selected", difficulty: "Medium", experience: "" });
       setProblems([{ link: "", description: "" }]);
       setActiveTab("browse");
-      // Refresh experiences list
       await loadExperiences();
     } catch (err) {
       console.error("Failed to submit experience:", err);
@@ -101,10 +111,53 @@ export default function InterviewExperiences() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const filteredExperiences = experiences.filter(exp =>
-    exp.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exp.role?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleLike = async (e, expId) => {
+    e.stopPropagation();
+    if (!user?.uid) return;
+
+    try {
+      const result = await toggleExperienceLike(expId, user.uid, token);
+      setExperiences((prev) =>
+        prev.map((exp) =>
+          exp.id === expId
+            ? {
+                ...exp,
+                likes: result.likes,
+                likedBy: result.liked
+                  ? [...(exp.likedBy || []), user.uid]
+                  : (exp.likedBy || []).filter((id) => id !== user.uid),
+              }
+            : exp
+        )
+      );
+    } catch (err) {
+      console.error("Failed to toggle like:", err);
+    }
+  };
+
+  // Filter and sort
+  const filteredExperiences = experiences
+    .filter((exp) => {
+      const matchesSearch =
+        exp.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        exp.role?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesDifficulty =
+        difficultyFilter === "All" || exp.difficulty === difficultyFilter;
+      return matchesSearch && matchesDifficulty;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "most_liked":
+          return (b.likes || 0) - (a.likes || 0);
+        case "difficulty_asc":
+          return (DIFFICULTY_ORDER[a.difficulty] || 2) - (DIFFICULTY_ORDER[b.difficulty] || 2);
+        case "difficulty_desc":
+          return (DIFFICULTY_ORDER[b.difficulty] || 2) - (DIFFICULTY_ORDER[a.difficulty] || 2);
+        case "newest":
+        default:
+          return 0; // Already sorted by newest from backend
+      }
+    });
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
@@ -141,15 +194,52 @@ export default function InterviewExperiences() {
       {/* --- BROWSE MODE --- */}
       {activeTab === "browse" && (
         <div className="space-y-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by company, role, or difficulty..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
-            />
+
+          {/* Search + Filters */}
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by company or role..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Difficulty Filter Pills */}
+              <div className="flex gap-1.5">
+                {DIFFICULTY_OPTIONS.map((diff) => (
+                  <button
+                    key={diff}
+                    onClick={() => setDifficultyFilter(diff)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
+                      difficultyFilter === diff
+                        ? "bg-indigo-600 text-white border-indigo-600"
+                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700"
+                    }`}
+                  >
+                    {diff}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className="flex items-center gap-1.5 ml-auto">
+                <ArrowUpDown size={14} className="text-slate-400" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="text-xs font-medium rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-slate-600 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           <div className="grid gap-4">
@@ -165,67 +255,83 @@ export default function InterviewExperiences() {
               </div>
             )}
 
-            {!loading && filteredExperiences.map((exp) => (
-              <div
-                key={exp.id}
-                className={`group rounded-xl border bg-white shadow-sm transition-all dark:bg-slate-900 ${expandedId === exp.id
-                    ? "border-indigo-500 ring-1 ring-indigo-500 dark:border-indigo-500"
-                    : "border-slate-200 hover:border-indigo-300 dark:border-slate-800 dark:hover:border-indigo-700"
-                  }`}
-              >
-                <div className="p-5 cursor-pointer" onClick={() => toggleExpand(exp.id)}>
+            {!loading && filteredExperiences.map((exp) => {
+              const isLiked = (exp.likedBy || []).includes(user?.uid);
+              return (
+                <div
+                  key={exp.id}
+                  className={`group rounded-xl border bg-white shadow-sm transition-all dark:bg-slate-900 ${expandedId === exp.id
+                      ? "border-indigo-500 ring-1 ring-indigo-500 dark:border-indigo-500"
+                      : "border-slate-200 hover:border-indigo-300 dark:border-slate-800 dark:hover:border-indigo-700"
+                    }`}
+                >
+                  <div className="p-5 cursor-pointer" onClick={() => toggleExpand(exp.id)}>
 
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold dark:bg-slate-800 dark:text-slate-300">
-                        {exp.company[0]}
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold dark:bg-slate-800 dark:text-slate-300">
+                          {exp.company?.[0] || "?"}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-slate-900 dark:text-white">{exp.company}</h3>
+                          <p className="text-xs text-slate-500">{exp.role} • {exp.date}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900 dark:text-white">{exp.company}</h3>
-                        <p className="text-xs text-slate-500">{exp.role} • {exp.date}</p>
+                      <div className={`px-2.5 py-1 rounded text-xs font-medium border ${exp.status === "Selected"
+                          ? "bg-green-50 text-green-700 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900"
+                          : "bg-red-50 text-red-700 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900"
+                        }`}>
+                        {exp.status === "Selected" ? <span className="flex items-center gap-1"><CheckCircle size={12} /> Selected</span> : <span className="flex items-center gap-1"><XCircle size={12} /> Rejected</span>}
                       </div>
                     </div>
-                    <div className={`px-2.5 py-1 rounded text-xs font-medium border ${exp.status === "Selected"
-                        ? "bg-green-50 text-green-700 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900"
-                        : "bg-red-50 text-red-700 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900"
-                      }`}>
-                      {exp.status === "Selected" ? <span className="flex items-center gap-1"><CheckCircle size={12} /> Selected</span> : <span className="flex items-center gap-1"><XCircle size={12} /> Rejected</span>}
-                    </div>
-                  </div>
 
-                  <div className="mb-2">
-                    {expandedId === exp.id ? (
-                      <div className="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
-                        {exp.fullStory}
+                    <div className="mb-2">
+                      {expandedId === exp.id ? (
+                        <div className="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
+                          {exp.fullStory}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
+                          {exp.summary}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center gap-4 text-xs text-slate-500">
+                        <span className="flex items-center gap-1"><User size={12} /> {exp.author}</span>
+                        <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold ${
+                          exp.difficulty === "Easy" ? "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400" :
+                          exp.difficulty === "Hard" ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400" :
+                          "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+                        }`}>
+                          <Briefcase size={12} /> {exp.difficulty}
+                        </span>
                       </div>
-                    ) : (
-                      <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
-                        {exp.summary}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-4 text-xs text-slate-500">
-                      <span className="flex items-center gap-1"><User size={12} /> {exp.author}</span>
-                      <span className="flex items-center gap-1"><Briefcase size={12} /> {exp.difficulty}</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1 text-xs font-medium text-slate-500">
-                        <ThumbsUp size={14} /> {exp.likes}
-                      </span>
-                      <span className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                        {expandedId === exp.id ? (
-                          <>Show Less <ChevronUp size={14} /></>
-                        ) : (
-                          <>Read Full Story <ChevronRight size={14} /></>
-                        )}
-                      </span>
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={(e) => handleLike(e, exp.id)}
+                          className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg transition-all ${
+                            isLiked
+                              ? "text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-900/30"
+                              : "text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20"
+                          }`}
+                        >
+                          <ThumbsUp size={14} className={isLiked ? "fill-current" : ""} /> {exp.likes || 0}
+                        </button>
+                        <span className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                          {expandedId === exp.id ? (
+                            <>Show Less <ChevronUp size={14} /></>
+                          ) : (
+                            <>Read Full Story <ChevronRight size={14} /></>
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -274,11 +380,19 @@ export default function InterviewExperiences() {
                   <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Verdict</label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="status" className="accent-green-500" defaultChecked />
+                      <input
+                        type="radio" name="status" className="accent-green-500"
+                        checked={formData.status === "Selected"}
+                        onChange={() => setFormData({ ...formData, status: "Selected" })}
+                      />
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Selected</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="status" className="accent-red-500" />
+                      <input
+                        type="radio" name="status" className="accent-red-500"
+                        checked={formData.status === "Rejected"}
+                        onChange={() => setFormData({ ...formData, status: "Rejected" })}
+                      />
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Rejected</span>
                     </label>
                   </div>
@@ -331,7 +445,6 @@ export default function InterviewExperiences() {
                     <div key={index} className="p-4 rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800/50">
 
                       <div className="space-y-3">
-                        {/* Row 1: Link input and the inline remove button */}
                         <div className="flex items-center gap-2">
                           <input
                             type="url"
@@ -353,7 +466,6 @@ export default function InterviewExperiences() {
                           )}
                         </div>
 
-                        {/* Row 2: Description textarea */}
                         <div>
                           <textarea
                             value={problem.description}
