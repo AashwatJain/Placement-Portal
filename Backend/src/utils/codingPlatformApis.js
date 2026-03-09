@@ -130,6 +130,39 @@ export const getLeetCodeStats = async (handle) => {
     }
 };
 
+// ── LEETCODE: Fetch accepted problem slugs for auto-sync ────
+export const getLeetCodeSolvedSlugs = async (handle) => {
+    if (!handle) return [];
+    try {
+        const query = `
+        query recentAcSubmissions($username: String!, $limit: Int!) {
+            recentAcSubmissionList(username: $username, limit: $limit) {
+                titleSlug
+            }
+        }`;
+
+        const response = await axios.post("https://leetcode.com/graphql", {
+            query,
+            variables: { username: handle, limit: 500 }
+        }, {
+            headers: {
+                "Content-Type": "application/json",
+                "Referer": "https://leetcode.com",
+                "Origin": "https://leetcode.com",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+            },
+            timeout: 15000
+        });
+
+        const submissions = response.data?.data?.recentAcSubmissionList || [];
+        // Return unique slugs
+        return [...new Set(submissions.map(s => s.titleSlug))];
+    } catch (error) {
+        console.error(`LeetCode Slugs Error for ${handle}:`, error.message);
+        return [];
+    }
+};
+
 // 2. CODEFORCES
 export const getCodeforcesStats = async (handle) => {
     if (!handle) return null;

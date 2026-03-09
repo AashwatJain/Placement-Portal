@@ -1,18 +1,59 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-// Replaced direct firebase/database imports with proxy methods
 import { onUserApplications } from "../../services/firebaseDb";
+import {
+  fetchApprovedQuestions,
+  fetchSolvedQuestions,
+  toggleSolvedQuestion,
+} from "../../services/studentApi";
 import {
   Briefcase, FileText, CheckCircle, Clock,
   AlertCircle, ChevronRight, TrendingUp,
+  Sparkles, ExternalLink, CheckCircle2, Loader2,
 } from "lucide-react";
 import { useCompanies } from "../../hooks/useCompanies";
 
+// ── Mini Donut (for dashboard widget) ────────────────────────
+function MiniDonut({ solved, total, size = 64, strokeWidth = 6 }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const percentage = total > 0 ? (solved / total) * 100 : 0;
+  const offset = circumference - (percentage / 100) * circumference;
+  const color = percentage >= 60 ? "#10b981" : percentage >= 30 ? "#6366f1" : "#94a3b8";
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg className="-rotate-90" width={size} height={size}>
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} className="stroke-slate-100 dark:stroke-slate-700" />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} stroke={color} strokeLinecap="round"
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 0.8s ease-out" }} />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-sm font-black" style={{ color }}>{Math.round(percentage)}%</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Difficulty badge color
+const DIFF_COLORS = {
+  Easy: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  Medium: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  Hard: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+};
+
 export default function StudentHome() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { companies } = useCompanies();
   const [applications, setApplications] = useState([]);
+
+  // Practice data
+  const [questions, setQuestions] = useState([]);
+  const [solvedSet, setSolvedSet] = useState(new Set());
+  const [practiceLoading, setPracticeLoading] = useState(true);
+  const [toggling, setToggling] = useState(null);
 
   // Fetch user applications
   useEffect(() => {
@@ -23,10 +64,70 @@ export default function StudentHome() {
     return () => unsub();
   }, [user?.uid]);
 
+  // Fetch practice questions
+  useEffect(() => {
+    if (!user?.uid) return;
+    const load = async () => {
+      try {
+        const [qData, sData] = await Promise.all([
+          fetchApprovedQuestions(),
+          fetchSolvedQuestions(user.uid),
+        ]);
+        setQuestions(qData);
+        setSolvedSet(new Set(sData));
+      } catch (err) {
+        console.error("Practice load error:", err);
+      } finally {
+        setPracticeLoading(false);
+      }
+    };
+    load();
+  }, [user?.uid]);
+
+  // Toggle solved from dashboard
+  const handleToggle = async (questionId) => {
+    if (!user?.uid) return;
+    setToggling(questionId);
+    const currently = solvedSet.has(questionId);
+    const newSolved = !currently;
+
+    setSolvedSet((prev) => {
+      const next = new Set(prev);
+      newSolved ? next.add(questionId) : next.delete(questionId);
+      return next;
+    });
+
+    try {
+      await toggleSolvedQuestion(user.uid, questionId, newSolved, token);
+    } catch (err) {
+      setSolvedSet((prev) => {
+        const next = new Set(prev);
+        !newSolved ? next.add(questionId) : next.delete(questionId);
+        return next;
+      });
+    } finally {
+      setToggling(null);
+    }
+  };
+
   const totalApplied = applications.length;
   const shortlisted = applications.filter((a) => a.status === "Shortlisted" || a.status === "Offered").length;
   const pending = applications.filter((a) => !["Offered", "Rejected", "Final Decision"].includes(a.status)).length;
   const recommendations = companies.slice(0, 3);
+
+  // Build recommended questions based on applied companies
+  const appliedCompanyNames = [...new Set(applications.map(a => a.company).filter(Boolean))];
+  const recommendedQuestions = questions
+    .filter(q => {
+      const matchesCompany = appliedCompanyNames.some(
+        name => (q.companyName || "").toLowerCase() === name.toLowerCase()
+      );
+      return matchesCompany && !solvedSet.has(q.id);
+    })
+    .slice(0, 5);
+
+  const totalQuestions = questions.length;
+  const totalSolved = questions.filter(q => solvedSet.has(q.id)).length;
 
   const getStatusStyle = (status) => {
     switch (status) {
@@ -157,6 +258,76 @@ export default function StudentHome() {
 
           {/* Right Sidebar */}
           <div className="space-y-6">
+            {/* ── Practice Recommendations Widget ── */}
+            <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50/80 to-white p-5 shadow-sm dark:border-indigo-900/50 dark:from-indigo-950/20 dark:to-slate-800">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-indigo-900 dark:text-indigo-300">
+                  <Sparkles size={16} className="text-indigo-500" /> Practice
+                </h3>
+                <MiniDonut solved={totalSolved} total={totalQuestions} />
+              </div>
+
+              {practiceLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 size={20} className="animate-spin text-indigo-400" />
+                </div>
+              ) : recommendedQuestions.length > 0 ? (
+                <>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-2">
+                    Recommended for your companies
+                  </p>
+                  <div className="space-y-2">
+                    {recommendedQuestions.map((q) => (
+                      <div key={q.id} className="flex items-start gap-2 rounded-lg border border-indigo-100 dark:border-indigo-900/40 bg-white dark:bg-slate-900 p-2.5 transition-all hover:shadow-sm">
+                        <button
+                          onClick={() => handleToggle(q.id)}
+                          disabled={toggling === q.id}
+                          className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-slate-300 bg-white hover:border-indigo-400 dark:border-slate-600 dark:bg-slate-800 transition-all"
+                        >
+                          {toggling === q.id ? (
+                            <Loader2 size={10} className="animate-spin" />
+                          ) : (
+                            <CheckCircle2 size={10} className="text-slate-300" />
+                          )}
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-slate-800 dark:text-slate-200 leading-snug line-clamp-2">
+                            {q.text}
+                          </p>
+                          <div className="mt-1 flex items-center gap-2 flex-wrap">
+                            <span className={`inline-flex rounded px-1 py-0.5 text-[9px] font-bold ${DIFF_COLORS[q.difficulty] || DIFF_COLORS.Medium}`}>
+                              {q.difficulty || "Medium"}
+                            </span>
+                            <span className="text-[9px] text-slate-400">{q.companyName}</span>
+                            {q.link && (
+                              <a href={q.link} target="_blank" rel="noopener noreferrer"
+                                className="text-[9px] font-bold text-indigo-500 hover:underline flex items-center gap-0.5">
+                                <ExternalLink size={8} /> Solve
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-3">
+                  {totalQuestions > 0
+                    ? "🎉 All recommended questions solved!"
+                    : "No practice questions available yet."}
+                </p>
+              )}
+
+              <Link
+                to="/student/practice"
+                className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition-all shadow-sm"
+              >
+                View All Practice <ChevronRight size={14} />
+              </Link>
+            </div>
+
+            {/* Quick Links */}
             <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm dark:border-amber-900/50 dark:bg-amber-900/10">
               <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-amber-900 dark:text-amber-400">
                 <AlertCircle size={16} /> Quick Links
@@ -175,6 +346,7 @@ export default function StudentHome() {
               </ul>
             </div>
 
+            {/* Recent Notices */}
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
               <h3 className="mb-4 text-base font-semibold text-slate-800 dark:text-slate-100">Recent Notices</h3>
               <div className="space-y-4">

@@ -5,6 +5,7 @@ import {
   fetchSolvedQuestions,
   toggleSolvedQuestion,
   fetchCompanies,
+  fetchUserApplications,
 } from "../../services/studentApi";
 import {
   BookOpen,
@@ -18,8 +19,17 @@ import {
   ArrowLeft,
   Building2,
   Sparkles,
-  X,
+  Star,
+  Filter,
 } from "lucide-react";
+
+// ── Difficulty helpers ───────────────────────────────────────
+const DIFF_CONFIG = {
+  Easy:   { color: "#10b981", bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800" },
+  Medium: { color: "#f59e0b", bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400", border: "border-amber-200 dark:border-amber-800" },
+  Hard:   { color: "#ef4444", bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400", border: "border-red-200 dark:border-red-800" },
+};
+const getDiff = (d) => DIFF_CONFIG[d] || DIFF_CONFIG.Medium;
 
 // ── Donut Chart Component ────────────────────────────────────
 function DonutChart({ solved, total, size = 140, strokeWidth = 14 }) {
@@ -65,6 +75,89 @@ function DonutChart({ solved, total, size = 140, strokeWidth = 14 }) {
   );
 }
 
+// ── Pie Chart (Difficulty Distribution) ──────────────────────
+function PieChart({ easy, medium, hard, size = 120 }) {
+  const total = easy + medium + hard;
+  if (total === 0) return null;
+  const cx = size / 2, cy = size / 2, r = size / 2 - 4;
+
+  const slices = [
+    { count: easy, color: "#10b981", label: "Easy" },
+    { count: medium, color: "#f59e0b", label: "Medium" },
+    { count: hard, color: "#ef4444", label: "Hard" },
+  ].filter(s => s.count > 0);
+
+  let cumAngle = -90;
+  const paths = slices.map((slice) => {
+    const angle = (slice.count / total) * 360;
+    const startAngle = cumAngle;
+    const endAngle = cumAngle + angle;
+    cumAngle = endAngle;
+
+    const startRad = (startAngle * Math.PI) / 180;
+    const endRad = (endAngle * Math.PI) / 180;
+    const x1 = cx + r * Math.cos(startRad);
+    const y1 = cy + r * Math.sin(startRad);
+    const x2 = cx + r * Math.cos(endRad);
+    const y2 = cy + r * Math.sin(endRad);
+    const largeArc = angle > 180 ? 1 : 0;
+
+    const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+    return <path key={slice.label} d={d} fill={slice.color} opacity={0.85} />;
+  });
+
+  return (
+    <div className="flex items-center gap-4">
+      <svg width={size} height={size} className="drop-shadow-sm">
+        {paths}
+        <circle cx={cx} cy={cy} r={r * 0.45} className="fill-white dark:fill-slate-900" />
+      </svg>
+      <div className="space-y-1.5">
+        {[
+          { label: "Easy", count: easy, color: "bg-emerald-500" },
+          { label: "Medium", count: medium, color: "bg-amber-500" },
+          { label: "Hard", count: hard, color: "bg-red-500" },
+        ].map((s) => (
+          <div key={s.label} className="flex items-center gap-2 text-xs">
+            <div className={`h-2.5 w-2.5 rounded-full ${s.color}`} />
+            <span className="font-medium text-slate-600 dark:text-slate-300">{s.label}</span>
+            <span className="font-bold text-slate-900 dark:text-white">{s.count}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Horizontal Bar Chart (Company Progress) ─────────────────
+function CompanyBarChart({ companies, maxBars = 6 }) {
+  const top = companies.slice(0, maxBars);
+  if (top.length === 0) return null;
+  const maxCount = Math.max(...top.map(c => c.totalCount), 1);
+
+  return (
+    <div className="space-y-2.5">
+      {top.map((c) => (
+        <div key={c.id} className="group">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[120px]">{c.name}</span>
+            <span className="text-[10px] font-bold text-slate-500">{c.solvedCount}/{c.totalCount}</span>
+          </div>
+          <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div
+              className="h-2 rounded-full transition-all duration-700"
+              style={{
+                width: `${(c.totalCount / maxCount) * 100}%`,
+                background: `linear-gradient(to right, #6366f1 ${c.totalCount > 0 ? (c.solvedCount / c.totalCount) * 100 : 0}%, #e2e8f0 ${c.totalCount > 0 ? (c.solvedCount / c.totalCount) * 100 : 0}%)`,
+              }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Mini Bar Chart (for company cards) ───────────────────────
 function MiniProgress({ solved, total }) {
   const pct = total > 0 ? (solved / total) * 100 : 0;
@@ -88,10 +181,12 @@ export default function Practice() {
   const [questions, setQuestions] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [solvedSet, setSolvedSet] = useState(new Set());
+  const [appliedCompanies, setAppliedCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(null);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [diffFilter, setDiffFilter] = useState("All");
 
   // Fetch data on mount
   useEffect(() => {
@@ -99,14 +194,18 @@ export default function Practice() {
 
     const load = async () => {
       try {
-        const [qData, cData, sData] = await Promise.all([
+        const [qData, cData, sData, appData] = await Promise.all([
           fetchApprovedQuestions(),
           fetchCompanies(),
           fetchSolvedQuestions(user.uid),
+          fetchUserApplications(user.uid).catch(() => []),
         ]);
         setQuestions(qData);
         setCompanies(cData);
         setSolvedSet(new Set(sData));
+        // Extract unique company names from applications
+        const appliedNames = [...new Set(appData.map(a => a.company).filter(Boolean))];
+        setAppliedCompanies(appliedNames);
       } catch (err) {
         console.error("Practice load error:", err);
       } finally {
@@ -134,7 +233,6 @@ export default function Practice() {
       await toggleSolvedQuestion(user.uid, questionId, newSolved, token);
     } catch (err) {
       console.error("Toggle error:", err);
-      // Revert on failure
       setSolvedSet((prev) => {
         const next = new Set(prev);
         !newSolved ? next.add(questionId) : next.delete(questionId);
@@ -160,6 +258,16 @@ export default function Practice() {
   const totalQuestions = questions.length;
   const totalSolved = questions.filter((q) => solvedSet.has(q.id)).length;
 
+  // Difficulty counts
+  const easyCount = questions.filter(q => (q.difficulty || "Medium") === "Easy").length;
+  const mediumCount = questions.filter(q => (q.difficulty || "Medium") === "Medium").length;
+  const hardCount = questions.filter(q => (q.difficulty || "Medium") === "Hard").length;
+
+  // Recommended companies — those the student applied to
+  const recommendedCompanies = companiesWithQuestions.filter(c =>
+    appliedCompanies.some(name => c.name?.toLowerCase() === name?.toLowerCase())
+  );
+
   const filteredCompanies = companiesWithQuestions.filter((c) =>
     (c.name || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -167,6 +275,13 @@ export default function Practice() {
   const selectedCompanyData = selectedCompany
     ? companiesWithQuestions.find((c) => String(c.id) === String(selectedCompany))
     : null;
+
+  // Filter questions by difficulty when inside a company
+  const filteredQuestions = selectedCompanyData
+    ? (selectedCompanyData.questions || []).filter(q =>
+        diffFilter === "All" ? true : (q.difficulty || "Medium") === diffFilter
+      )
+    : [];
 
   if (loading) {
     return (
@@ -210,33 +325,61 @@ export default function Practice() {
         )}
       </div>
 
-      {/* OVERALL STATS */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-        <StatCard
-          title="Total Questions"
-          value={totalQuestions}
-          icon={<BookOpen size={20} />}
-          gradient="from-indigo-500 to-violet-600"
-        />
-        <StatCard
-          title="Solved"
-          value={totalSolved}
-          icon={<CheckCircle2 size={20} />}
-          gradient="from-emerald-500 to-teal-600"
-        />
-        <StatCard
-          title="Companies"
-          value={companiesWithQuestions.length}
-          icon={<Building2 size={20} />}
-          gradient="from-amber-500 to-orange-600"
-        />
-        <StatCard
-          title="Accuracy"
-          value={totalQuestions > 0 ? `${Math.round((totalSolved / totalQuestions) * 100)}%` : "—"}
-          icon={<Target size={20} />}
-          gradient="from-rose-500 to-pink-600"
-        />
+      {/* ── OVERALL STATS with Charts ── */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-3 lg:col-span-1">
+          <StatCard title="Total" value={totalQuestions} icon={<BookOpen size={18} />} gradient="from-indigo-500 to-violet-600" />
+          <StatCard title="Solved" value={totalSolved} icon={<CheckCircle2 size={18} />} gradient="from-emerald-500 to-teal-600" />
+          <StatCard title="Companies" value={companiesWithQuestions.length} icon={<Building2 size={18} />} gradient="from-amber-500 to-orange-600" />
+          <StatCard title="Accuracy" value={totalQuestions > 0 ? `${Math.round((totalSolved / totalQuestions) * 100)}%` : "—"} icon={<Target size={18} />} gradient="from-rose-500 to-pink-600" />
+        </div>
+
+        {/* Pie Chart — Difficulty Distribution */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 flex flex-col items-center justify-center">
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+            <BarChart3 size={14} className="text-indigo-500" /> Difficulty Distribution
+          </h3>
+          <PieChart easy={easyCount} medium={mediumCount} hard={hardCount} />
+        </div>
+
+        {/* Bar Chart — Top Companies Progress */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+            <Trophy size={14} className="text-amber-500" /> Company Progress
+          </h3>
+          <CompanyBarChart companies={companiesWithQuestions} />
+        </div>
       </div>
+
+      {/* ── RECOMMENDED FOR YOU ── */}
+      {!selectedCompany && recommendedCompanies.length > 0 && (
+        <div className="rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-950/20 p-5">
+          <h3 className="mb-3 text-sm font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
+            <Star size={16} className="text-indigo-500" /> Recommended for You
+            <span className="text-[10px] font-medium text-indigo-500 dark:text-indigo-400 ml-1">Based on your applications</span>
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {recommendedCompanies.map((company) => (
+              <button
+                key={company.id}
+                onClick={() => setSelectedCompany(company.id)}
+                className="group flex items-center gap-3 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 p-3 text-left transition-all hover:shadow-md hover:border-indigo-400 dark:hover:border-indigo-600"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-bold text-white shadow">
+                  {(company.name || "?").charAt(0)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{company.name}</p>
+                  <p className="text-[10px] text-slate-500">
+                    {company.totalCount - company.solvedCount} unsolved • {company.totalCount} total
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── COMPANY VIEW or QUESTION VIEW ── */}
       {!selectedCompany ? (
@@ -288,12 +431,32 @@ export default function Practice() {
 
           {/* LEFT: questions list */}
           <div className="lg:col-span-2 space-y-4">
-            <button
-              onClick={() => setSelectedCompany(null)}
-              className="flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
-            >
-              <ArrowLeft size={16} /> Back to Companies
-            </button>
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => { setSelectedCompany(null); setDiffFilter("All"); }}
+                className="flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+              >
+                <ArrowLeft size={16} /> Back to Companies
+              </button>
+
+              {/* Difficulty filter */}
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+                <Filter size={12} className="ml-2 text-slate-400" />
+                {["All", "Easy", "Medium", "Hard"].map(d => (
+                  <button
+                    key={d}
+                    onClick={() => setDiffFilter(d)}
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all ${
+                      diffFilter === d
+                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                        : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-xl font-bold text-white shadow-md">
@@ -310,8 +473,9 @@ export default function Practice() {
             </div>
 
             <div className="space-y-3">
-              {(selectedCompanyData?.questions || []).map((q, idx) => {
+              {filteredQuestions.map((q, idx) => {
                 const isSolved = solvedSet.has(q.id);
+                const diff = getDiff(q.difficulty || "Medium");
                 return (
                   <div
                     key={q.id}
@@ -343,6 +507,19 @@ export default function Practice() {
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          {/* Difficulty badge */}
+                          <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold border ${diff.bg} ${diff.text} ${diff.border}`}>
+                            {q.difficulty || "Medium"}
+                          </span>
+                          {/* Topic tags */}
+                          {(q.tags || []).map(tag => (
+                            <span key={tag} className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-400">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+
                         <p
                           className={`text-sm leading-relaxed ${
                             isSolved
@@ -359,9 +536,9 @@ export default function Practice() {
                               href={q.link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 text-[11px] font-bold text-indigo-600 hover:bg-indigo-100 dark:text-indigo-400 dark:hover:bg-indigo-900/40 transition-colors border border-indigo-200 dark:border-indigo-800"
                             >
-                              <ExternalLink size={11} /> Solve on Platform
+                              <ExternalLink size={12} /> Solve on Platform
                             </a>
                           )}
                           {q.author && (
@@ -376,10 +553,14 @@ export default function Practice() {
                 );
               })}
 
-              {(selectedCompanyData?.questions || []).length === 0 && (
+              {filteredQuestions.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-500">
                   <BookOpen size={36} className="mb-3 text-slate-300 dark:text-slate-600" />
-                  <p className="text-sm font-medium">No questions yet for this company.</p>
+                  <p className="text-sm font-medium">
+                    {diffFilter !== "All"
+                      ? `No ${diffFilter} questions for this company.`
+                      : "No questions yet for this company."}
+                  </p>
                 </div>
               )}
             </div>
@@ -418,6 +599,17 @@ export default function Practice() {
               </div>
             </div>
 
+            {/* Difficulty breakdown for this company */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+              <h3 className="mb-4 font-bold text-slate-900 dark:text-white text-center text-sm">Difficulty Breakdown</h3>
+              <PieChart
+                easy={(selectedCompanyData?.questions || []).filter(q => (q.difficulty || "Medium") === "Easy").length}
+                medium={(selectedCompanyData?.questions || []).filter(q => (q.difficulty || "Medium") === "Medium").length}
+                hard={(selectedCompanyData?.questions || []).filter(q => (q.difficulty || "Medium") === "Hard").length}
+                size={100}
+              />
+            </div>
+
             {/* Overall Summary Donut */}
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
               <h3 className="mb-5 font-bold text-slate-900 dark:text-white text-center flex items-center justify-center gap-2">
@@ -441,16 +633,16 @@ export default function Practice() {
 
 function StatCard({ title, value, icon, gradient }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-slate-800 dark:bg-slate-900/80">
+    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-slate-800 dark:bg-slate-900/80">
       <div className={`absolute top-0 right-0 h-16 w-16 rounded-full bg-gradient-to-br ${gradient} opacity-[0.05] -translate-y-10 translate-x-10 group-hover:opacity-[0.08] transition-opacity`} />
       <div className="relative">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{title}</span>
-          <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} text-white shadow-sm`}>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{title}</span>
+          <div className={`flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} text-white shadow-sm`}>
             {icon}
           </div>
         </div>
-        <div className="text-3xl font-black text-slate-900 dark:text-white">{value}</div>
+        <div className="text-2xl font-black text-slate-900 dark:text-white">{value}</div>
       </div>
     </div>
   );

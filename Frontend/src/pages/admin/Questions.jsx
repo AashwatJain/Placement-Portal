@@ -14,7 +14,9 @@ export default function AdminQuestions() {
   const [formData, setFormData] = useState({
     companyId: "",
     text: "",
-    link: ""
+    link: "",
+    difficulty: "Medium",
+    tagsInput: ""
   });
 
   // Fetch questions and companies on mount
@@ -61,16 +63,23 @@ export default function AdminQuestions() {
     const selectedCompany = companies.find(c => String(c.id) === String(formData.companyId));
 
     try {
+      const tags = formData.tagsInput
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
       const result = await apiAddQuestion({
         companyId: formData.companyId,
         companyName: selectedCompany?.name || "Unknown",
         text: formData.text,
         link: formData.link,
+        difficulty: formData.difficulty,
+        tags,
         author: "Placement Cell (Admin)",
       });
 
       setQuestions([{ id: result.id, ...result }, ...questions]);
-      setFormData({ companyId: "", text: "", link: "" });
+      setFormData({ companyId: "", text: "", link: "", difficulty: "Medium", tagsInput: "" });
       setShowAddForm(false);
       setActiveTab("approved");
     } catch (err) {
@@ -163,6 +172,30 @@ export default function AdminQuestions() {
                 value={formData.link}
                 onChange={(e) => setFormData({ ...formData, link: e.target.value })}
                 placeholder="e.g., LeetCode, Codeforces link"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Difficulty</label>
+              <select
+                value={formData.difficulty}
+                onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white transition-colors"
+              >
+                <option value="Easy">🟢 Easy</option>
+                <option value="Medium">🟡 Medium</option>
+                <option value="Hard">🔴 Hard</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Tags <span className="text-slate-400 font-normal lowercase">(comma-separated)</span></label>
+              <input
+                type="text"
+                value={formData.tagsInput}
+                onChange={(e) => setFormData({ ...formData, tagsInput: e.target.value })}
+                placeholder="e.g., Arrays, DP, Graphs"
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white transition-colors"
               />
             </div>

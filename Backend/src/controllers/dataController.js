@@ -347,3 +347,89 @@ export const toggleSolvedQuestion = async (req, res) => {
         res.status(500).json({ error: "Failed to toggle solved status" });
     }
 };
+
+// ── Practice Page: Auto-Sync with LeetCode ────────────────────
+
+import { getLeetCodeSolvedSlugs } from "../utils/codingPlatformApis.js";
+
+/**
+ * Extracts the problem slug from a LeetCode URL.
+ * e.g. "https://leetcode.com/problems/two-sum/" → "two-sum"
+ */
+function extractSlug(link) {
+    if (!link) return null;
+    const match = link.match(/leetcode\.com\/problems\/([^/?#]+)/i);
+    return match ? match[1].toLowerCase() : null;
+}
+
+export const syncLeetCodeSolved = async (req, res) => {
+    try {
+        const { uid } = req.params;
+        if (!uid) return res.status(400).json({ error: "UID is required" });
+
+        // 1. Get user's LeetCode handle from RTDB
+        const db = admin.database();
+        const userSnap = await db.ref(`users/${uid}/leetcode`).once("value");
+        const leetcodeHandle = userSnap.val();
+
+        if (!leetcodeHandle) {
+            return res.status(200).json({
+                synced: 0,
+                message: "No LeetCode handle found. Add it in your Profile → Coding Profiles."
+            });
+        }
+
+        // 2. Fetch accepted slugs from LeetCode API
+        const solvedSlugs = await getLeetCodeSolvedSlugs(leetcodeHandle);
+        if (solvedSlugs.length === 0) {
+            return res.status(200).json({ synced: 0, message: "No accepted submissions found on LeetCode." });
+        }
+        const solvedSlugSet = new Set(solvedSlugs);
+
+        // 3. Fetch all approved questions from Firestore
+        const firestore = admin.firestore();
+        const qSnap = await firestore.collection("questions")
+            .where("status", "==", "approved")
+            .get();
+
+        // 4. Match questions whose link slug is in the solved set
+        const matchedIds = [];
+        qSnap.docs.forEach(doc => {
+            const data = doc.data();
+            const slug = extractSlug(data.link);
+            if (slug && solvedSlugSet.has(slug)) {
+                matchedIds.push(doc.id);
+            }
+        });
+
+        // 5. Get already-solved set from RTDB
+        const solvedSnap = await db.ref(`users/${uid}/solvedQuestions`).once("value");
+        const existingSolved = solvedSnap.exists() ? Object.keys(solvedSnap.val()) : [];
+        const existingSet = new Set(existingSolved);
+
+        // 6. Write only newly solved entries
+        let newlySynced = 0;
+        const updates = {};
+        for (const qId of matchedIds) {
+            if (!existingSet.has(qId)) {
+                updates[`users/${uid}/solvedQuestions/${qId}`] = { solvedAt: Date.now(), source: "leetcode-sync" };
+                newlySynced++;
+            }
+        }
+
+        if (newlySynced > 0) {
+            await db.ref().update(updates);
+        }
+
+        res.status(200).json({
+            synced: newlySynced,
+            totalMatched: matchedIds.length,
+            message: newlySynced > 0
+                ? `✅ Synced ${newlySynced} new question(s) from LeetCode!`
+                : "All matching questions are already marked as solved."
+        });
+    } catch (error) {
+        console.error("Error syncing LeetCode solved:", error);
+        res.status(500).json({ error: "Failed to sync with LeetCode." });
+    }
+};

@@ -59,4 +59,7 @@ router.get("/questions", dataController.getApprovedQuestions);
 router.get("/solved-questions/:uid", dataController.getSolvedQuestions);
 router.post("/solved-questions/:uid", dataController.toggleSolvedQuestion);
 
+// 10. LeetCode Auto-Sync
+router.post("/sync-leetcode/:uid", dataController.syncLeetCodeSolved);
+
 export default router;

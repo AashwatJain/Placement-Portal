@@ -51,7 +51,7 @@ export const getQuestions = async (req, res) => {
 // 3. POST a new question (Admin adds a PYQ)
 export const addQuestion = async (req, res) => {
     try {
-        const { companyId, companyName, text, link, author } = req.body;
+        const { companyId, companyName, text, link, author, difficulty, tags } = req.body;
 
         if (!text) {
             return res.status(400).json({ error: "Question text is required" });
@@ -64,6 +64,8 @@ export const addQuestion = async (req, res) => {
             text,
             link: link || "",
             author: author || "Placement Cell (Admin)",
+            difficulty: difficulty || "Medium",
+            tags: Array.isArray(tags) ? tags : [],
             status: "approved",
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         };

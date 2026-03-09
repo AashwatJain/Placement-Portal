@@ -149,3 +149,14 @@ export async function toggleSolvedQuestion(uid, questionId, solved, token) {
   return response.data;
 }
 
+// ── LeetCode Auto-Sync ──────────────────────────────────────
+
+export async function syncLeetCode(uid, token) {
+  const response = await axios.post(
+    `${API_BASE_URL}/api/student/sync-leetcode/${uid}`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+}
+
