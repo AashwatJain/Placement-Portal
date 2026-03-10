@@ -112,18 +112,25 @@ export const getJafs = async (req, res) => {
         const { companyName } = req.query;
         const firestore = admin.firestore();
         
-        let query = firestore.collection("opportunities").orderBy("createdAt", "desc");
+        let query = firestore.collection("opportunities");
         
-        // Only return JAFs belonging to the recruiter's company, if provided
         if (companyName) {
-            query = firestore.collection("opportunities").where("name", "==", companyName).orderBy("createdAt", "desc");
+            query = query.where("name", "==", companyName);
         }
         
         const snapshot = await query.get();
-        const jafs = snapshot.docs.map(doc => ({
+        let jafs = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
+
+        // Sort in memory to avoid Firebase Composite Index requirement
+        jafs.sort((a, b) => {
+            const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+            const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+            return timeB - timeA;
+        });
+
         res.status(200).json(jafs);
     } catch (error) {
         console.error("Error fetching JAFs:", error);
