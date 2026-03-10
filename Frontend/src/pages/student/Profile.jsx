@@ -3,7 +3,8 @@ import {
   User, Mail, Phone, MapPin, Book, Award,
   Save, Camera, FileText, Github, Linkedin,
   Loader2, ExternalLink,
-  Code, TrendingUp, Globe
+  Code, TrendingUp, Globe, UserCircle,
+  Hash, AlertTriangle
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
@@ -12,6 +13,7 @@ import { API_BASE_URL } from "../../config/api";
 export default function Profile() {
   const { user, token, refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [errors, setErrors] = useState({});
 
   const avatarInputRef = useRef(null);
@@ -20,7 +22,8 @@ export default function Profile() {
   const [formData, setFormData] = useState({
     fullName: "", email: "", phone: "", location: "",
     branch: "", year: "", cgpa: "", github: "",
-    linkedin: "", codolio: "", leetcode: "", codeforces: "", codechef: "", about: "", avatar: null
+    linkedin: "", codolio: "", leetcode: "", codeforces: "", codechef: "", about: "", avatar: null,
+    gender: "", marks10th: "", marks12th: "", activeBacklogs: "0", backlogHistory: "0"
   });
 
   // Re-fetch user data from DB when component mounts
@@ -45,7 +48,12 @@ export default function Profile() {
         codeforces: user.codeforces || "",
         codechef: user.codechef || "",
         about: user.about || "",
-        avatar: user.avatarUrl || user.avatar || null
+        avatar: user.avatarUrl || user.avatar || null,
+        gender: user.gender || "",
+        marks10th: user.marks10th || "",
+        marks12th: user.marks12th || "",
+        activeBacklogs: user.activeBacklogs || "0",
+        backlogHistory: user.backlogHistory || "0",
       });
     }
   }, [user]);
@@ -104,16 +112,23 @@ export default function Profile() {
 
       // Step 2: Push binary data via multipart/form-data POST request
       if (avatarFile) {
+        setAvatarUploading(true);
         const filePayload = new FormData();
         filePayload.append("uid", user.uid);
         filePayload.append("avatar", avatarFile);
 
-        await axios.post(`${API_BASE_URL}/api/student/upload-docs`, filePayload, {
+        const uploadRes = await axios.post(`${API_BASE_URL}/api/student/upload-docs`, filePayload, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data"
           }
         });
+
+        // Use the Cloudinary URL from the response immediately
+        if (uploadRes.data?.avatarUrl) {
+          setFormData(prev => ({ ...prev, avatar: uploadRes.data.avatarUrl }));
+        }
+        setAvatarUploading(false);
       }
 
       // Step 3: Refresh user data
@@ -140,11 +155,16 @@ export default function Profile() {
         <div className="h-32 w-full bg-gradient-to-r from-blue-600 to-indigo-600 opacity-90"></div>
         <div className="px-6 pb-6 flex items-center sm:flex-row sm:items-end sm:gap-6 relative">
           <div className="relative -mt-12 group">
-            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-indigo-500 shadow-md overflow-hidden dark:border-slate-900">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-indigo-500 shadow-md overflow-hidden dark:border-slate-900 relative">
               {formData.avatar ? (
                 <img src={formData.avatar} alt="Profile" className="h-full w-full object-cover" />
               ) : (
                 <span className="text-3xl font-bold text-white">{formData.fullName ? formData.fullName[0].toUpperCase() : "S"}</span>
+              )}
+              {avatarUploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+                  <Loader2 size={24} className="animate-spin text-white" />
+                </div>
               )}
             </div>
 
@@ -190,10 +210,55 @@ export default function Profile() {
 
             <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
               <h4 className="mb-5 text-xs font-bold uppercase tracking-widest text-slate-400">Academic Details</h4>
-              <div className="grid gap-6 sm:grid-cols-3">
-                <InputGroup label="Branch" name="branch" value={formData.branch} icon={Book} onChange={handleChange} required error={errors.branch} />
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase">
+                    Branch <span className="text-red-500 ml-0.5">*</span>
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 group-focus-within:text-indigo-500">
+                      <Book size={18} />
+                    </div>
+                    <select
+                      name="branch" value={formData.branch} onChange={handleChange}
+                      className={`block w-full rounded-xl border py-2.5 pl-10 pr-3 text-sm font-medium transition-all appearance-none
+                        bg-white border-slate-200 text-slate-900 focus:border-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-white
+                        ${errors.branch ? "border-red-400 ring-1 ring-red-400" : ""}`}
+                    >
+                      <option value="">Select Branch</option>
+                      {["CS", "IT", "AIML", "AIDS", "MNC", "ECE", "Robotics", "IIOT"].map(b => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {errors.branch && <p className="mt-1 text-xs text-red-500">{errors.branch}</p>}
+                </div>
                 <InputGroup label="Grad Year" name="year" value={formData.year} icon={Award} onChange={handleChange} required error={errors.year} />
                 <InputGroup label="CGPA" name="cgpa" value={formData.cgpa} icon={Award} onChange={handleChange} required error={errors.cgpa} />
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase">Gender</label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 group-focus-within:text-indigo-500">
+                      <UserCircle size={18} />
+                    </div>
+                    <select
+                      name="gender" value={formData.gender} onChange={handleChange}
+                      className="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium transition-all focus:border-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-white appearance-none"
+                    >
+                      <option value="">Select</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Non-Binary">Non-Binary</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mt-6">
+                <InputGroup label="10th Marks (%)" name="marks10th" value={formData.marks10th} icon={Hash} onChange={handleChange} />
+                <InputGroup label="12th Marks (%)" name="marks12th" value={formData.marks12th} icon={Hash} onChange={handleChange} />
+                <InputGroup label="Active Backlogs" name="activeBacklogs" value={formData.activeBacklogs} icon={AlertTriangle} onChange={handleChange} />
+                <InputGroup label="Backlog History" name="backlogHistory" value={formData.backlogHistory} icon={AlertTriangle} onChange={handleChange} />
               </div>
             </div>
 

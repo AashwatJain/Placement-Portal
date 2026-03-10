@@ -76,6 +76,14 @@ export const registerUserApplication = async (req, res) => {
         const db = admin.database();
         await db.ref(`users/${uid}/applications/${oppId}`).set(appData);
 
+        // Increment the applicantsCount on the global opportunity document
+        const firestore = admin.firestore();
+        const oppRef = firestore.collection("opportunities").doc(oppId);
+        
+        await oppRef.update({
+            applicantsCount: admin.firestore.FieldValue.increment(1)
+        });
+
         res.status(200).json({ message: "Application registered successfully" });
     } catch (error) {
         console.error("Error registering user application:", error);

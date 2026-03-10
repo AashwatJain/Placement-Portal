@@ -5,7 +5,8 @@ const updateStudentProfile = async (req, res) => {
     const {
       uid, fullName, phone, location, branch,
       year, cgpa, github, linkedin, codolio, about,
-      leetcode, codeforces, codechef
+      leetcode, codeforces, codechef,
+      gender, marks10th, marks12th, activeBacklogs, backlogHistory
     } = req.body;
 
     if (!uid) {
@@ -27,6 +28,11 @@ const updateStudentProfile = async (req, res) => {
       codeforces: codeforces || "",
       codechef: codechef || "",
       about: about || "",
+      gender: gender || "",
+      marks10th: marks10th || "",
+      marks12th: marks12th || "",
+      activeBacklogs: activeBacklogs || "0",
+      backlogHistory: backlogHistory || "0",
       updatedAt: Date.now(),
     });
 

@@ -12,9 +12,10 @@ import {
   AlertCircle,
   CheckCircle,
   Info,
-  User,       // New Icon
-  LogOut,     // New Icon
-  Settings    // New Icon
+  User,
+  LogOut,
+  Settings,
+  Trash2
 } from "lucide-react";
 import { fetchNotifications, markNotificationsRead, deleteNotificationApi } from "../../services/studentApi";
 
@@ -25,6 +26,7 @@ export default function Header({ toggleSidebar }) {
   // States for Dropdowns
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [notifFilter, setNotifFilter] = useState("All");
   const notifRef = useRef(null);
   const profileRef = useRef(null);
 
@@ -54,7 +56,7 @@ export default function Header({ toggleSidebar }) {
       // Map backend fields to the UI format
       setNotifications(data.map(n => ({
         id: n.id,
-        title: n.text?.split(":")[0] || n.text,
+        title: n.text || "Notification",
         message: n.text,
         time: n.createdAt?._seconds
           ? getRelativeTime(n.createdAt._seconds * 1000)
@@ -63,6 +65,7 @@ export default function Header({ toggleSidebar }) {
           : n.type === "shortlist" ? "success"
             : n.type === "reminder" ? "warning"
               : "info",
+        rawType: n.type || "info",
         read: n.read || false
       })));
     } catch (err) {
@@ -104,6 +107,18 @@ export default function Header({ toggleSidebar }) {
     }
   };
 
+  const clearAllNotifications = async () => {
+    const ids = notifications.map(n => n.id);
+    setNotifications([]);
+    for (const id of ids) {
+      try {
+        await deleteNotificationApi(id);
+      } catch (err) {
+        console.error("Failed to delete notification:", err);
+      }
+    }
+  };
+
   const getIcon = (type) => {
     switch (type) {
       case "alert": return <AlertCircle size={16} className="text-red-500" />;
@@ -112,6 +127,27 @@ export default function Header({ toggleSidebar }) {
       default: return <Info size={16} className="text-blue-500" />;
     }
   };
+
+  const getBorderColor = (type) => {
+    switch (type) {
+      case "alert": return "border-l-red-500";
+      case "success": return "border-l-emerald-500";
+      case "warning": return "border-l-amber-500";
+      default: return "border-l-blue-500";
+    }
+  };
+
+  // Filter notifications by tab
+  const NOTIF_TABS = [
+    { key: "All", label: "All" },
+    { key: "deadline", label: "Deadlines" },
+    { key: "shortlist", label: "Shortlists" },
+    { key: "info", label: "Info" },
+  ];
+
+  const filteredNotifications = notifFilter === "All"
+    ? notifications
+    : notifications.filter(n => n.rawType === notifFilter || (notifFilter === "info" && (n.rawType === "info" || n.rawType === "reminder")));
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 sm:px-6">
@@ -122,7 +158,7 @@ export default function Header({ toggleSidebar }) {
           <Menu size={24} />
         </button>
         <h2 className="hidden text-sm font-semibold text-slate-700 dark:text-slate-200 sm:block">
-          Welcome back, {user?.name?.split(" ")[0]} 👋
+          Welcome back, {(user?.fullName || user?.name || "User").split(" ")[0]} 👋
         </h2>
       </div>
 
@@ -156,16 +192,53 @@ export default function Header({ toggleSidebar }) {
             <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 animate-in fade-in zoom-in-95 duration-100 origin-top-right rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
               {/* Notif Header */}
               <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                <h3 className="font-semibold text-slate-900 dark:text-white">Recent Alerts</h3>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllAsRead}
-                    className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
-                  >
-                    <CheckCheck size={14} /> Mark read
-                  </button>
-                )}
+                <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                  Recent Alerts
+                  {notifications.length > 0 && (
+                    <span className="inline-flex items-center justify-center rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+                      {notifications.length}
+                    </span>
+                  )}
+                </h3>
+                <div className="flex items-center gap-1.5">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                      title="Mark all as read"
+                    >
+                      <CheckCheck size={14} /> Read
+                    </button>
+                  )}
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={clearAllNotifications}
+                      className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-600 dark:text-red-400"
+                      title="Clear all notifications"
+                    >
+                      <Trash2 size={14} /> Clear
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Category Tabs */}
+              <div className="flex border-b border-slate-100 dark:border-slate-800 px-2 py-1.5 gap-1">
+                {NOTIF_TABS.map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setNotifFilter(tab.key)}
+                    className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition-all ${
+                      notifFilter === tab.key
+                        ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
+                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
               {/* Notif List */}
               <div className="max-h-[350px] overflow-y-auto py-1">
                 {notifLoading ? (
@@ -173,18 +246,18 @@ export default function Header({ toggleSidebar }) {
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent mb-2"></div>
                     <p className="text-xs">Loading...</p>
                   </div>
-                ) : notifications.length > 0 ? (
-                  notifications.map((notif) => (
+                ) : filteredNotifications.length > 0 ? (
+                  filteredNotifications.map((notif) => (
                     <div
                       key={notif.id}
-                      className={`relative flex gap-3 border-b border-slate-50 px-4 py-3 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-800/50 dark:hover:bg-slate-800/50 ${!notif.read ? "bg-indigo-50/30 dark:bg-indigo-900/10" : ""}`}
+                      className={`relative flex gap-3 border-b border-l-[3px] border-b-slate-50 px-4 py-3 transition-colors last:border-b-0 hover:bg-slate-50 dark:border-b-slate-800/50 dark:hover:bg-slate-800/50 ${getBorderColor(notif.type)} ${!notif.read ? "bg-indigo-50/30 dark:bg-indigo-900/10" : ""}`}
                     >
                       <div className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800`}>
                         {getIcon(notif.type)}
                       </div>
                       <div className="flex-1 space-y-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className={`text-sm font-medium ${!notif.read ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-300"}`}>
+                          <p className={`text-sm font-medium leading-snug ${!notif.read ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-300"}`}>
                             {notif.title}
                           </p>
                           <button
@@ -194,7 +267,6 @@ export default function Header({ toggleSidebar }) {
                             <X size={14} />
                           </button>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{notif.message}</p>
                         <p className="text-[10px] text-slate-400">{notif.time}</p>
                       </div>
                       {!notif.read && (
@@ -203,9 +275,12 @@ export default function Header({ toggleSidebar }) {
                     </div>
                   ))
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-slate-500">
-                    <Bell size={32} className="mb-2 opacity-20" />
-                    <p className="text-sm">No new alerts</p>
+                  <div className="flex flex-col items-center justify-center py-10 text-slate-500">
+                    <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+                      <Bell size={24} className="text-slate-300 dark:text-slate-600" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">You're all caught up! 🎉</p>
+                    <p className="text-xs text-slate-400 mt-1">No {notifFilter !== "All" ? notifFilter.toLowerCase() : ""} notifications right now.</p>
                   </div>
                 )}
               </div>

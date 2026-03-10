@@ -16,7 +16,11 @@ import {
   GraduationCap,
   FileUser,
   Briefcase,
-  BookOpen
+  BookOpen,
+  Star,
+  Search,
+  Megaphone,
+  MessageSquare
 } from "lucide-react";
 
 const roleNav = {
@@ -39,7 +43,12 @@ const roleNav = {
     { to: "/calendar", label: "Calendar", icon: CalendarDays },
   ],
   recruiter: [
-    { to: "/recruiter", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/recruiter", label: "Candidate Search", icon: Search },
+    { to: "/recruiter/shortlisted", label: "Shortlisted Candidates", icon: Star },
+    { to: "/recruiter/jafs", label: "Job Postings (JAFs)", icon: FileText },
+    { to: "/recruiter/drives", label: "Active Drives", icon: Briefcase },
+    { to: "/recruiter/announcements", label: "Broadcasts", icon: Megaphone },
+    { to: "/recruiter/messages", label: "TnP Connect", icon: MessageSquare },
     { to: "/calendar", label: "Calendar", icon: CalendarDays },
   ],
 };

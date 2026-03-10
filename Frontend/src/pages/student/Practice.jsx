@@ -215,7 +215,7 @@ export default function Practice() {
     load();
   }, [user?.uid]);
 
-  // Toggle solved
+  // Toggle solved — optimistic update + backend confirmation re-fetch
   const handleToggle = async (questionId) => {
     if (!user?.uid) return;
     setToggling(questionId);
@@ -231,13 +231,18 @@ export default function Practice() {
 
     try {
       await toggleSolvedQuestion(user.uid, questionId, newSolved, token);
+      // Re-fetch from backend to confirm sync
+      const freshSolved = await fetchSolvedQuestions(user.uid);
+      setSolvedSet(new Set(freshSolved));
     } catch (err) {
       console.error("Toggle error:", err);
+      // Revert optimistic update
       setSolvedSet((prev) => {
         const next = new Set(prev);
         !newSolved ? next.add(questionId) : next.delete(questionId);
         return next;
       });
+      alert("Failed to update question status. Please try again.");
     } finally {
       setToggling(null);
     }

@@ -38,7 +38,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signup = async (userData) => {
-    const { email, password, role, ...studentDetails } = userData;
+    const { email, password, role, ...extraDetails } = userData;
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
       const profileData = {
         email,
         role,
-        ...(role === "student" ? studentDetails : {}),
+        ...(role === "student" || role === "recruiter" ? extraDetails : {}),
         createdAt: new Date().toISOString(),
       };
 

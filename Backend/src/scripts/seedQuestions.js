@@ -99,6 +99,54 @@ const QUESTIONS = [
   { company: "Adobe", text: "Longest Common Prefix — Find the longest common prefix among an array of strings.", link: "https://leetcode.com/problems/longest-common-prefix/", difficulty: "Easy", tags: ["Strings"] },
   { company: "Adobe", text: "Decode Ways — Count ways to decode a digit string.", link: "https://leetcode.com/problems/decode-ways/", difficulty: "Medium", tags: ["DP", "Strings"] },
   { company: "Adobe", text: "Maximal Rectangle — Find the largest rectangle containing only 1s in a binary matrix.", link: "https://leetcode.com/problems/maximal-rectangle/", difficulty: "Hard", tags: ["Stack", "Matrix", "DP"] },
+
+  // ── Atlassian ──
+  { company: "Atlassian", text: "Design Hit Counter — Design a hit counter that counts hits in the past 5 minutes.", link: "https://leetcode.com/problems/design-hit-counter/", difficulty: "Medium", tags: ["Design", "Queue"] },
+  { company: "Atlassian", text: "Rate Limiter — Implement a rate limiter using token bucket or sliding window.", link: "https://leetcode.com/problems/logger-rate-limiter/", difficulty: "Easy", tags: ["Design", "Hash Map"] },
+  { company: "Atlassian", text: "Find All Anagrams in a String — Find all start indices of anagrams of p in s.", link: "https://leetcode.com/problems/find-all-anagrams-in-a-string/", difficulty: "Medium", tags: ["Sliding Window", "Strings"] },
+  { company: "Atlassian", text: "LFU Cache — Implement a Least Frequently Used cache.", link: "https://leetcode.com/problems/lfu-cache/", difficulty: "Hard", tags: ["Design", "Hash Map", "Linked List"] },
+
+  // ── DE Shaw ──
+  { company: "DE Shaw", text: "Longest Increasing Subsequence — Find the length of the longest strictly increasing subsequence.", link: "https://leetcode.com/problems/longest-increasing-subsequence/", difficulty: "Medium", tags: ["DP", "Binary Search"] },
+  { company: "DE Shaw", text: "Edit Distance — Find minimum operations to convert one string to another.", link: "https://leetcode.com/problems/edit-distance/", difficulty: "Medium", tags: ["DP", "Strings"] },
+  { company: "DE Shaw", text: "Count of Smaller Numbers After Self", link: "https://leetcode.com/problems/count-of-smaller-numbers-after-self/", difficulty: "Hard", tags: ["Binary Indexed Tree", "Divide and Conquer"] },
+  { company: "DE Shaw", text: "Regular Expression Matching — Implement regex with '.' and '*' support.", link: "https://leetcode.com/problems/regular-expression-matching/", difficulty: "Hard", tags: ["DP", "Strings", "Recursion"] },
+
+  // ── Sprinklr ──
+  { company: "Sprinklr", text: "Word Search — Search for a word in a 2D grid of characters.", link: "https://leetcode.com/problems/word-search/", difficulty: "Medium", tags: ["Backtracking", "Matrix"] },
+  { company: "Sprinklr", text: "Combination Sum — Find all unique combinations that sum to a target.", link: "https://leetcode.com/problems/combination-sum/", difficulty: "Medium", tags: ["Backtracking", "Arrays"] },
+  { company: "Sprinklr", text: "Alien Dictionary — Derive the order of characters in an alien language.", link: "https://leetcode.com/problems/alien-dictionary/", difficulty: "Hard", tags: ["Graphs", "Topological Sort"] },
+  { company: "Sprinklr", text: "Sliding Window Maximum — Find max in each sliding window of size k.", link: "https://leetcode.com/problems/sliding-window-maximum/", difficulty: "Hard", tags: ["Deque", "Sliding Window"] },
+
+  // ── Media.net ──
+  { company: "Media.net", text: "Implement Trie (Prefix Tree) — Design a trie with insert, search, and startsWith.", link: "https://leetcode.com/problems/implement-trie-prefix-tree/", difficulty: "Medium", tags: ["Trie", "Design"] },
+  { company: "Media.net", text: "Find Median from Data Stream — Design a data structure for streaming median.", link: "https://leetcode.com/problems/find-median-from-data-stream/", difficulty: "Hard", tags: ["Heap", "Design"] },
+  { company: "Media.net", text: "Largest Rectangle in Histogram — Find the largest rectangular area in a histogram.", link: "https://leetcode.com/problems/largest-rectangle-in-histogram/", difficulty: "Hard", tags: ["Stack", "Arrays"] },
+  { company: "Media.net", text: "Daily Temperatures — Find days until a warmer temperature for each day.", link: "https://leetcode.com/problems/daily-temperatures/", difficulty: "Medium", tags: ["Stack", "Arrays"] },
+
+  // ── Zomato ──
+  { company: "Zomato", text: "Search in Rotated Sorted Array — Search a target in a rotated sorted array.", link: "https://leetcode.com/problems/search-in-rotated-sorted-array/", difficulty: "Medium", tags: ["Binary Search", "Arrays"] },
+  { company: "Zomato", text: "Coin Change — Find minimum coins needed to make up a given amount.", link: "https://leetcode.com/problems/coin-change/", difficulty: "Medium", tags: ["DP", "Greedy"] },
+  { company: "Zomato", text: "Word Break — Determine if a string can be segmented into dictionary words.", link: "https://leetcode.com/problems/word-break/", difficulty: "Medium", tags: ["DP", "Strings"] },
+  { company: "Zomato", text: "Set Matrix Zeroes — Set entire row and column to 0 if an element is 0.", link: "https://leetcode.com/problems/set-matrix-zeroes/", difficulty: "Medium", tags: ["Matrix", "Arrays"] },
+
+  // ── Oracle ──
+  { company: "Oracle", text: "N-Queens — Place N queens on an N×N board so no two queens attack each other.", link: "https://leetcode.com/problems/n-queens/", difficulty: "Hard", tags: ["Backtracking", "Recursion"] },
+  { company: "Oracle", text: "Top K Frequent Elements — Find the k most frequent elements.", link: "https://leetcode.com/problems/top-k-frequent-elements/", difficulty: "Medium", tags: ["Heap", "Hash Map", "Sorting"] },
+  { company: "Oracle", text: "Lowest Common Ancestor of a Binary Tree", link: "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/", difficulty: "Medium", tags: ["Trees", "DFS", "Recursion"] },
+  { company: "Oracle", text: "Flatten Binary Tree to Linked List", link: "https://leetcode.com/problems/flatten-binary-tree-to-linked-list/", difficulty: "Medium", tags: ["Trees", "DFS"] },
+
+  // ── Samsung ──
+  { company: "Samsung", text: "Longest Valid Parentheses — Find length of the longest valid parentheses substring.", link: "https://leetcode.com/problems/longest-valid-parentheses/", difficulty: "Hard", tags: ["Stack", "DP", "Strings"] },
+  { company: "Samsung", text: "Unique Paths — Count unique paths from top-left to bottom-right of an m×n grid.", link: "https://leetcode.com/problems/unique-paths/", difficulty: "Medium", tags: ["DP", "Math"] },
+  { company: "Samsung", text: "Graph Valid Tree — Determine if an undirected graph is a valid tree.", link: "https://leetcode.com/problems/graph-valid-tree/", difficulty: "Medium", tags: ["Graphs", "Union Find", "BFS"] },
+  { company: "Samsung", text: "Surrounded Regions — Capture regions surrounded by 'X'.", link: "https://leetcode.com/problems/surrounded-regions/", difficulty: "Medium", tags: ["BFS", "DFS", "Matrix"] },
+
+  // ── Intuit ──
+  { company: "Intuit", text: "Task Scheduler — Find least intervals needed to finish all tasks with cooldown.", link: "https://leetcode.com/problems/task-scheduler/", difficulty: "Medium", tags: ["Greedy", "Heap", "Arrays"] },
+  { company: "Intuit", text: "Accounts Merge — Merge accounts that share common emails.", link: "https://leetcode.com/problems/accounts-merge/", difficulty: "Medium", tags: ["Union Find", "DFS", "Graphs"] },
+  { company: "Intuit", text: "House Robber — Maximum money without robbing two adjacent houses.", link: "https://leetcode.com/problems/house-robber/", difficulty: "Medium", tags: ["DP", "Arrays"] },
+  { company: "Intuit", text: "Permutations — Generate all permutations of a list of distinct integers.", link: "https://leetcode.com/problems/permutations/", difficulty: "Medium", tags: ["Backtracking", "Arrays"] },
 ];
 
 // ── Seed ─────────────────────────────────────────────────────

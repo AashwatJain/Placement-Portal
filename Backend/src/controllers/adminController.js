@@ -103,3 +103,79 @@ export const deleteQuestion = async (req, res) => {
         res.status(500).json({ error: "Failed to delete question" });
     }
 };
+
+// ── Recruiter JAF (Job Announcement Form) Management ─────────
+
+// 6. GET JAFs via Company Name or globally
+export const getJafs = async (req, res) => {
+    try {
+        const { companyName } = req.query;
+        const firestore = admin.firestore();
+        
+        let query = firestore.collection("opportunities").orderBy("createdAt", "desc");
+        
+        // Only return JAFs belonging to the recruiter's company, if provided
+        if (companyName) {
+            query = firestore.collection("opportunities").where("name", "==", companyName).orderBy("createdAt", "desc");
+        }
+        
+        const snapshot = await query.get();
+        const jafs = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        res.status(200).json(jafs);
+    } catch (error) {
+        console.error("Error fetching JAFs:", error);
+        res.status(500).json({ error: "Failed to fetch JAFs" });
+    }
+};
+
+// 7. POST a new JAF (Opportunity)
+export const createJaf = async (req, res) => {
+    try {
+        const jafData = req.body;
+        
+        if (!jafData.name || !jafData.roles) {
+            return res.status(400).json({ error: "Company name and roles are required" });
+        }
+
+        const firestore = admin.firestore();
+        const newJaf = {
+            ...jafData,
+            applicantsCount: 0,
+            shortlistedCount: 0,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+
+        const docRef = await firestore.collection("opportunities").add(newJaf);
+        res.status(201).json({ id: docRef.id, ...newJaf });
+    } catch (error) {
+        console.error("Error creating JAF:", error);
+        res.status(500).json({ error: "Failed to create JAF" });
+    }
+};
+
+// 8. PUT (Update) an existing JAF
+export const updateJaf = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const jafData = req.body;
+        
+        const firestore = admin.firestore();
+        const docRef = firestore.collection("opportunities").doc(id);
+        
+        // Strip createdAt to preserve original
+        if (jafData.createdAt) delete jafData.createdAt;
+
+        await docRef.update({
+            ...jafData,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+        res.status(200).json({ message: "JAF updated successfully", id });
+    } catch (error) {
+        console.error("Error updating JAF:", error);
+        res.status(500).json({ error: "Failed to update JAF" });
+    }
+};

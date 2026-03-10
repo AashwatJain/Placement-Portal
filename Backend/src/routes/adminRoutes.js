@@ -12,4 +12,9 @@ router.post("/questions", adminController.addQuestion);
 router.put("/questions/:id/approve", adminController.approveQuestion);
 router.delete("/questions/:id", adminController.deleteQuestion);
 
+// 3. Recruiter JAF Management
+router.get("/jafs", adminController.getJafs);
+router.post("/jafs", adminController.createJaf);
+router.put("/jafs/:id", adminController.updateJaf);
+
 export default router;

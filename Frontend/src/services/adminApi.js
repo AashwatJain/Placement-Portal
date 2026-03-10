@@ -34,3 +34,21 @@ export async function deleteQuestion(id) {
     const response = await axios.delete(`${API_BASE_URL}/api/admin/questions/${id}`);
     return response.data;
 }
+
+// ── Recruiter JAFs ──────────────────────────────────────────
+
+export async function fetchJafs(companyName) {
+    const url = companyName ? `${API_BASE_URL}/api/admin/jafs?companyName=${encodeURIComponent(companyName)}` : `${API_BASE_URL}/api/admin/jafs`;
+    const response = await axios.get(url);
+    return response.data;
+}
+
+export async function createJaf(data) {
+    const response = await axios.post(`${API_BASE_URL}/api/admin/jafs`, data);
+    return response.data;
+}
+
+export async function updateJaf(id, data) {
+    const response = await axios.put(`${API_BASE_URL}/api/admin/jafs/${id}`, data);
+    return response.data;
+}

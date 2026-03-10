@@ -1,95 +1,89 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { db } from "../firebase";
 import { onUserApplications } from "../services/firebaseDb";
 import {
   ChevronLeft, ChevronRight, Calendar as CalendarIcon,
-  Clock, ExternalLink, Loader2,
+  Clock, ExternalLink, Loader2, Briefcase, LayoutGrid, Rows3,
 } from "lucide-react";
 
+// ── Constants ────────────────────────────────────────────────
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
 
-// ── Google Calendar URL builder ──────────────────────────────
+// ── Color config by step type ────────────────────────────────
+const STEP_COLORS = {
+  OA:        { chip: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800", bar: "bg-amber-500", dot: "bg-amber-500" },
+  Interview: { chip: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800", bar: "bg-blue-500", dot: "bg-blue-500" },
+  Decision:  { chip: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800", bar: "bg-purple-500", dot: "bg-purple-500" },
+  Final:     { chip: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800", bar: "bg-green-500", dot: "bg-green-500" },
+  Shortlist: { chip: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800", bar: "bg-emerald-500", dot: "bg-emerald-500" },
+  Default:   { chip: "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800", bar: "bg-indigo-500", dot: "bg-indigo-500" },
+};
+
+function getStepType(step) {
+  if (step.includes("OA")) return "OA";
+  if (step.includes("Interview")) return "Interview";
+  if (step.includes("Decision")) return "Decision";
+  if (step.includes("Final")) return "Final";
+  if (step.includes("Shortlist")) return "Shortlist";
+  return "Default";
+}
+function getColors(step) { return STEP_COLORS[getStepType(step)] || STEP_COLORS.Default; }
+
+// ── Google Calendar URL ──────────────────────────────────────
 function buildGCalUrl(company, stepName, date) {
   const d = (date || "").replace(/-/g, "");
   if (!d) return "#";
-  const p = new URLSearchParams({
-    action: "TEMPLATE",
-    text: `${company} — ${stepName}`,
-    dates: `${d}/${d}`,
+  return `https://calendar.google.com/calendar/render?${new URLSearchParams({
+    action: "TEMPLATE", text: `${company} — ${stepName}`, dates: `${d}/${d}`,
     details: `Company: ${company}\nStep: ${stepName}`,
-  });
-  return `https://calendar.google.com/calendar/render?${p}`;
+  })}`;
 }
 
-// ── Event chip colour by step name ───────────────────────────
-function getChipColor(step) {
-  if (step.includes("OA")) return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800";
-  if (step.includes("Interview")) return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
-  if (step.includes("Decision")) return "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800";
-  if (step.includes("Final")) return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800";
-  if (step.includes("Shortlist")) return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800";
-  return "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800";
-}
-
-// ── Sidebar accent bar ───────────────────────────────────────
-function getBarColor(step) {
-  if (step.includes("OA")) return "bg-amber-500";
-  if (step.includes("Interview")) return "bg-blue-500";
-  if (step.includes("Final")) return "bg-green-500";
-  if (step.includes("Decision")) return "bg-purple-500";
-  return "bg-indigo-500";
-}
-
-// ── Extract calendar events from applications ────────────────
-// Smart rules:
-// 1. Skip rejected applications entirely.
-// 2. Only show upcoming steps (not done) whose predecessors are all done.
+// ── Extract events from applications ─────────────────────────
 function extractEvents(applications) {
   const events = [];
   for (const app of applications) {
-    // Skip rejected applications
     if (app.status === "Rejected") continue;
-
     const tl = app.timeline || [];
     for (let i = 0; i < tl.length; i++) {
       const step = tl[i];
       if (!step.date) continue;
-
-      // Skip already-done steps — only show upcoming
-      if (step.done) continue;
-
-      // Check all previous steps are done
+      // Show upcoming steps (not done) whose predecessors are all done
+      // Also include done steps within last 7 days for context
       const prevAllDone = tl.slice(0, i).every((s) => s.done);
-      if (!prevAllDone) continue;
-
+      if (!step.done && !prevAllDone) continue;
       events.push({
         id: `${app.id}-${i}`,
-        appId: app.id,
-        company: app.company,
-        role: app.role,
-        step: step.step,
-        date: step.date,
-        done: step.done,
+        appId: app.id, company: app.company, role: app.role,
+        step: step.step, date: step.date, done: step.done,
       });
     }
   }
   return events;
 }
 
+// ── Days until helper ────────────────────────────────────────
+function daysUntil(dateStr) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr + "T00:00:00"); target.setHours(0, 0, 0, 0);
+  return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+}
+
+// ══════════════════════════════════════════════════════════════
 export default function Calendar() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState("month"); // "month" | "week"
+  const [selectedDay, setSelectedDay] = useState(null);
 
-  // Fetch user's applications
   useEffect(() => {
     if (!user?.uid) { setLoading(false); return; }
     const unsub = onUserApplications(user.uid, (apps) => {
@@ -106,44 +100,131 @@ export default function Calendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
 
-  const fmtKey = (d) => `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  const isToday = (d) => {
+  const fmtKey = (y, m, d) =>
+    `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+
+  const isToday = (y, m, d) => {
     const t = new Date();
-    return d === t.getDate() && month === t.getMonth() && year === t.getFullYear();
+    return d === t.getDate() && m === t.getMonth() && y === t.getFullYear();
   };
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
   const goToToday = () => setCurrentDate(new Date());
 
-  const eventsForDay = (day) => events.filter((e) => e.date === fmtKey(day));
+  const eventsForDay = (day) => events.filter((e) => e.date === fmtKey(year, month, day));
+
+  // Month event counts for stats bar
+  const monthEvents = events.filter((e) => {
+    const ed = new Date(e.date + "T00:00:00");
+    return ed.getMonth() === month && ed.getFullYear() === year;
+  });
+  const monthStats = {};
+  monthEvents.forEach((e) => {
+    const t = getStepType(e.step);
+    monthStats[t] = (monthStats[t] || 0) + 1;
+  });
 
   // Sidebar: upcoming events
   const todayStr = new Date().toISOString().slice(0, 10);
-  const upcoming = [...events].filter((e) => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 6);
-  const sidebarEvents = upcoming.length >= 3
-    ? upcoming
-    : [
-      ...upcoming,
-      ...[...events].filter((e) => e.date < todayStr).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6 - upcoming.length),
-    ];
+  const upcoming = [...events]
+    .filter((e) => e.date >= todayStr && !e.done)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 8);
 
+  // Week view: derive 7-day window for the selected week
+  const getWeekDays = () => {
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      return d;
+    });
+  };
+  const weekDays = getWeekDays();
+  const prevWeek = () => setCurrentDate(new Date(currentDate.getTime() - 7 * 86400000));
+  const nextWeek = () => setCurrentDate(new Date(currentDate.getTime() + 7 * 86400000));
+
+  // Selected day events
+  const selectedDayEvents = selectedDay
+    ? events.filter((e) => e.date === selectedDay)
+    : [];
+
+  // Batch GCal export URL
+  const buildBatchGCalUrl = () => {
+    if (upcoming.length === 0) return "#";
+    // Google Calendar only supports single event links, so open first one
+    return buildGCalUrl(upcoming[0].company, upcoming[0].step, upcoming[0].date);
+  };
+
+  // ── Render ─────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Placement Calendar</h1>
-          <p className="text-slate-600 dark:text-slate-400">Your application timeline events synced automatically.</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">
+            Your application timeline events synced automatically.
+          </p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <button onClick={prevMonth} className="rounded-lg p-2 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"><ChevronLeft size={20} /></button>
-          <span className="min-w-[140px] text-center font-semibold text-slate-800 dark:text-slate-100">{MONTHS[month]} {year}</span>
-          <button onClick={nextMonth} className="rounded-lg p-2 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"><ChevronRight size={20} /></button>
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
-          <button onClick={goToToday} className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">Today</button>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* View toggle */}
+          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-800">
+            <button
+              onClick={() => setViewMode("month")}
+              className={`rounded-md p-1.5 transition-colors ${viewMode === "month" ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"}`}
+              title="Month view"
+            >
+              <LayoutGrid size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode("week")}
+              className={`rounded-md p-1.5 transition-colors ${viewMode === "week" ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"}`}
+              title="Week view"
+            >
+              <Rows3 size={16} />
+            </button>
+          </div>
+
+          {/* Month/Week navigation */}
+          <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <button onClick={viewMode === "month" ? prevMonth : prevWeek} className="rounded-lg p-2 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
+              <ChevronLeft size={18} />
+            </button>
+            <span className="min-w-[140px] text-center text-sm font-semibold text-slate-800 dark:text-slate-100">
+              {viewMode === "month"
+                ? `${MONTHS[month]} ${year}`
+                : `${weekDays[0].toLocaleDateString("en-US", { month: "short", day: "numeric" })} — ${weekDays[6].toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+            </span>
+            <button onClick={viewMode === "month" ? nextMonth : nextWeek} className="rounded-lg p-2 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
+              <ChevronRight size={18} />
+            </button>
+            <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
+            <button onClick={goToToday} className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
+              Today
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Month stats bar */}
+      {Object.keys(monthStats).length > 0 && viewMode === "month" && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-xs font-medium text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          <CalendarIcon size={14} className="text-slate-400" />
+          <span className="text-slate-400">This month:</span>
+          {Object.entries(monthStats).map(([type, count]) => (
+            <span key={type} className="flex items-center gap-1">
+              <span className={`h-2 w-2 rounded-full ${STEP_COLORS[type]?.dot || "bg-slate-400"}`} />
+              {count} {type}{count > 1 ? "s" : ""}
+            </span>
+          ))}
+          <span className="text-slate-400">·</span>
+          <span className="font-bold text-slate-800 dark:text-white">{monthEvents.length} total</span>
+        </div>
+      )}
 
       {loading && (
         <div className="flex items-center justify-center py-20 text-slate-400">
@@ -152,96 +233,281 @@ export default function Calendar() {
       )}
 
       {!loading && (
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Calendar Grid */}
-          <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700">
-              {DAYS.map((d) => (
-                <div key={d} className="py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{d}</div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 auto-rows-fr">
-              {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                <div key={`e-${i}`} className="min-h-[100px] border-b border-r border-slate-100 bg-slate-50/30 p-2 dark:border-slate-700/50 dark:bg-slate-900/20" />
-              ))}
-
-              {Array.from({ length: daysInMonth }).map((_, i) => {
-                const day = i + 1;
-                const dayEvents = eventsForDay(day);
-                const isTodayDate = isToday(day);
-
-                return (
-                  <div
-                    key={day}
-                    className={`group min-h-[100px] border-b border-r border-slate-100 p-2 transition-colors hover:bg-slate-50 dark:border-slate-700/50 dark:hover:bg-slate-700/30 ${isTodayDate ? "bg-blue-50/50 dark:bg-blue-900/10" : "bg-white dark:bg-slate-800"}`}
-                  >
-                    <span className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium ${isTodayDate ? "bg-blue-600 text-white" : "text-slate-700 dark:text-slate-300 group-hover:bg-slate-200 dark:group-hover:bg-slate-600"}`}>
-                      {day}
-                    </span>
-                    <div className="mt-2 space-y-1">
-                      {dayEvents.map((ev) => (
-                        <div
-                          key={ev.id}
-                          onClick={() => navigate("/student/applications")}
-                          className={`cursor-pointer truncate rounded px-1.5 py-0.5 text-[10px] font-medium border transition-transform hover:scale-[1.02] ${getChipColor(ev.step)}`}
-                          title={`${ev.company} — ${ev.step}`}
-                        >
-                          {ev.company}: {ev.step}
-                        </div>
-                      ))}
-                    </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* ── Calendar Grid ── */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 overflow-hidden">
+              {viewMode === "month" ? (
+                /* ── MONTH VIEW ── */
+                <>
+                  <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700">
+                    {DAYS.map((d) => (
+                      <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{d}</div>
+                    ))}
                   </div>
-                );
-              })}
+                  <div className="grid grid-cols-7 auto-rows-fr">
+                    {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                      <div key={`e-${i}`} className="min-h-[80px] border-b border-r border-slate-100 bg-slate-50/30 p-1.5 dark:border-slate-700/50 dark:bg-slate-900/20" />
+                    ))}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                      const day = i + 1;
+                      const dayEvents = eventsForDay(day);
+                      const isTodayDate = isToday(year, month, day);
+                      const dateKey = fmtKey(year, month, day);
+                      const isSelected = selectedDay === dateKey;
+
+                      return (
+                        <div
+                          key={day}
+                          onClick={() => setSelectedDay(isSelected ? null : dateKey)}
+                          className={`group min-h-[80px] border-b border-r border-slate-100 p-1.5 transition-colors cursor-pointer dark:border-slate-700/50 ${
+                            isSelected ? "bg-indigo-50 dark:bg-indigo-900/20 ring-1 ring-indigo-300 dark:ring-indigo-700" :
+                            isTodayDate ? "bg-blue-50/50 dark:bg-blue-900/10" :
+                            "bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/30"
+                          }`}
+                        >
+                          <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
+                            isTodayDate
+                              ? "bg-blue-600 text-white shadow-sm shadow-blue-500/30 ring-2 ring-blue-300 dark:ring-blue-700"
+                              : "text-slate-700 dark:text-slate-300 group-hover:bg-slate-200 dark:group-hover:bg-slate-600"
+                          }`}>
+                            {day}
+                          </span>
+                          <div className="mt-1 space-y-0.5">
+                            {dayEvents.slice(0, 2).map((ev) => {
+                              const colors = getColors(ev.step);
+                              const days = daysUntil(ev.date);
+                              return (
+                                <div
+                                  key={ev.id}
+                                  className={`relative truncate rounded px-1 py-0.5 text-[9px] font-medium border transition-transform hover:scale-[1.02] ${colors.chip}`}
+                                  title={`${ev.company} — ${ev.step}`}
+                                >
+                                  {/* Urgency dot */}
+                                  {!ev.done && days >= 0 && days <= 3 && (
+                                    <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                                    </span>
+                                  )}
+                                  {!ev.done && days > 3 && days <= 7 && (
+                                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500" />
+                                  )}
+                                  {ev.company.split(" ")[0]}: {ev.step.split(" ")[0]}
+                                </div>
+                              );
+                            })}
+                            {dayEvents.length > 2 && (
+                              <div className="text-[9px] font-bold text-slate-400 pl-1">+{dayEvents.length - 2} more</div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                /* ── WEEK VIEW ── */
+                <div>
+                  <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700">
+                    {weekDays.map((wd) => {
+                      const isTodayDate = isToday(wd.getFullYear(), wd.getMonth(), wd.getDate());
+                      return (
+                        <div key={wd.toISOString()} className={`py-2.5 text-center ${isTodayDate ? "bg-blue-50 dark:bg-blue-900/10" : ""}`}>
+                          <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            {DAYS[wd.getDay()]}
+                          </div>
+                          <div className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium ${
+                            isTodayDate ? "bg-blue-600 text-white" : "text-slate-700 dark:text-slate-300"
+                          }`}>
+                            {wd.getDate()}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="grid grid-cols-7 min-h-[200px]">
+                    {weekDays.map((wd) => {
+                      const dateKey = fmtKey(wd.getFullYear(), wd.getMonth(), wd.getDate());
+                      const dayEvts = events.filter((e) => e.date === dateKey);
+                      const isSelected = selectedDay === dateKey;
+                      return (
+                        <div
+                          key={wd.toISOString()}
+                          onClick={() => setSelectedDay(isSelected ? null : dateKey)}
+                          className={`border-r border-slate-100 dark:border-slate-700/50 p-2 cursor-pointer transition-colors ${
+                            isSelected ? "bg-indigo-50 dark:bg-indigo-900/20" : "hover:bg-slate-50 dark:hover:bg-slate-700/30"
+                          }`}
+                        >
+                          <div className="space-y-1.5">
+                            {dayEvts.map((ev) => {
+                              const colors = getColors(ev.step);
+                              const days = daysUntil(ev.date);
+                              return (
+                                <div key={ev.id} className={`relative rounded-lg px-2 py-1.5 text-[10px] font-medium border ${colors.chip}`}>
+                                  {!ev.done && days >= 0 && days <= 3 && (
+                                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+                                    </span>
+                                  )}
+                                  <div className="font-bold truncate">{ev.company}</div>
+                                  <div className="text-[9px] opacity-75">{ev.step}</div>
+                                </div>
+                              );
+                            })}
+                            {dayEvts.length === 0 && (
+                              <div className="text-[9px] text-slate-300 dark:text-slate-600 text-center pt-4">—</div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* ── Color Legend ── */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-[11px] dark:border-slate-700 dark:bg-slate-800">
+              {[
+                { label: "OA", type: "OA" },
+                { label: "Interview", type: "Interview" },
+                { label: "Decision", type: "Decision" },
+                { label: "Shortlist", type: "Shortlist" },
+                { label: "Final", type: "Final" },
+              ].map(({ label, type }) => (
+                <span key={type} className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                  <span className={`h-2.5 w-2.5 rounded-full ${STEP_COLORS[type].dot}`} />
+                  <span className="font-medium">{label}</span>
+                </span>
+              ))}
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                <span className="flex h-2.5 w-2.5"><span className="animate-ping absolute h-2.5 w-2.5 rounded-full bg-red-400 opacity-50" /><span className="relative h-2.5 w-2.5 rounded-full bg-red-500" /></span>
+                <span className="font-medium ml-1">≤3 days</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                <span className="font-medium">≤7 days</span>
+              </span>
+            </div>
+
+            {/* Empty state */}
+            {events.length === 0 && (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/50 p-8 text-center">
+                <Briefcase size={36} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No events on your calendar yet</p>
+                <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                  Register for opportunities and your timeline will appear here automatically.
+                </p>
+                <Link
+                  to="/student/opportunities"
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition-all shadow-sm"
+                >
+                  <Briefcase size={14} /> Browse Opportunities
+                </Link>
+              </div>
+            )}
           </div>
 
-          {/* Sidebar */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800 h-fit">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-800 dark:text-white">
-              <CalendarIcon size={20} className="text-amber-500" /> Upcoming Steps
-            </h2>
-
-            {sidebarEvents.length === 0 && (
-              <p className="text-sm text-slate-500 text-center py-6">No upcoming events. Register for opportunities!</p>
+          {/* ── Sidebar ── */}
+          <div className="space-y-4">
+            {/* Selected day detail */}
+            {selectedDay && selectedDayEvents.length > 0 && (
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 shadow-sm dark:border-indigo-900/50 dark:bg-indigo-950/20">
+                <h3 className="mb-3 text-sm font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
+                  <CalendarIcon size={16} className="text-indigo-500" />
+                  {new Date(selectedDay + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                </h3>
+                <div className="space-y-2">
+                  {selectedDayEvents.map((ev) => {
+                    const colors = getColors(ev.step);
+                    const days = daysUntil(ev.date);
+                    return (
+                      <div key={ev.id} className="relative flex gap-3 rounded-lg border border-indigo-100 dark:border-indigo-900 bg-white dark:bg-slate-900 p-3">
+                        <div className={`absolute left-0 top-2 bottom-2 w-1 rounded-r ${colors.bar}`} />
+                        <div className="flex-1 min-w-0 pl-2">
+                          <h4 className="text-sm font-semibold text-slate-900 dark:text-white">{ev.company}</h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{ev.step} · {ev.role || "SDE"}</p>
+                          {!ev.done && days >= 0 && days <= 3 && (
+                            <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-900/30 px-2 py-0.5 text-[10px] font-bold text-red-600 dark:text-red-400">
+                              🔴 {days === 0 ? "Today!" : `${days}d left`}
+                            </span>
+                          )}
+                        </div>
+                        <a
+                          href={buildGCalUrl(ev.company, ev.step, ev.date)}
+                          target="_blank" rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex h-7 w-7 shrink-0 items-center justify-center self-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-blue-700 dark:hover:bg-blue-900/30 transition-all"
+                          title="Add to Google Calendar"
+                        >
+                          <ExternalLink size={12} />
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
 
-            <div className="space-y-4">
-              {sidebarEvents.map((ev) => (
-                <div
-                  key={ev.id}
-                  className="relative flex gap-4 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/50 transition cursor-pointer"
-                  onClick={() => navigate("/student/applications")}
-                >
-                  <div className="flex flex-col items-center justify-center rounded bg-slate-100 px-3 py-1 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-                    <span className="text-xs font-bold uppercase">{new Date(ev.date + "T00:00:00").toLocaleString("default", { month: "short" })}</span>
-                    <span className="text-lg font-bold">{new Date(ev.date + "T00:00:00").getDate()}</span>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate">{ev.company}</h3>
-                    <div className="mt-1 flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
-                      <span className="flex items-center gap-1"><Clock size={12} /> {ev.step}</span>
-                      <span className={`inline-flex w-fit rounded-full border px-2 py-0.5 text-[10px] font-medium ${getChipColor(ev.step)}`}>
-                        {ev.done ? "Completed" : "Upcoming"}
-                      </span>
-                    </div>
-                  </div>
-
+            {/* Upcoming steps */}
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 h-fit">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-base font-semibold text-slate-800 dark:text-white">
+                  <CalendarIcon size={18} className="text-amber-500" /> Upcoming
+                </h2>
+                {upcoming.length > 0 && (
                   <a
-                    href={buildGCalUrl(ev.company, ev.step, ev.date)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    title="Save to Google Calendar"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-blue-700 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-all"
+                    href={buildBatchGCalUrl()}
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1"
                   >
-                    <ExternalLink size={14} />
+                    <ExternalLink size={10} /> Add to GCal
                   </a>
+                )}
+              </div>
 
-                  <div className={`absolute left-0 top-3 bottom-3 w-1 rounded-r ${getBarColor(ev.step)}`} />
-                </div>
-              ))}
+              {upcoming.length === 0 && (
+                <p className="text-sm text-slate-500 text-center py-4">No upcoming events. Register for opportunities!</p>
+              )}
+
+              <div className="space-y-3">
+                {upcoming.map((ev) => {
+                  const colors = getColors(ev.step);
+                  const days = daysUntil(ev.date);
+                  return (
+                    <div
+                      key={ev.id}
+                      className="relative flex gap-3 rounded-lg border border-slate-100 p-2.5 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/50 transition cursor-pointer"
+                      onClick={() => navigate("/student/applications")}
+                    >
+                      <div className="flex flex-col items-center justify-center rounded bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                        <span className="text-[9px] font-bold uppercase">{new Date(ev.date + "T00:00:00").toLocaleString("default", { month: "short" })}</span>
+                        <span className="text-base font-bold">{new Date(ev.date + "T00:00:00").getDate()}</span>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate">{ev.company}</h3>
+                        <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <Clock size={10} /> {ev.step}
+                        </div>
+                        {days >= 0 && days <= 3 ? (
+                          <span className="mt-1 inline-flex rounded-full bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 text-[9px] font-bold text-red-600 dark:text-red-400">
+                            {days === 0 ? "Today!" : `${days}d left`}
+                          </span>
+                        ) : days > 3 && days <= 7 ? (
+                          <span className="mt-1 inline-flex rounded-full bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 text-[9px] font-bold text-amber-600 dark:text-amber-400">
+                            {days}d left
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className={`absolute left-0 top-2 bottom-2 w-1 rounded-r ${colors.bar}`} />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

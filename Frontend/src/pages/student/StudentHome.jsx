@@ -6,6 +6,7 @@ import {
   fetchApprovedQuestions,
   fetchSolvedQuestions,
   toggleSolvedQuestion,
+  fetchNotifications,
 } from "../../services/studentApi";
 import {
   Briefcase, FileText, CheckCircle, Clock,
@@ -55,6 +56,10 @@ export default function StudentHome() {
   const [practiceLoading, setPracticeLoading] = useState(true);
   const [toggling, setToggling] = useState(null);
 
+  // Notices data
+  const [notices, setNotices] = useState([]);
+  const [noticesLoading, setNoticesLoading] = useState(true);
+
   // Fetch user applications
   useEffect(() => {
     if (!user?.uid) return;
@@ -63,6 +68,21 @@ export default function StudentHome() {
     });
     return () => unsub();
   }, [user?.uid]);
+
+  // Fetch recent notices
+  useEffect(() => {
+    const loadNotices = async () => {
+      try {
+        const data = await fetchNotifications();
+        setNotices(data.slice(0, 4));
+      } catch (err) {
+        console.error("Notices load error:", err);
+      } finally {
+        setNoticesLoading(false);
+      }
+    };
+    loadNotices();
+  }, []);
 
   // Fetch practice questions
   useEffect(() => {
@@ -140,8 +160,8 @@ export default function StudentHome() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-6 transition-colors duration-200 dark:bg-slate-900">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="p-6 transition-colors duration-200">
+      <div className="mx-auto max-w-7xl space-y-5">
         {/* Header */}
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
@@ -154,7 +174,7 @@ export default function StudentHome() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Applied</p>
@@ -178,9 +198,9 @@ export default function StudentHome() {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
+        {/* Content — 5-column grid: 3 left + 2 right */}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
+          <div className="lg:col-span-3 space-y-5">
             {/* Recent Applications */}
             <section className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:border-slate-700 dark:bg-slate-800">
               <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between dark:border-slate-700">
@@ -257,7 +277,7 @@ export default function StudentHome() {
           </div>
 
           {/* Right Sidebar */}
-          <div className="space-y-6">
+          <div className="lg:col-span-2 space-y-5">
             {/* ── Practice Recommendations Widget ── */}
             <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50/80 to-white p-5 shadow-sm dark:border-indigo-900/50 dark:from-indigo-950/20 dark:to-slate-800">
               <div className="flex items-center justify-between mb-4">
@@ -343,6 +363,16 @@ export default function StudentHome() {
                     📅 View Calendar
                   </Link>
                 </li>
+                <li>
+                  <a href="https://nitkkr.ac.in/wp-content/uploads/2025/04/Placement-Policy_F.pdf" target="_blank" rel="noopener noreferrer" className="block rounded-lg border border-amber-100 bg-white/80 p-3 text-sm font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-900 dark:bg-slate-800 dark:text-amber-200 transition">
+                    📋 Placement Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="https://www.linkedin.com/company/training-and-placement-cell-nit-kurukshetra/posts/?feedView=all" target="_blank" rel="noopener noreferrer" className="block rounded-lg border border-amber-100 bg-white/80 p-3 text-sm font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-900 dark:bg-slate-800 dark:text-amber-200 transition">
+                    💼 T&P Cell LinkedIn
+                  </a>
+                </li>
               </ul>
             </div>
 
@@ -350,14 +380,26 @@ export default function StudentHome() {
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
               <h3 className="mb-4 text-base font-semibold text-slate-800 dark:text-slate-100">Recent Notices</h3>
               <div className="space-y-4">
-                <div className="relative border-l-2 border-blue-500 pl-4">
-                  <p className="text-sm font-medium text-slate-900 dark:text-slate-200">Google Pre-placement Talk</p>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Tomorrow, 10:00 AM @ Auditorium</p>
-                </div>
-                <div className="relative border-l-2 border-slate-300 pl-4 dark:border-slate-600">
-                  <p className="text-sm font-medium text-slate-900 dark:text-slate-200">Resume Freeze</p>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Final deadline: Friday 5 PM</p>
-                </div>
+                {noticesLoading ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 size={18} className="animate-spin text-slate-400" />
+                  </div>
+                ) : notices.length > 0 ? (
+                  notices.map((n, idx) => {
+                    const borderColor = n.type === "deadline" ? "border-red-500" : n.type === "shortlist" ? "border-green-500" : n.type === "reminder" ? "border-amber-500" : "border-blue-500";
+                    const relTime = n.createdAt?._seconds
+                      ? (() => { const diff = Date.now() - n.createdAt._seconds * 1000; const mins = Math.floor(diff / 60000); if (mins < 1) return "just now"; if (mins < 60) return `${mins}m ago`; const hrs = Math.floor(mins / 60); if (hrs < 24) return `${hrs}h ago`; return `${Math.floor(hrs / 24)}d ago`; })()
+                      : "";
+                    return (
+                      <div key={n.id || idx} className={`relative border-l-2 ${borderColor} pl-4`}>
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-200">{n.text}</p>
+                        {relTime && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{relTime}</p>}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-2">No notices yet.</p>
+                )}
               </div>
             </div>
           </div>

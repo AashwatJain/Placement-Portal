@@ -3,9 +3,11 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import Footer from "./Footer";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
@@ -26,7 +28,7 @@ export default function Layout() {
           <div className="mx-auto min-h-[calc(100vh-150px)] max-w-7xl p-4 sm:p-6 lg:p-8">
             <Outlet />
           </div>
-          <Footer />
+          <Footer role={user?.role} />
         </main>
       </div>
 

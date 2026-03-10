@@ -22,6 +22,10 @@ import AdminQuestions from "./pages/admin/Questions";
 
 // Recruiter Pages
 import RecruiterDashboard from "./pages/recruiter/RecruiterDashboard";
+import ShortlistedCandidates from "./pages/recruiter/ShortlistedCandidates";
+import JAFDashboard from "./pages/recruiter/JAFDashboard";
+import JAFCreationWizard from "./pages/recruiter/JAFCreationWizard";
+import JAFDetail from "./pages/recruiter/JAFDetail";
 
 // Shared Pages
 import Calendar from "./pages/Calendar";
@@ -77,6 +81,11 @@ function AppRoutes() {
         <Route path="admin/questions" element={<AdminQuestions />} />
         {/* Recruiter Routes */}
         <Route path="recruiter" element={<RecruiterDashboard />} />
+        <Route path="recruiter/shortlisted" element={<ShortlistedCandidates />} />
+        <Route path="recruiter/jafs" element={<JAFDashboard />} />
+        <Route path="recruiter/jafs/new" element={<JAFCreationWizard />} />
+        <Route path="recruiter/jafs/edit/:id" element={<JAFCreationWizard />} />
+        <Route path="recruiter/jafs/:id" element={<JAFDetail />} />
         {/* Shared Routes */}
         <Route path="calendar" element={<Calendar />} />
         {/* Catch All */}
