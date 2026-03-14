@@ -23,6 +23,10 @@ export default function Header({ toggleSidebar }) {
   const { isDarkMode, toggleTheme } = useTheme();
   const { user, logout } = useAuth(); // Logout function yahan se liya
 
+  const defaultName = user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : "User";
+  const displayName = user?.fullName || user?.name || defaultName;
+  const displayInitial = displayName.charAt(0).toUpperCase();
+
   // States for Dropdowns
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -52,7 +56,7 @@ export default function Header({ toggleSidebar }) {
   const loadNotifications = async () => {
     setNotifLoading(true);
     try {
-      const data = await fetchNotifications();
+      const data = await fetchNotifications(user?.uid);
       // Map backend fields to the UI format
       setNotifications(data.map(n => ({
         id: n.id,
@@ -158,7 +162,7 @@ export default function Header({ toggleSidebar }) {
           <Menu size={24} />
         </button>
         <h2 className="hidden text-sm font-semibold text-slate-700 dark:text-slate-200 sm:block">
-          Welcome back, {(user?.fullName || user?.name || "User").split(" ")[0]} 👋
+          Welcome back, {displayName.split(" ")[0]} 👋
         </h2>
       </div>
 
@@ -300,7 +304,7 @@ export default function Header({ toggleSidebar }) {
             {(user?.avatarUrl || user?.avatar) ? (
               <img src={user.avatarUrl || user.avatar} alt="Profile" className="h-full w-full object-cover" />
             ) : (
-              (user?.name || user?.fullName || "U")[0].toUpperCase()
+              displayInitial
             )}
           </button>
 
@@ -309,14 +313,14 @@ export default function Header({ toggleSidebar }) {
 
               {/* User Info */}
               <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
-                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user?.name}</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{displayName}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
               </div>
 
               {/* Menu Items */}
               <div className="space-y-0.5">
                 <Link
-                  to="/student/profile"
+                  to={user?.role === "admin" ? "/admin/profile" : user?.role === "recruiter" ? "/recruiter/profile" : "/student/profile"}
                   onClick={() => setIsProfileOpen(false)}
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
                 >

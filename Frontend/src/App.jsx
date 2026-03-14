@@ -19,6 +19,7 @@ import Practice from "./pages/student/Practice";
 import StudentManagement from "./pages/admin/StudentManagement";
 import CompanyAdd from "./pages/admin/CompanyAdd";
 import AdminQuestions from "./pages/admin/Questions";
+import AdminProfile from "./pages/admin/AdminProfile";
 
 // Recruiter Pages
 import RecruiterDashboard from "./pages/recruiter/RecruiterDashboard";
@@ -29,6 +30,7 @@ import JAFDetail from "./pages/recruiter/JAFDetail";
 import ActiveDrives from "./pages/recruiter/ActiveDrives";
 import TnpConnect from "./pages/recruiter/TnpConnect";
 import Broadcasts from "./pages/recruiter/Broadcasts";
+import RecruiterProfile from "./pages/recruiter/RecruiterProfile";
 
 // Shared Pages
 import Calendar from "./pages/Calendar";
@@ -82,6 +84,7 @@ function AppRoutes() {
         <Route path="admin/students" element={<StudentManagement />} />
         <Route path="admin/company-add" element={<CompanyAdd />} />
         <Route path="admin/questions" element={<AdminQuestions />} />
+        <Route path="admin/profile" element={<AdminProfile />} />
         {/* Recruiter Routes */}
         <Route path="recruiter" element={<RecruiterDashboard />} />
         <Route path="recruiter/shortlisted" element={<ShortlistedCandidates />} />
@@ -92,6 +95,7 @@ function AppRoutes() {
         <Route path="recruiter/drives" element={<ActiveDrives />} />
         <Route path="recruiter/announcements" element={<Broadcasts />} />
         <Route path="recruiter/messages" element={<TnpConnect />} />
+        <Route path="recruiter/profile" element={<RecruiterProfile />} />
         {/* Shared Routes */}
         <Route path="calendar" element={<Calendar />} />
         {/* Catch All */}

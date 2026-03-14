@@ -29,5 +29,8 @@ router.put("/shortlisted/:uid", recruiterController.saveShortlistedIds);
 router.get("/broadcasts", recruiterController.getBroadcasts);
 router.post("/broadcasts", recruiterController.createBroadcast);
 
+// 6. Notify Candidates
+router.post("/notify-candidates", recruiterController.notifyCandidates);
+
 export default router;
 

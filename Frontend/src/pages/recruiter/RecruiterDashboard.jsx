@@ -5,6 +5,7 @@ import { fetchAllStudents } from "../../services/adminApi";
 import {
   fetchCandidateStatuses, saveCandidateStatuses,
   fetchCandidateNotes, saveCandidateNotes,
+  sendCandidateNotifications
 } from "../../services/recruiterApi";
 import {
   Search, X, FileText, ExternalLink, Code2, Award,
@@ -31,9 +32,14 @@ const PIPELINE_STAGES = [
 ];
 
 const PLACEMENT_TAG = {
-  unplaced:   { label: "Unplaced",            color: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" },
+  unplaced:   { label: "Available",            color: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" },
   dream:      { label: "Placed (Dream)",      color: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" },
   superDream: { label: "Placed (Super Dream)",color: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800" },
+};
+
+const formatName = (name) => {
+  if (!name) return "Unknown";
+  return name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 };
 
 function getPlacementTag(s) {
@@ -65,6 +71,7 @@ export default function RecruiterDashboard() {
   const [statuses, setStatuses]           = useState({});
   const [notes, setNotes]                 = useState({});
   const [previewUrl, setPreviewUrl]       = useState(null);
+  const [sendingEmails, setSendingEmails] = useState(false);
 
   const statusTimer = useRef(null);
   const notesTimer  = useRef(null);
@@ -121,13 +128,13 @@ export default function RecruiterDashboard() {
   const selectAll = (ids) => setSelectedIds(new Set(ids));
   const clearSelection = () => setSelectedIds(new Set());
 
-  const allBranches = useMemo(() => [...new Set(students.map(s => s.branch).filter(Boolean))].sort(), [students]);
+  const allBranches = useMemo(() => [...new Set(students.map(s => s.branch ? s.branch.toUpperCase() : null).filter(Boolean))].sort(), [students]);
   const allYears    = useMemo(() => [...new Set(students.map(s => String(s.year)).filter(y => y && y !== "undefined"))].sort(), [students]);
 
   const filteredAndSorted = useMemo(() => {
     let list = [...students];
     if (search) { const q = search.toLowerCase(); list = list.filter(s => (s.fullName||"").toLowerCase().includes(q) || (s.branch||"").toLowerCase().includes(q) || (s.email||"").toLowerCase().includes(q)); }
-    if (branch !== "All") list = list.filter(s => s.branch === branch);
+    if (branch !== "All") list = list.filter(s => s.branch && s.branch.toUpperCase() === branch);
     if (year   !== "All") list = list.filter(s => String(s.year) === year);
     if (gender !== "All") list = list.filter(s => s.gender === gender);
     if (minCgpa)     list = list.filter(s => parseFloat(s.cgpa) >= parseFloat(minCgpa));
@@ -153,14 +160,14 @@ export default function RecruiterDashboard() {
   const avgCgpa = validCgpas.length > 0
     ? (validCgpas.reduce((s, x) => s + x, 0) / validCgpas.length).toFixed(2)
     : "—";
-  const branchCounts = {}; filteredAndSorted.forEach(s => { if (s.branch) branchCounts[s.branch] = (branchCounts[s.branch]||0)+1; });
+  const branchCounts = {}; filteredAndSorted.forEach(s => { if (s.branch) { const b = s.branch.toUpperCase(); branchCounts[b] = (branchCounts[b]||0)+1; } });
   const topBranch = Object.entries(branchCounts).sort((a,b)=>b[1]-a[1])[0]?.[0] || "—";
   const eligible  = filteredAndSorted.filter(s => parseFloat(s.cgpa) >= 7).length;
 
   const exportCSV = () => {
     const h = ["Name","Branch","Year","CGPA","10th%","12th%","Backlogs","Gender","Email","Phone","GitHub","LinkedIn","LeetCode","Codeforces","CodeChef","Status","Note"];
     const rows = filteredAndSorted.map(s => [
-      s.fullName||"", s.branch||"", s.year||"", s.cgpa||"", s.marks10th||"", s.marks12th||"",
+      formatName(s.fullName), s.branch ? s.branch.toUpperCase() : "", s.year||"", s.cgpa||"", s.marks10th||"", s.marks12th||"",
       s.activeBacklogs||"0", s.gender||"", s.email||"", s.phone||"", s.github||"", s.linkedin||"",
       s.leetcode||"", s.codeforces||"", s.codechef||"",
       PIPELINE_STAGES.find(p=>p.value===(statuses[s.id]||""))?.label || "", notes[s.id]||""
@@ -168,6 +175,37 @@ export default function RecruiterDashboard() {
     const csv = [h.join(","), ...rows.map(r => r.map(v=>`"${v}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" }); const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = `candidates_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
+  };
+
+  const handleBulkEmail = async () => {
+    if (selectedIds.size === 0) return;
+    
+    // Prepare candidate data array
+    const candidatesToNotify = filteredAndSorted
+      .filter(s => selectedIds.has(s.id) && s.email && s.uid)
+      .map(s => ({
+         uid: s.uid,
+         email: s.email,
+         name: formatName(s.fullName),
+         status: statuses[s.id] || "" 
+      }));
+
+    if (candidatesToNotify.length === 0) {
+      alert("None of the selected candidates have email addresses and UID registered.");
+      return;
+    }
+
+    setSendingEmails(true);
+    try {
+      await sendCandidateNotifications(candidatesToNotify);
+      alert(`Successfully notified and emailed ${candidatesToNotify.length} candidates!`);
+      clearSelection();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to send some or all emails.");
+    } finally {
+      setSendingEmails(false);
+    }
   };
 
   const SortBtn = ({ label, columnKey }) => (
@@ -218,8 +256,13 @@ export default function RecruiterDashboard() {
             <Download size={14}/> Export CSV
           </button>
           {selectedIds.size > 0 && (
-            <button onClick={() => { const emails = filteredAndSorted.filter(s => selectedIds.has(s.id) && s.email).map(s => s.email).join(","); if(emails) window.location.href = `mailto:${emails}`; }} className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition-all">
-              <Mail size={14}/> Email {selectedIds.size} Selected
+            <button 
+              onClick={handleBulkEmail} 
+              disabled={sendingEmails}
+              className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition-all disabled:opacity-70"
+            >
+              {sendingEmails ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14}/>} 
+              {sendingEmails ? "Sending..." : `Notify & Email ${selectedIds.size} Selected`}
             </button>
           )}
         </div>
@@ -355,7 +398,7 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
     }
   }, [isExpanded, s.codeforces, s.leetcode, s.github]);
 
-  const displayName = s.fullName || s.email?.split("@")[0] || "Unknown";
+  const displayName = formatName(s.fullName || s.email?.split("@")[0]);
   const initial     = displayName.charAt(0).toUpperCase();
   const cgpaNum     = parseFloat(s.cgpa);
   const tag         = getPlacementTag(s);
@@ -395,7 +438,7 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
             {status && <span className={`hidden md:inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold ${stageObj.color}`}>{stageObj.label}</span>}
           </div>
           <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {s.branch && <span>{s.branch}</span>}
+            {s.branch && <span>{s.branch.toUpperCase()}</span>}
             {s.year && <><span className="text-slate-300 dark:text-slate-600">·</span><span>{s.year}</span></>}
             {s.gender && <><span className="text-slate-300 dark:text-slate-600">·</span><span>{s.gender}</span></>}
             {s.email && <><span className="text-slate-300 dark:text-slate-600 hidden lg:inline">·</span><span className="hidden lg:inline truncate max-w-[200px]">{s.email}</span></>}
@@ -404,7 +447,11 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
 
         {/* Chips */}
         <div className="hidden sm:flex items-center gap-1.5">
-          {s.cgpa && !isNaN(cgpaNum) && <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border ${cgpaColor}`}>{cgpaNum.toFixed(1)}</span>}
+          {(!s.cgpa || isNaN(cgpaNum)) ? (
+             <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">CGPA: N/A</span>
+          ) : (
+             <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border ${cgpaColor}`}>{cgpaNum.toFixed(1)}</span>
+          )}
           {s.marks10th && <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-slate-50 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">10th: {s.marks10th}%</span>}
           {s.marks12th && <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-slate-50 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">12th: {s.marks12th}%</span>}
         </div>
@@ -430,7 +477,7 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
               </div>
               <div className="flex-1 min-w-0 pb-1">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white truncate">{displayName}</h2>
-                <p className="text-sm text-slate-500">{[s.branch, s.year && `Batch ${s.year}`, s.gender].filter(Boolean).join(" · ")}</p>
+                <p className="text-sm text-slate-500">{[s.branch ? s.branch.toUpperCase() : null, s.year && `Batch ${s.year}`, s.gender].filter(Boolean).join(" · ")}</p>
               </div>
               <div className="flex items-center gap-2 pb-1 flex-wrap">
                 {s.primaryResumeUrl && <>
@@ -451,7 +498,7 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
                   {s.cgpa && !isNaN(cgpaNum) && <InfoRow icon={<Award size={14} className="text-emerald-500"/>} label="CGPA" value={cgpaNum.toFixed(2)} bold/>}
                   {s.marks10th && <InfoRow icon={<Hash size={14} className="text-blue-500"/>} label="10th Marks" value={`${s.marks10th}%`}/>}
                   {s.marks12th && <InfoRow icon={<Hash size={14} className="text-violet-500"/>} label="12th Marks" value={`${s.marks12th}%`}/>}
-                  {s.branch && <InfoRow icon={<GraduationCap size={14} className="text-indigo-500"/>} label="Branch" value={s.branch}/>}
+                  {s.branch && <InfoRow icon={<GraduationCap size={14} className="text-indigo-500"/>} label="Branch" value={s.branch.toUpperCase()}/>}
                   {s.year && <InfoRow icon={<Calendar size={14} className="text-violet-500"/>} label="Graduation" value={`Batch ${s.year}`}/>}
                   <InfoRow icon={<AlertTriangle size={14} className="text-amber-500"/>} label="Active Backlogs" value={s.activeBacklogs || "0"}/>
                   <InfoRow icon={<AlertTriangle size={14} className="text-orange-500"/>} label="Backlog History" value={s.backlogHistory || "0"}/>

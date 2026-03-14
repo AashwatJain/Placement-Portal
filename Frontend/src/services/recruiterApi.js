@@ -89,3 +89,10 @@ export async function createBroadcast(data) {
     return response.data;
 }
 
+// ── Notifications ─────────────────────────────────────────────
+
+export async function sendCandidateNotifications(candidates) {
+    const response = await axios.post(`${API_BASE_URL}/api/recruiter/notify-candidates`, { candidates });
+    return response.data;
+}
+

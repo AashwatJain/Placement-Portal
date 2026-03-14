@@ -40,6 +40,7 @@ const roleNav = {
     { to: "/admin/students", label: "Student Management", icon: Users },
     { to: "/admin/company-add", label: "Manage Companies", icon: Briefcase },
     { to: "/admin/questions", label: "Question Bank", icon: FileQuestion },
+    { to: "/admin/profile", label: "My Profile", icon: User },
     { to: "/calendar", label: "Calendar", icon: CalendarDays },
   ],
   recruiter: [
@@ -49,6 +50,7 @@ const roleNav = {
     { to: "/recruiter/drives", label: "Active Drives", icon: Briefcase },
     { to: "/recruiter/announcements", label: "Broadcasts", icon: Megaphone },
     { to: "/recruiter/messages", label: "TnP Connect", icon: MessageSquare },
+    { to: "/recruiter/profile", label: "My Profile", icon: User },
     { to: "/calendar", label: "Calendar", icon: CalendarDays },
   ],
 };

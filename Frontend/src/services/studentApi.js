@@ -113,8 +113,9 @@ export async function setPrimaryResume(uid, resumeId, token) {
 
 // ── Notifications ───────────────────────────────────────────
 
-export async function fetchNotifications() {
-  const response = await axios.get(`${API_BASE_URL}/api/student/notifications`);
+export async function fetchNotifications(uid) {
+  const params = uid ? `?uid=${uid}` : '';
+  const response = await axios.get(`${API_BASE_URL}/api/student/notifications${params}`);
   return response.data;
 }
 

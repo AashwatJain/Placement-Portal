@@ -23,7 +23,7 @@ export default function Profile() {
     fullName: "", email: "", phone: "", location: "",
     branch: "", year: "", cgpa: "", github: "",
     linkedin: "", codolio: "", leetcode: "", codeforces: "", codechef: "", about: "", avatar: null,
-    gender: "", marks10th: "", marks12th: "", activeBacklogs: "0", backlogHistory: "0"
+    gender: "", marks10th: "", marks12th: "", activeBacklogs: "0"
   });
 
   // Re-fetch user data from DB when component mounts
@@ -53,7 +53,6 @@ export default function Profile() {
         marks10th: user.marks10th || "",
         marks12th: user.marks12th || "",
         activeBacklogs: user.activeBacklogs || "0",
-        backlogHistory: user.backlogHistory || "0",
       });
     }
   }, [user]);
@@ -175,7 +174,7 @@ export default function Profile() {
           </div>
 
           <div className="mt-4 text-center sm:mb-1 sm:mt-0 sm:text-left">
-            <h1 className="text-2xl font-bold">{formData.fullName || "Student Name"}</h1>
+            <h1 className="text-2xl font-bold">{formData.fullName || "Student"}</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">NIT Kurukshetra | {formData.branch || "Branch"}</p>
           </div>
         </div>
@@ -258,7 +257,6 @@ export default function Profile() {
                 <InputGroup label="10th Marks (%)" name="marks10th" value={formData.marks10th} icon={Hash} onChange={handleChange} />
                 <InputGroup label="12th Marks (%)" name="marks12th" value={formData.marks12th} icon={Hash} onChange={handleChange} />
                 <InputGroup label="Active Backlogs" name="activeBacklogs" value={formData.activeBacklogs} icon={AlertTriangle} onChange={handleChange} />
-                <InputGroup label="Backlog History" name="backlogHistory" value={formData.backlogHistory} icon={AlertTriangle} onChange={handleChange} />
               </div>
             </div>
 

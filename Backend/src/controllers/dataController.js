@@ -208,13 +208,21 @@ export const toggleExperienceLike = async (req, res) => {
 
 export const getNotifications = async (req, res) => {
     try {
+        const { uid } = req.query; // optional: filter by user
         const firestore = admin.firestore();
         const snapshot = await firestore.collection("notifications").get();
 
-        const notifications = snapshot.docs.map(doc => ({
+        let notifications = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
+
+        // Filter: show only notifications targeted at "all" OR at this specific user
+        if (uid) {
+            notifications = notifications.filter(
+                n => n.target === "all" || n.target === uid
+            );
+        }
 
         // Sort by createdAt descending (newest first)
         notifications.sort((a, b) => {
