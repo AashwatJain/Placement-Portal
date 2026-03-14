@@ -52,11 +52,19 @@ function extractEvents(applications) {
     const tl = app.timeline || [];
     for (let i = 0; i < tl.length; i++) {
       const step = tl[i];
+      // Relaxed filtering: show any event with a date that is from the past 14 days or upcoming
       if (!step.date) continue;
-      // Show upcoming steps (not done) whose predecessors are all done
-      // Also include done steps within last 7 days for context
-      const prevAllDone = tl.slice(0, i).every((s) => s.done);
-      if (!step.done && !prevAllDone) continue;
+      
+      const eventDate = new Date(step.date + "T00:00:00");
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const diffTime = eventDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Hide very old events (more than 14 days ago) unless they are marked done and we want to keep them longer
+      if (diffDays < -14 && !step.done) continue;
+
       events.push({
         id: `${app.id}-${i}`,
         appId: app.id, company: app.company, role: app.role,

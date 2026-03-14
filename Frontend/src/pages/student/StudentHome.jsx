@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useCompanies } from "../../hooks/useCompanies";
 import RecommendationsPanel from "../../components/ui/RecommendationsPanel";
+import { API_BASE_URL } from "../../config/api";
 
 // ── Mini Donut (for dashboard widget) ────────────────────────
 function MiniDonut({ solved, total, size = 64, strokeWidth = 6 }) {
@@ -142,7 +143,7 @@ export default function StudentHome() {
     if (!user?.uid) return;
     try {
       // Fetch real coding stats
-      const statsRes = await fetch(`http://localhost:5001/api/student/coding-stats/${user.uid}`);
+      const statsRes = await fetch(`${API_BASE_URL}/api/student/coding-stats/${user.uid}`);
       const statsData = await statsRes.json();
       if (!statsData.success || !statsData.platforms) return;
 
@@ -155,7 +156,7 @@ export default function StudentHome() {
       const devScore = Math.min(100, ((typeof github?.repos === "number" ? github.repos : 0) / 50) * 100);
 
       // Fetch ML recommendations
-      const mlRes = await fetch("http://localhost:5001/api/student/recommendations", {
+      const mlRes = await fetch(`${API_BASE_URL}/api/student/recommendations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentProfile: [dsaScore, devScore, cpScore] }),

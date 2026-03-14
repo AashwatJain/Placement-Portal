@@ -18,7 +18,7 @@ import axios from "axios";
 import db from "../config/firebaseAdmin.js";
 
 // Base URL of the Python Flask ML service
-const mlServiceUrl = "http://127.0.0.1:5000";
+const mlServiceUrl = "http://127.0.0.1:5005";
 
 // ── Helper: fetch and reshape pastPlacements from RTDB ───────────────────────
 
@@ -104,6 +104,7 @@ const getRecommendations = async (req, res) => {
  * Returns:
  *   { selectionChance: number }  (0–100 %)
  */
+
 const getCompanyChances = async (req, res) => {
   try {
     const targetCompany = req.body?.targetCompany?.trim();

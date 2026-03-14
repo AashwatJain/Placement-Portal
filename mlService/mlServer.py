@@ -183,7 +183,7 @@ def predictChance():
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("🚀  ML Service running on http://localhost:5000")
+    print("🚀  ML Service running on http://localhost:5005")
     print("     POST /recommend      → company recommendations")
     print("     POST /predict-chance → placement probability")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5005, debug=True)
