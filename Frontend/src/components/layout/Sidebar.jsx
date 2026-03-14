@@ -20,7 +20,8 @@ import {
   Star,
   Search,
   Megaphone,
-  MessageSquare
+  MessageSquare,
+  Brain
 } from "lucide-react";
 
 const roleNav = {
@@ -34,6 +35,7 @@ const roleNav = {
     { to: "/student/opportunities", label: "Opportunities", icon: Briefcase },
     { to: "/student/interview-experiences", label: "Interview Exp.", icon: FileQuestion },
     { to: "/student/practice", label: "Practice", icon: BookOpen },
+    { to: "/student/placement-insights", label: "Placement Insights", icon: Brain },
     { to: "/calendar", label: "Calendar", icon: CalendarDays },
   ],
   admin: [

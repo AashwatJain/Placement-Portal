@@ -73,13 +73,14 @@ def calcConfidenceScore(distance):
     """
     Converts a euclidean distance into a confidence percentage.
 
-    Formula: confidence = 100 / (1 + distance)
+    Formula: confidence = 100 / (1 + distance * 0.4)
+    Softer curve — closer profiles get 70–90% instead of 40–60%.
     - distance 0   → 100 %  (perfect match)
-    - distance 10  →  ~9 %
-    - distance 100 →  ~1 %
+    - distance 10  →  ~17 %
+    - distance 25  →  ~9 %
     Rounded to 1 decimal place.
     """
-    return round(100.0 / (1.0 + distance), 1)
+    return round(100.0 / (1.0 + distance * 0.4), 1)
 
 
 # ── Endpoint 1: /recommend ────────────────────────────────────────────────────
@@ -104,7 +105,7 @@ def recommend():
 
     # ── Build model ───────────────────────────────────────────────────────────
     featureMatrix, companies = buildFeatureMatrix(pastPlacements)
-    model, k = fitNearestNeighbors(featureMatrix, numNeighbors=5)
+    model, k = fitNearestNeighbors(featureMatrix, numNeighbors=8)
 
     queryVector = np.array(studentProfile).reshape(1, -1)
     distances, indices = model.kneighbors(queryVector)
@@ -161,7 +162,7 @@ def predictChance():
 
     # ── Build model ───────────────────────────────────────────────────────────
     featureMatrix, companies = buildFeatureMatrix(pastPlacements)
-    model, k = fitNearestNeighbors(featureMatrix, numNeighbors=5)
+    model, k = fitNearestNeighbors(featureMatrix, numNeighbors=8)
 
     queryVector = np.array(studentProfile).reshape(1, -1)
     distances, indices = model.kneighbors(queryVector)

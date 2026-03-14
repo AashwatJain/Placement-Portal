@@ -1,30 +1,26 @@
 /**
  * generateDummyData.js
  *
- * Generates 500 realistic past student profiles and pushes them to
- * the Firebase Realtime Database `pastPlacements` node.
+ * Generates 600 dense, realistic profiles and REPLACES the entire
+ * `pastPlacements` node in Firebase Realtime Database using .set().
  *
- * ─────────────────────────────────────────────────────────────────────────
- * Clusters (realistic industry patterns)
- * ─────────────────────────────────────────────────────────────────────────
+ * ─────────────────────────────────────────────────────────────────────
+ * Rules
+ * ─────────────────────────────────────────────────────────────────────
  *
- * 1. Big Tech / FAANG (Google, Microsoft, Amazon, Meta)
- *    → Very High DSA + Medium-High CP + Low Dev
+ * - Gender: Male/Female. Females get 10-15% lower score thresholds.
+ * - Top MNCs (Google, Microsoft, Amazon, Adobe, Uber, Directi):
+ *     DSA-heavy. Male: DSA 85-100, Dev 50-80. Female: DSA 75-100, Dev 45-80.
+ * - Startups (Swiggy, Zomato, PhonePe, Oyo Rooms, Flipkart, Paytm):
+ *     Dev-heavy. DevScore 85-100, DSA can be average 60-80.
+ * - Finance (JP Morgan Chase & Co., Goldman Sachs, Morgan Stanley,
+ *            DE Shaw, Arcesium, Bajaj Finserv):
+ *     Balanced. DSA 70-90, Dev 60-80.
+ * - Mass Recruiters (TCS, Infosys, Wipro):
+ *     Low bar. DSA 40-55, Dev 40-55. Baseline never 0%.
  *
- * 2. Quant / Trading Firms (Jane Street, Tower Research, DE Shaw, Graviton)
- *    → Medium DSA + VERY HIGH CP + Almost No Dev
- *
- * 3. Product Startups (Razorpay, Swiggy, Cred, PhonePe, Zomato)
- *    → High DSA + Medium CP + Medium Dev
- *
- * 4. Service / Mass Recruiters (TCS, Infosys, Wipro, Cognizant, Accenture)
- *    → Low-Medium DSA + Low CP + Low Dev
- *
- * 5. Fintech / Banks (Goldman Sachs, Morgan Stanley, JP Morgan)
- *    → High DSA + Medium-High CP + Low Dev
- *
- * 6. Dev-Oriented Startups (Vercel, Postman, Hashnode)
- *    → Low DSA + Low CP + High Dev  (smallest cluster — rare)
+ * Dense distribution: many overlapping profiles per tier so KNN always
+ * finds close neighbors → 70%+ probabilities for reasonable matches.
  *
  * Run (from Backend/):
  *   node src/scripts/generateDummyData.js
@@ -50,198 +46,144 @@ const pastPlacementsRef = db.ref("pastPlacements");
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const randomFloat = (min, max) =>
+const rand = (min, max) =>
   Math.round((Math.random() * (max - min) + min) * 100) / 100;
 
-const randomInt = (min, max) =>
+const randInt = (min, max) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
-const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// ── Cluster definitions ──────────────────────────────────────────────────────
+// ── Tier Definitions ─────────────────────────────────────────────────────────
 //
-// dsaScore  ←  LeetCode problems solved (normalized /500 × 100)
-// cpScore   ←  Codeforces rating (normalized /2400 × 100)
-// devScore  ←  GitHub public repos (normalized /50 × 100)
-//
-// Ranges below are for the NORMALIZED SCORES (0–100).
+// Each tier has Male and Female score ranges.
+// Female thresholds are 10-15% lower for DSA/CP to reflect diversity hiring.
 
-const clusterDefinitions = [
-  // ── 1. Big Tech / FAANG ────────────────────────────────────────────────────
-  // These companies gate on DSA rounds (LC mediums/hards). CP helps but isn't
-  // required. Dev/projects barely matter in screening.
+const tiers = [
+
+  // ── Tier 1: Top MNCs — DSA-heavy ──────────────────────────────────────────
   {
-    clusterName:           "Big Tech / FAANG",
-    count:                 120,
-    dsaScoreRange:         { min: 60, max: 100 },   // very high
-    cpScoreRange:          { min: 35, max: 75  },   // medium-high
-    devScoreRange:         { min: 5,  max: 30  },   // low
-    placedCompanies:       ["Google", "Microsoft", "Amazon", "Meta"],
-    leetCodeSolvedRange:   { min: 300, max: 500 },
-    codeforcesRatingRange: { min: 840, max: 1800 },
-    githubReposRange:      { min: 2,  max: 15  },
-    cgpaRange:             { min: 7.5, max: 9.8 },
+    name: "Top MNCs",
+    count: 140,
+    companies: ["Google", "Microsoft", "Amazon", "Adobe", "Uber", "Directi"],
+    male:   { dsa: [85, 100], dev: [50, 80], cp: [55, 85] },
+    female: { dsa: [75, 100], dev: [45, 80], cp: [45, 80] },
+  },
+  // Extra dense Tier 1 at slightly lower scores (so good profiles match)
+  {
+    name: "Top MNCs — Near Miss",
+    count: 50,
+    companies: ["Google", "Microsoft", "Amazon", "Adobe", "Uber", "Directi"],
+    male:   { dsa: [75, 90], dev: [45, 70], cp: [45, 70] },
+    female: { dsa: [65, 85], dev: [40, 65], cp: [35, 65] },
   },
 
-  // ── 2. Quant / Trading Firms ───────────────────────────────────────────────
-  // CP is KING here. They need 1800+ CF rated coders. LC matters less.
-  // Dev/projects almost irrelevant for these roles.
+  // ── Tier 2: Startups/Unicorns — DEV-heavy ─────────────────────────────────
   {
-    clusterName:           "Quant / Trading Firms",
-    count:                 70,
-    dsaScoreRange:         { min: 30, max: 65  },   // moderate
-    cpScoreRange:          { min: 75, max: 100 },   // VERY high
-    devScoreRange:         { min: 2,  max: 15  },   // almost none
-    placedCompanies:       ["Jane Street", "Tower Research", "DE Shaw", "Graviton"],
-    leetCodeSolvedRange:   { min: 150, max: 325 },
-    codeforcesRatingRange: { min: 1800, max: 2400 },
-    githubReposRange:      { min: 1,  max: 8   },
-    cgpaRange:             { min: 8.0, max: 9.9 },
+    name: "Startups/Unicorns",
+    count: 120,
+    companies: ["Swiggy", "Zomato", "PhonePe", "Oyo Rooms", "Flipkart", "Paytm"],
+    male:   { dsa: [60, 80], dev: [85, 100], cp: [30, 60] },
+    female: { dsa: [50, 75], dev: [80, 100], cp: [25, 55] },
+  },
+  // Extra dense startup profiles at moderate dev
+  {
+    name: "Startups — Balanced Dev",
+    count: 40,
+    companies: ["Swiggy", "Zomato", "PhonePe", "Oyo Rooms", "Flipkart", "Paytm"],
+    male:   { dsa: [55, 75], dev: [75, 95], cp: [25, 50] },
+    female: { dsa: [45, 70], dev: [70, 92], cp: [20, 45] },
   },
 
-  // ── 3. Product Startups ────────────────────────────────────────────────────
-  // Strong DSA + decent CP + some project/dev exposure helps.
+  // ── Tier 3: Finance — Balanced ─────────────────────────────────────────────
   {
-    clusterName:           "Product Startups",
-    count:                 100,
-    dsaScoreRange:         { min: 50, max: 85  },   // high
-    cpScoreRange:          { min: 25, max: 55  },   // medium
-    devScoreRange:         { min: 25, max: 55  },   // medium
-    placedCompanies:       ["Razorpay", "Swiggy", "Cred", "PhonePe", "Zomato"],
-    leetCodeSolvedRange:   { min: 250, max: 425 },
-    codeforcesRatingRange: { min: 600, max: 1320 },
-    githubReposRange:      { min: 12, max: 28  },
-    cgpaRange:             { min: 7.0, max: 9.2 },
+    name: "Finance",
+    count: 100,
+    companies: ["JP Morgan Chase & Co.", "Goldman Sachs", "Morgan Stanley", "DE Shaw", "Arcesium", "Bajaj Finserv"],
+    male:   { dsa: [70, 90], dev: [60, 80], cp: [50, 75] },
+    female: { dsa: [60, 85], dev: [55, 78], cp: [40, 70] },
+  },
+  // Extra dense finance at slightly lower scores
+  {
+    name: "Finance — Accessible",
+    count: 40,
+    companies: ["JP Morgan Chase & Co.", "Goldman Sachs", "Morgan Stanley", "Bajaj Finserv"],
+    male:   { dsa: [62, 82], dev: [55, 75], cp: [40, 65] },
+    female: { dsa: [52, 78], dev: [50, 72], cp: [30, 60] },
   },
 
-  // ── 4. Service / Mass Recruiters ───────────────────────────────────────────
-  // Low bar overall. Hire in bulk. Aptitude + basic DSA enough.
+  // ── Tier 4: Mass Recruiters / Safe Nets — Low bar ──────────────────────────
   {
-    clusterName:           "Service / Mass Recruiters",
-    count:                 110,
-    dsaScoreRange:         { min: 10, max: 40  },   // low-medium
-    cpScoreRange:          { min: 5,  max: 30  },   // low
-    devScoreRange:         { min: 5,  max: 30  },   // low
-    placedCompanies:       ["TCS", "Infosys", "Wipro", "Cognizant", "Accenture"],
-    leetCodeSolvedRange:   { min: 50,  max: 200 },
-    codeforcesRatingRange: { min: 100, max: 720 },
-    githubReposRange:      { min: 2,  max: 15  },
-    cgpaRange:             { min: 6.0, max: 8.0 },
+    name: "Mass Recruiters",
+    count: 80,
+    companies: ["TCS", "Infosys", "Wipro"],
+    male:   { dsa: [35, 55], dev: [35, 55], cp: [15, 40] },
+    female: { dsa: [30, 50], dev: [30, 50], cp: [10, 35] },
   },
-
-  // ── 5. Fintech / Banks ─────────────────────────────────────────────────────
-  // Similar to FAANG but slightly more CP-heavy (algo trading teams).
+  // Extra dense: slightly better profiles also placed at mass recruiters
+  // This ensures even moderate students see 85%+ for TCS/Infosys
   {
-    clusterName:           "Fintech / Banks",
-    count:                 65,
-    dsaScoreRange:         { min: 55, max: 90  },   // high
-    cpScoreRange:          { min: 45, max: 80  },   // medium-high
-    devScoreRange:         { min: 5,  max: 25  },   // low
-    placedCompanies:       ["Goldman Sachs", "Morgan Stanley", "JP Morgan"],
-    leetCodeSolvedRange:   { min: 275, max: 450 },
-    codeforcesRatingRange: { min: 1080, max: 1920 },
-    githubReposRange:      { min: 2, max: 12  },
-    cgpaRange:             { min: 7.5, max: 9.6 },
-  },
-
-  // ── 6. Dev-Oriented Startups ───────────────────────────────────────────────
-  // Rare niche: these look at GitHub/projects/open-source more than DSA.
-  // Smallest cluster because most companies still care about DSA/CP first.
-  {
-    clusterName:           "Dev-Oriented Startups",
-    count:                 35,
-    dsaScoreRange:         { min: 10, max: 40  },   // low
-    cpScoreRange:          { min: 5,  max: 25  },   // low
-    devScoreRange:         { min: 65, max: 100 },   // HIGH
-    placedCompanies:       ["Vercel", "Postman", "Hashnode"],
-    leetCodeSolvedRange:   { min: 50,  max: 200 },
-    codeforcesRatingRange: { min: 100, max: 600 },
-    githubReposRange:      { min: 32, max: 50  },
-    cgpaRange:             { min: 6.0, max: 8.5 },
+    name: "Mass Recruiters — Better Profiles",
+    count: 30,
+    companies: ["TCS", "Infosys", "Wipro"],
+    male:   { dsa: [50, 65], dev: [50, 65], cp: [25, 50] },
+    female: { dsa: [45, 60], dev: [45, 60], cp: [20, 45] },
   },
 ];
 
-// ── Misc ─────────────────────────────────────────────────────────────────────
-
-const branches        = ["CS", "IT", "AIML", "ECE", "MECH", "AIDS"];
-const graduationYears = [2021, 2022, 2023, 2024, 2025];
-
 // ── Profile builder ──────────────────────────────────────────────────────────
 
-const buildStudentProfile = (clusterDef, index) => {
-  const {
-    clusterName, dsaScoreRange, cpScoreRange, devScoreRange,
-    placedCompanies, leetCodeSolvedRange, codeforcesRatingRange,
-    githubReposRange, cgpaRange,
-  } = clusterDef;
+const buildProfile = (tier, index) => {
+  const gender = Math.random() < 0.45 ? "Female" : "Male";
+  const ranges = gender === "Female" ? tier.female : tier.male;
 
-  const dsaScore         = randomFloat(dsaScoreRange.min,         dsaScoreRange.max);
-  const cpScore          = randomFloat(cpScoreRange.min,          cpScoreRange.max);
-  const devScore         = randomFloat(devScoreRange.min,         devScoreRange.max);
-  const leetCodeSolved   = randomInt(leetCodeSolvedRange.min,     leetCodeSolvedRange.max);
-  const codeforcesRating = randomInt(codeforcesRatingRange.min,   codeforcesRatingRange.max);
-  const githubRepos      = randomInt(githubReposRange.min,        githubReposRange.max);
-  const cgpa             = randomFloat(cgpaRange.min,             cgpaRange.max);
-  const placedCompany    = pickRandom(placedCompanies);
-  const branch           = pickRandom(branches);
-  const graduationYear   = pickRandom(graduationYears);
-
-  const overallScore =
-    Math.round((dsaScore * 0.4 + cpScore * 0.35 + devScore * 0.25) * 100) / 100;
+  const dsaScore = rand(ranges.dsa[0], ranges.dsa[1]);
+  const devScore = rand(ranges.dev[0], ranges.dev[1]);
+  const cpScore  = rand(ranges.cp[0],  ranges.cp[1]);
+  const placedCompany = pick(tier.companies);
 
   return {
-    studentId:        `dummy_${clusterName.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_${index}`,
-    clusterName,
     dsaScore,
-    cpScore,
     devScore,
-    overallScore,
-    leetCodeSolved,
-    codeforcesRating,
-    githubRepos,
-    cgpa,
-    branch,
-    graduationYear,
+    cpScore,
+    gender,
     placedCompany,
-    createdAt: Date.now(),
   };
 };
 
 // ── Main seeder ──────────────────────────────────────────────────────────────
 
 async function generateDummyData() {
-  // ── Step 0: Delete old data ──────────────────────────────────────────────
-  console.log("🗑️  Deleting old pastPlacements data...");
-  await pastPlacementsRef.remove();
-  console.log("   ✅ Old data deleted.\n");
+  console.log("🗑️  Replacing entire pastPlacements node...\n");
 
-  console.log("🚀 Generating new realistic placement data → RTDB: pastPlacements\n");
+  const allProfiles = {};
+  let totalCount = 0;
 
-  let totalWritten = 0;
-  let grandTotal = 0;
-  clusterDefinitions.forEach(c => { grandTotal += c.count; });
+  for (const tier of tiers) {
+    console.log(`📦 [${tier.name}] → ${tier.count} records (${tier.companies.join(", ")})`);
 
-  for (const clusterDef of clusterDefinitions) {
-    console.log(`📦 [${clusterDef.clusterName}] → ${clusterDef.count} records (${clusterDef.placedCompanies.join(", ")})`);
-
-    const pushPromises = [];
-    for (let i = 0; i < clusterDef.count; i++) {
-      const profile = buildStudentProfile(clusterDef, i);
-      pushPromises.push(pastPlacementsRef.push(profile));
+    for (let i = 0; i < tier.count; i++) {
+      const profile = buildProfile(tier, i);
+      const key = `entry_${totalCount}`;
+      allProfiles[key] = profile;
+      totalCount++;
     }
 
-    await Promise.all(pushPromises);
-    totalWritten += clusterDef.count;
-    console.log(`   ✅ Done — ${totalWritten}/${grandTotal} written\n`);
+    console.log(`   ✅ Generated — running total: ${totalCount}\n`);
   }
 
-  console.log("🎉 Success! New placement data summary:");
+  // ── Overwrite entire node with .set() ──────────────────────────────────
+  console.log(`⏳ Writing ${totalCount} records to Firebase RTDB...`);
+  await pastPlacementsRef.set(allProfiles);
+  console.log("   ✅ pastPlacements node overwritten!\n");
+
+  console.log("🎉 Success! Data summary:");
   console.log("───────────────────────────────────────────────────────");
-  clusterDefinitions.forEach(c => {
-    console.log(`   ${c.clusterName.padEnd(28)} ${String(c.count).padStart(3)} records → ${c.placedCompanies.join(", ")}`);
+  tiers.forEach(t => {
+    console.log(`   ${t.name.padEnd(35)} ${String(t.count).padStart(3)} records`);
   });
   console.log("───────────────────────────────────────────────────────");
-  console.log(`   TOTAL: ${totalWritten} records`);
+  console.log(`   TOTAL: ${totalCount} records`);
 
   process.exit(0);
 }

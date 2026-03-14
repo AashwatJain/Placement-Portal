@@ -14,7 +14,7 @@ import {
   Sparkles, ExternalLink, CheckCircle2, Loader2,
 } from "lucide-react";
 import { useCompanies } from "../../hooks/useCompanies";
-import RecommendationsPanel from "../../components/ui/RecommendationsPanel";
+
 import { API_BASE_URL } from "../../config/api";
 
 // ── Mini Donut (for dashboard widget) ────────────────────────
@@ -458,9 +458,6 @@ export default function StudentHome() {
             </div>
           </div>
         </div>
-
-        {/* ── Placement Insights ── */}
-        <RecommendationsPanel />
 
       </div>
     </div>
