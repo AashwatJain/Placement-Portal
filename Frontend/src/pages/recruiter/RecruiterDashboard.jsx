@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { fetchAllStudents } from "../../services/adminApi";
+import { API_BASE_URL } from "../../config/api";
 import {
   fetchCandidateStatuses, saveCandidateStatuses,
   fetchCandidateNotes, saveCandidateNotes,
@@ -379,20 +380,19 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
           .then(data => { if (data.status === "OK") setLiveStats(p => ({ ...p, cf: `${data.result[0].rank || "Unrated"} (${data.result[0].rating || 0})` })); })
           .catch(() => {});
       }
-      // LeetCode
+      // LeetCode — use backend proxy to avoid CORS
       if (s.leetcode) {
         const handle = s.leetcode.replace(/^https?:\/\/(www\.)?[^/]+\/(u\/|profile\/|users\/)?/, "");
-        fetch(`https://leetcode-stats-api.herokuapp.com/${handle}`)
+        fetch(`${API_BASE_URL}/api/student/coding-stats/${s.id}`)
           .then(res => res.json())
-          .then(data => { if (data.status === "success") setLiveStats(p => ({ ...p, lc: `${data.totalSolved} Solved` })); })
-          .catch(() => {});
-      }
-      // GitHub
-      if (s.github) {
-        const handle = s.github.replace(/^https?:\/\/(www\.)?github\.com\/?/, "");
-        fetch(`https://api.github.com/users/${handle}`)
-          .then(res => res.json())
-          .then(data => { if (data.public_repos !== undefined) setLiveStats(p => ({ ...p, gh: `${data.public_repos} Repos` })); })
+          .then(data => {
+            if (data.success && data.platforms) {
+              const lc = data.platforms.find(p => p.id === "leetcode");
+              if (lc && typeof lc.solved === "number") setLiveStats(p => ({ ...p, lc: `${lc.solved} Solved` }));
+              const gh = data.platforms.find(p => p.id === "github");
+              if (gh && typeof gh.repos === "number") setLiveStats(p => ({ ...p, gh: `${gh.repos} Repos` }));
+            }
+          })
           .catch(() => {});
       }
     }
