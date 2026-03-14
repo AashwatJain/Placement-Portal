@@ -14,6 +14,7 @@ import Opportunities from "./pages/student/Opportunities";
 import CodingProfiles from "./pages/student/CodingProfiles";
 import ResumeBuilder from "./pages/student/ResumeBuilder";
 import Practice from "./pages/student/Practice";
+import PlacementInsights from "./pages/student/PlacementInsights";
 
 // Admin Pages
 import StudentManagement from "./pages/admin/StudentManagement";
@@ -80,6 +81,7 @@ function AppRoutes() {
           element={<InterviewExperiences />}
         />
         <Route path="student/practice" element={<Practice />} />
+        <Route path="student/placement-insights" element={<PlacementInsights />} />
         {/* Admin Routes */}
         <Route path="admin/students" element={<StudentManagement />} />
         <Route path="admin/company-add" element={<CompanyAdd />} />
