@@ -1,45 +1,42 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { fetchAllStudents } from "../../services/adminApi";
+import { fetchShortlistedIds, saveShortlistedIds } from "../../services/recruiterApi";
 import {
   Star, FileText, ExternalLink, Loader2,
   Code2, Mail, Github, Trash2,
   ArrowLeft, Users,
 } from "lucide-react";
 
-const LS_KEY = "recruiter-shortlisted";
-
-function getShortlisted() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
-  catch { return []; }
-}
-function setShortlistedLS(ids) {
-  localStorage.setItem(LS_KEY, JSON.stringify(ids));
-}
-
 export default function ShortlistedCandidates() {
+  const { user } = useAuth();
   const [allStudents, setAllStudents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [shortlisted, setShortlisted] = useState(getShortlisted);
+  const [shortlisted, setShortlisted] = useState([]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await fetchAllStudents();
-        setAllStudents(data);
+        const [students, ids] = await Promise.all([
+          fetchAllStudents(),
+          user?.uid ? fetchShortlistedIds(user.uid).catch(() => []) : [],
+        ]);
+        setAllStudents(students);
+        setShortlisted(Array.isArray(ids) ? ids : []);
       } catch (err) {
-        console.error("Failed to fetch students:", err);
+        console.error("Failed to load data:", err);
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [user?.uid]);
 
   const removeFromShortlist = (id) => {
     setShortlisted((prev) => {
       const next = prev.filter((x) => x !== id);
-      setShortlistedLS(next);
+      if (user?.uid) saveShortlistedIds(user.uid, next).catch(console.error);
       return next;
     });
   };
@@ -158,3 +155,4 @@ export default function ShortlistedCandidates() {
     </div>
   );
 }
+

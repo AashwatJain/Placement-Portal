@@ -26,6 +26,9 @@ import ShortlistedCandidates from "./pages/recruiter/ShortlistedCandidates";
 import JAFDashboard from "./pages/recruiter/JAFDashboard";
 import JAFCreationWizard from "./pages/recruiter/JAFCreationWizard";
 import JAFDetail from "./pages/recruiter/JAFDetail";
+import ActiveDrives from "./pages/recruiter/ActiveDrives";
+import TnpConnect from "./pages/recruiter/TnpConnect";
+import Broadcasts from "./pages/recruiter/Broadcasts";
 
 // Shared Pages
 import Calendar from "./pages/Calendar";
@@ -86,6 +89,9 @@ function AppRoutes() {
         <Route path="recruiter/jafs/new" element={<JAFCreationWizard />} />
         <Route path="recruiter/jafs/edit/:id" element={<JAFCreationWizard />} />
         <Route path="recruiter/jafs/:id" element={<JAFDetail />} />
+        <Route path="recruiter/drives" element={<ActiveDrives />} />
+        <Route path="recruiter/announcements" element={<Broadcasts />} />
+        <Route path="recruiter/messages" element={<TnpConnect />} />
         {/* Shared Routes */}
         <Route path="calendar" element={<Calendar />} />
         {/* Catch All */}

@@ -1,6 +1,11 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { fetchAllStudents } from "../../services/adminApi";
+import {
+  fetchCandidateStatuses, saveCandidateStatuses,
+  fetchCandidateNotes, saveCandidateNotes,
+} from "../../services/recruiterApi";
 import {
   Search, X, FileText, ExternalLink, Code2, Award,
   ArrowUpDown, ArrowUp, ArrowDown, Loader2,
@@ -12,14 +17,8 @@ import {
   CheckSquare, Square, StickyNote,
 } from "lucide-react";
 
-/* ═══════════ LocalStorage helpers ═══════════ */
-const LS_STATUS_KEY = "recruiter-candidate-status";
-const LS_NOTES_KEY  = "recruiter-candidate-notes";
-
-function getStoredStatuses() { try { return JSON.parse(localStorage.getItem(LS_STATUS_KEY)) || {}; } catch { return {}; } }
-function setStoredStatuses(m) { localStorage.setItem(LS_STATUS_KEY, JSON.stringify(m)); }
-function getStoredNotes()    { try { return JSON.parse(localStorage.getItem(LS_NOTES_KEY))   || {}; } catch { return {}; } }
-function setStoredNotes(m)   { localStorage.setItem(LS_NOTES_KEY, JSON.stringify(m)); }
+/* ═══════════ Debounce delay (ms) ═══════════ */
+const SAVE_DELAY = 800;
 
 const PIPELINE_STAGES = [
   { value: "",            label: "— None —",        color: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
@@ -45,6 +44,7 @@ function getPlacementTag(s) {
 
 /* ═══════════ Main Component ═══════════ */
 export default function RecruiterDashboard() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get("jobId") || "";
 
@@ -62,23 +62,60 @@ export default function RecruiterDashboard() {
   const [expandedId, setExpandedId]       = useState(null);
   const [showFilters, setShowFilters]     = useState(false);
   const [selectedIds, setSelectedIds]     = useState(new Set());
-  const [statuses, setStatuses]           = useState(getStoredStatuses);
-  const [notes, setNotes]                 = useState(getStoredNotes);
+  const [statuses, setStatuses]           = useState({});
+  const [notes, setNotes]                 = useState({});
   const [previewUrl, setPreviewUrl]       = useState(null);
 
-  useEffect(() => { (async () => { try { setStudents(await fetchAllStudents()); } catch(e) { console.error(e); } finally { setLoading(false); } })(); }, []);
+  const statusTimer = useRef(null);
+  const notesTimer  = useRef(null);
+
+  // Load students + recruiter-persisted data in parallel
+  useEffect(() => {
+    const uid = user?.uid;
+    (async () => {
+      try {
+        const [studentData, savedStatuses, savedNotes] = await Promise.all([
+          fetchAllStudents(),
+          uid ? fetchCandidateStatuses(uid).catch(() => ({})) : {},
+          uid ? fetchCandidateNotes(uid).catch(() => ({}))    : {},
+        ]);
+        setStudents(studentData);
+        setStatuses(savedStatuses);
+        setNotes(savedNotes);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [user?.uid]);
 
   const handleSort = (key) => {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === "desc" ? "asc" : "desc" }));
   };
 
+  // Debounced save to backend
   const updateStatus = useCallback((id, value) => {
-    setStatuses(prev => { const n = { ...prev, [id]: value }; setStoredStatuses(n); return n; });
-  }, []);
+    setStatuses(prev => {
+      const next = { ...prev, [id]: value };
+      clearTimeout(statusTimer.current);
+      statusTimer.current = setTimeout(() => {
+        if (user?.uid) saveCandidateStatuses(user.uid, next).catch(console.error);
+      }, SAVE_DELAY);
+      return next;
+    });
+  }, [user?.uid]);
 
   const updateNote = useCallback((id, text) => {
-    setNotes(prev => { const n = { ...prev, [id]: text }; setStoredNotes(n); return n; });
-  }, []);
+    setNotes(prev => {
+      const next = { ...prev, [id]: text };
+      clearTimeout(notesTimer.current);
+      notesTimer.current = setTimeout(() => {
+        if (user?.uid) saveCandidateNotes(user.uid, next).catch(console.error);
+      }, SAVE_DELAY);
+      return next;
+    });
+  }, [user?.uid]);
 
   const toggleSelect = (id) => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const selectAll = (ids) => setSelectedIds(new Set(ids));
