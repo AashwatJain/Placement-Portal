@@ -1,7 +1,7 @@
 /**
  * recommendationController.js
  *
- * Bridges the Node.js backend with the Python ML service (Flask, port 5000).
+ * Bridges the Node.js backend with the Python ML service (Flask, port 5005).
  *
  * Handlers
  * ─────────────────────────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ const getRecommendations = async (req, res) => {
 
     if (error.code === "ECONNREFUSED") {
       return res.status(503).json({
-        error: "ML service is unavailable. Make sure mlServer.py is running on port 5000.",
+        error: "ML service is unavailable. Make sure mlServer.py is running on port 5005.",
       });
     }
 
@@ -140,7 +140,7 @@ const getCompanyChances = async (req, res) => {
 
     if (error.code === "ECONNREFUSED") {
       return res.status(503).json({
-        error: "ML service is unavailable. Make sure mlServer.py is running on port 5000.",
+        error: "ML service is unavailable. Make sure mlServer.py is running on port 5005.",
       });
     }
 

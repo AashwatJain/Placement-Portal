@@ -4,6 +4,7 @@ import bodyParser from "body-parser";
 import studentRoutes from "./routes/studentRoutes.js"; // .js extension required in ESM
 import adminRoutes from "./routes/adminRoutes.js";
 import recruiterRoutes from "./routes/recruiterRoutes.js";
+import atsRoutes from "./routes/atsRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -17,6 +18,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/api/student", studentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/recruiter", recruiterRoutes);
+app.use("/api/ats", atsRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
