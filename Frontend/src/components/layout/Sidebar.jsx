@@ -39,9 +39,11 @@ const roleNav = {
     { to: "/calendar", label: "Calendar", icon: CalendarDays },
   ],
   admin: [
+    { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/admin/students", label: "Student Management", icon: Users },
     { to: "/admin/company-add", label: "Manage Companies", icon: Briefcase },
     { to: "/admin/questions", label: "Question Bank", icon: FileQuestion },
+    { to: "/admin/notifications", label: "Notifications", icon: Megaphone },
     { to: "/admin/profile", label: "My Profile", icon: User },
     { to: "/calendar", label: "Calendar", icon: CalendarDays },
   ],

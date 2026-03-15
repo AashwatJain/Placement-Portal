@@ -3,20 +3,25 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import studentRoutes from "./routes/studentRoutes.js"; // .js extension required in ESM
 import adminRoutes from "./routes/adminRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 import recruiterRoutes from "./routes/recruiterRoutes.js";
 import atsRoutes from "./routes/atsRoutes.js";
+
+// Ensure Firebase Admin SDK is initialized before any route handler runs
+import "./config/firebaseAdmin.js";
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Middleware
-app.use(cors()); // Frontend (3000) aur Backend (5001) ko connect karne ke liye
-app.use(express.json()); // JSON data handle karne ke liye
+app.use(cors());
+app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Route Mounting
 app.use("/api/student", studentRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin", dashboardRoutes); // Dashboard & analytics (same /api/admin prefix)
 app.use("/api/recruiter", recruiterRoutes);
 app.use("/api/ats", atsRoutes);
 

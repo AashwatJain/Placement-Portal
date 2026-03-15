@@ -13,6 +13,24 @@ export async function fetchAllStudents() {
     return response.data;
 }
 
+export async function fetchFilteredStudents(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.branch) params.append('branch', filters.branch);
+    if (filters.minCgpa) params.append('minCgpa', filters.minCgpa);
+    const response = await axios.get(`${API_BASE_URL}/api/admin/students/filter?${params.toString()}`);
+    return response.data;
+}
+
+export async function updateStudentStatus(id, data) {
+    const response = await axios.put(`${API_BASE_URL}/api/admin/students/${id}/status`, data);
+    return response.data;
+}
+
+export async function updateStudentResume(id, data) {
+    const response = await axios.put(`${API_BASE_URL}/api/admin/students/${id}/resume`, data);
+    return response.data;
+}
+
 // ── Questions (Admin Question Bank) ─────────────────────────
 
 export async function fetchQuestions() {
@@ -25,13 +43,13 @@ export async function addQuestion(data) {
     return response.data;
 }
 
-export async function approveQuestion(id) {
-    const response = await axios.put(`${API_BASE_URL}/api/admin/questions/${id}/approve`);
+export async function approveQuestion(id, data = {}) {
+    const response = await axios.put(`${API_BASE_URL}/api/admin/questions/${id}/approve`, data);
     return response.data;
 }
 
-export async function deleteQuestion(id) {
-    const response = await axios.delete(`${API_BASE_URL}/api/admin/questions/${id}`);
+export async function rejectQuestion(id, reason) {
+    const response = await axios.post(`${API_BASE_URL}/api/admin/questions/${id}/reject`, { reason });
     return response.data;
 }
 
@@ -50,5 +68,22 @@ export async function createJaf(data) {
 
 export async function updateJaf(id, data) {
     const response = await axios.put(`${API_BASE_URL}/api/admin/jafs/${id}`, data);
+    return response.data;
+}
+
+// ── Admin Dashboard API ─────────
+export async function fetchPlacementOverview() {
+    const response = await axios.get(`${API_BASE_URL}/api/admin/stats/placement-overview`);
+    return response.data;
+}
+
+// ── Admin Notifications ─────────
+export async function createNotification(data) {
+    const response = await axios.post(`${API_BASE_URL}/api/admin/notifications`, data);
+    return response.data;
+}
+
+export async function fetchNotifications() {
+    const response = await axios.get(`${API_BASE_URL}/api/admin/notifications`);
     return response.data;
 }

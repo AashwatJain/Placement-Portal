@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { fetchQuestions, addQuestion as apiAddQuestion, approveQuestion as apiApprove, deleteQuestion as apiDelete } from "../../services/adminApi";
+import { fetchQuestions, addQuestion as apiAddQuestion, approveQuestion as apiApprove, rejectQuestion as apiReject } from "../../services/adminApi";
 import { fetchCompanies } from "../../services/studentApi";
-import { Check, X, Clock, CheckCircle2, Plus, Send, Loader2 } from "lucide-react";
+import { Check, X, Clock, CheckCircle2, Plus, Send, Loader2, Edit2 } from "lucide-react";
 
 export default function AdminQuestions() {
   const [questions, setQuestions] = useState([]);
@@ -18,6 +18,13 @@ export default function AdminQuestions() {
     difficulty: "Medium",
     tagsInput: ""
   });
+
+  // State for Edit/Reject modals
+  const [editingQuestion, setEditingQuestion] = useState(null);
+  const [editFormData, setEditFormData] = useState({ text: "", tagsInput: "", difficulty: "Medium" });
+  
+  const [rejectingQuestionId, setRejectingQuestionId] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   // Fetch questions and companies on mount
   useEffect(() => {
@@ -38,21 +45,37 @@ export default function AdminQuestions() {
   const getCompanyName = (id) => companies.find((c) => String(c.id) === String(id))?.name ?? "Unknown Company";
 
   // --- Handlers for Student Submissions ---
-  const handleApprove = async (id) => {
+  const handleApprove = async (id, overrideData = null) => {
     try {
-      await apiApprove(id);
-      setQuestions(questions.map(q => q.id === id ? { ...q, status: 'approved' } : q));
+      await apiApprove(id, overrideData || {});
+      setQuestions(questions.map(q => q.id === id ? { ...q, ...overrideData, status: 'approved' } : q));
+      setEditingQuestion(null);
     } catch (err) {
       console.error("Failed to approve:", err);
     }
   };
 
-  const handleReject = async (id) => {
+  const submitEditAndApprove = (e) => {
+      e.preventDefault();
+      if (!editingQuestion) return;
+      const parsedTags = editFormData.tagsInput.split(",").map(t => t.trim()).filter(Boolean);
+      handleApprove(editingQuestion.id, {
+          text: editFormData.text,
+          difficulty: editFormData.difficulty,
+          tags: parsedTags
+      });
+  };
+
+  const handleRejectSubmit = async (e) => {
+    e.preventDefault();
+    if (!rejectingQuestionId) return;
     try {
-      await apiDelete(id);
-      setQuestions(questions.filter(q => q.id !== id));
+      await apiReject(rejectingQuestionId, rejectReason);
+      setQuestions(questions.map(q => q.id === rejectingQuestionId ? { ...q, status: 'rejected' } : q));
+      setRejectingQuestionId(null);
+      setRejectReason("");
     } catch (err) {
-      console.error("Failed to delete:", err);
+      console.error("Failed to reject:", err);
     }
   };
 
@@ -265,6 +288,13 @@ export default function AdminQuestions() {
                         <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">
                           {q.text}
                         </p>
+                        {q.tags && q.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                                {q.tags.map(t => (
+                                    <span key={t} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">{t}</span>
+                                ))}
+                            </div>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-4 text-sm">
                         {/* Highlight if it's an official Admin PYQ */}
@@ -277,6 +307,21 @@ export default function AdminQuestions() {
                         <td className="whitespace-nowrap px-4 py-4 text-right text-sm font-medium">
                           <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-50 sm:group-hover:opacity-100 transition-opacity">
                             <button
+                              onClick={() => {
+                                  setEditingQuestion(q);
+                                  setEditFormData({
+                                      text: q.text,
+                                      tagsInput: (q.tags || []).join(", "),
+                                      difficulty: q.difficulty || "Medium"
+                                  });
+                              }}
+                              className="p-1.5 rounded text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                              title="Edit question text before approving"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+
+                            <button
                               onClick={() => handleApprove(q.id)}
                               className="flex items-center gap-1 rounded-md px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40 transition-colors border border-emerald-200 dark:border-emerald-800/30"
                               title="Approve and publish"
@@ -286,7 +331,7 @@ export default function AdminQuestions() {
                             </button>
 
                             <button
-                              onClick={() => handleReject(q.id)}
+                              onClick={() => setRejectingQuestionId(q.id)}
                               className="flex items-center gap-1 rounded-md px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors border border-red-200 dark:border-red-800/30"
                               title="Reject and remove"
                             >
@@ -302,6 +347,89 @@ export default function AdminQuestions() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* --- EDIT AND APPROVE MODAL --- */}
+      {editingQuestion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl w-full max-w-2xl p-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Edit & Approve Question</h3>
+                    <button onClick={() => setEditingQuestion(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                        <X size={20} />
+                    </button>
+                </div>
+                <form onSubmit={submitEditAndApprove} className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1.5">Question Text</label>
+                        <textarea
+                            value={editFormData.text}
+                            onChange={(e) => setEditFormData({...editFormData, text: e.target.value})}
+                            required rows={4}
+                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white resize-none"
+                        ></textarea>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1.5">Difficulty</label>
+                            <select
+                                value={editFormData.difficulty}
+                                onChange={(e) => setEditFormData({...editFormData, difficulty: e.target.value})}
+                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                            >
+                                <option value="Easy">Easy</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1.5">Tags (comma-separated)</label>
+                            <input
+                                type="text"
+                                value={editFormData.tagsInput}
+                                onChange={(e) => setEditFormData({...editFormData, tagsInput: e.target.value})}
+                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                            />
+                        </div>
+                    </div>
+                    <div className="mt-6 flex justify-end gap-3">
+                        <button type="button" onClick={() => setEditingQuestion(null)} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">Cancel</button>
+                        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1.5">
+                            <Check size={16} /> Approve Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      )}
+
+      {/* --- REJECT REASON MODAL --- */}
+      {rejectingQuestionId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl w-full max-w-md p-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold text-red-600 dark:text-red-400">Reject Question</h3>
+                    <button onClick={() => { setRejectingQuestionId(null); setRejectReason(""); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                        <X size={20} />
+                    </button>
+                </div>
+                <form onSubmit={handleRejectSubmit}>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Please provide a reason for rejecting this submission. The student will be notified.</label>
+                    <textarea
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        required rows={3} placeholder="e.g., Incomplete description, inappropriate content..."
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-red-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white resize-none"
+                    ></textarea>
+                    <div className="mt-6 flex justify-end gap-3">
+                        <button type="button" onClick={() => { setRejectingQuestionId(null); setRejectReason(""); }} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">Cancel</button>
+                        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg">
+                            Reject & Notify
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
       )}
     </div>

@@ -17,9 +17,11 @@ import Practice from "./pages/student/Practice";
 import PlacementInsights from "./pages/student/PlacementInsights";
 
 // Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import StudentManagement from "./pages/admin/StudentManagement";
 import CompanyAdd from "./pages/admin/CompanyAdd";
 import AdminQuestions from "./pages/admin/Questions";
+import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminProfile from "./pages/admin/AdminProfile";
 
 // Recruiter Pages
@@ -83,9 +85,11 @@ function AppRoutes() {
         <Route path="student/practice" element={<Practice />} />
         <Route path="student/placement-insights" element={<PlacementInsights />} />
         {/* Admin Routes */}
+        <Route path="admin/dashboard" element={<AdminDashboard />} />
         <Route path="admin/students" element={<StudentManagement />} />
         <Route path="admin/company-add" element={<CompanyAdd />} />
         <Route path="admin/questions" element={<AdminQuestions />} />
+        <Route path="admin/notifications" element={<AdminNotifications />} />
         <Route path="admin/profile" element={<AdminProfile />} />
         {/* Recruiter Routes */}
         <Route path="recruiter" element={<RecruiterDashboard />} />

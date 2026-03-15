@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
-import { fetchAllStudents } from "../../services/adminApi";
-import { ArrowUpDown, X, FileText, Code2, Filter, Loader2 } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { fetchAllStudents, updateStudentStatus, updateStudentResume } from "../../services/adminApi";
+import { ArrowUpDown, X, FileText, Code2, Filter, Loader2, CheckCircle, AlertCircle, Save, CheckSquare, Square, Download, Bell, RefreshCw } from "lucide-react";
 
 // Custom weights for specific columns
 const BRANCH_WEIGHTS = {
@@ -55,6 +55,91 @@ export default function StudentManagement() {
 
   // Modal State
   const [selectedStudent, setSelectedStudent] = useState(null);
+
+  // Status Modal State
+  const [statusModal, setStatusModal] = useState(null); // { student, newStatus: 'Placed' }
+  const [placedCompany, setPlacedCompany] = useState("");
+  const [placedOfferUrl, setPlacedOfferUrl] = useState("");
+
+  // Resume Review State
+  const [resumeReview, setResumeReview] = useState({ isVerified: false, comment: "" });
+  const [isUpdatingResume, setIsUpdatingResume] = useState(false);
+
+  // Bulk Selection State
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+
+  useEffect(() => {
+      if (selectedStudent) {
+          setResumeReview({
+              isVerified: selectedStudent.isResumeVerified || false,
+              comment: selectedStudent.adminResumeComment || ""
+          });
+      }
+  }, [selectedStudent]);
+
+  const handleStatusChange = async (student, newStatus) => {
+    if (newStatus === "Placed") {
+        setStatusModal({ student, newStatus });
+        setPlacedCompany(student.companyName || "");
+        setPlacedOfferUrl(student.offerLetterUrl || "");
+        return;
+    }
+    
+    // Direct update for Unplaced / Opted-out
+    try {
+        await updateStudentStatus(student.id, { status: newStatus });
+        setStudents(prev => prev.map(s => s.id === student.id ? { ...s, status: newStatus, companyName: null, offerLetterUrl: null } : s));
+    } catch (err) {
+        console.error("Failed to update status", err);
+        alert("Failed to update status");
+    }
+  };
+
+  const handleSavePlacedStatus = async () => {
+      if (!statusModal) return;
+      try {
+          await updateStudentStatus(statusModal.student.id, { 
+              status: "Placed", 
+              companyName: placedCompany, 
+              offerLetterUrl: placedOfferUrl 
+          });
+          setStudents(prev => prev.map(s => s.id === statusModal.student.id ? { 
+              ...s, 
+              status: "Placed", 
+              companyName: placedCompany, 
+              offerLetterUrl: placedOfferUrl 
+          } : s));
+          setStatusModal(null);
+      } catch (err) {
+          console.error("Failed to update status", err);
+          alert("Failed to update status");
+      }
+  };
+
+  const handleSaveResumeReview = async () => {
+      if (!selectedStudent) return;
+      setIsUpdatingResume(true);
+      try {
+          await updateStudentResume(selectedStudent.id, {
+              isResumeVerified: resumeReview.isVerified,
+              adminResumeComment: resumeReview.comment
+          });
+          setStudents(prev => prev.map(s => s.id === selectedStudent.id ? {
+              ...s,
+              isResumeVerified: resumeReview.isVerified,
+              adminResumeComment: resumeReview.comment
+          } : s));
+          setSelectedStudent(prev => ({ ...prev, isResumeVerified: resumeReview.isVerified, adminResumeComment: resumeReview.comment }));
+          alert("Resume review saved successfully.");
+      } catch (err) {
+          console.error("Failed to save resume review", err);
+          alert("Failed to save resume review.");
+      } finally {
+          setIsUpdatingResume(false);
+      }
+  };
 
   // Fetch students from API on mount
   useEffect(() => {
@@ -162,6 +247,55 @@ export default function StudentManagement() {
     setYearFilter("All");
     setMinCgpa("");
     setMinRating("");
+  };
+
+  // --- Bulk-Action Handlers ---
+  const toggleSelectStudent = useCallback((id, e) => {
+    e.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === sortedStudents.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedStudents.map(s => s.id)));
+    }
+  }, [sortedStudents, selectedIds.size]);
+
+  const handleBulkStatusChange = async () => {
+    if (!bulkStatus || selectedIds.size === 0) return;
+    setIsBulkUpdating(true);
+    try {
+      const promises = [...selectedIds].map(id => updateStudentStatus(id, { status: bulkStatus }));
+      await Promise.all(promises);
+      setStudents(prev => prev.map(s => selectedIds.has(s.id) ? { ...s, status: bulkStatus } : s));
+      setSelectedIds(new Set());
+      setBulkStatus("");
+    } catch (err) {
+      console.error("Bulk update failed", err);
+      alert("Some updates failed. Please try again.");
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    const selected = students.filter(s => selectedIds.has(s.id));
+    const header = "Name,Email,Branch,Year,CGPA,Status,Company";
+    const rows = selected.map(s => `"${s.name}","${s.email || ""}","${s.branch}",${s.year || ""},${s.cgpa || ""},"${s.status || ""}","${s.companyName || ""}"`);
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `students_export_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -282,7 +416,11 @@ export default function StudentManagement() {
             <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
               <thead className="bg-slate-50 dark:bg-slate-800/50">
                 <tr>
-                  {/* ADDED 'year' to the columns array */}
+                  <th className="px-4 py-3 w-10">
+                    <button onClick={toggleSelectAll} className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                      {selectedIds.size > 0 && selectedIds.size === sortedStudents.length ? <CheckSquare size={18} /> : <Square size={18} />}
+                    </button>
+                  </th>
                   {["name", "branch", "year", "cgpa", "codeforcesRating", "status"].map((col) => (
                     <th
                       key={col}
@@ -305,8 +443,13 @@ export default function StudentManagement() {
                   <tr
                     key={s.id}
                     onClick={() => handleRowClick(s)}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                    className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group ${selectedIds.has(s.id) ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}
                   >
+                    <td className="whitespace-nowrap px-4 py-3 w-10">
+                      <button onClick={(e) => toggleSelectStudent(s.id, e)} className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                        {selectedIds.has(s.id) ? <CheckSquare size={18} className="text-indigo-600 dark:text-indigo-400" /> : <Square size={18} />}
+                      </button>
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900 dark:text-white flex items-center gap-2">
                       {s.name}
                       <FileText size={14} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" title="Click row to view resume" />
@@ -345,9 +488,26 @@ export default function StudentManagement() {
                       )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusStyles(s.status)}`}>
-                        {s.status}
-                      </span>
+                      <div className="flex flex-col items-start gap-1">
+                        <select
+                          value={s.status || "Unplaced"}
+                          onChange={(e) => { e.stopPropagation(); handleStatusChange(s, e.target.value); }}
+                          onClick={(e) => e.stopPropagation()}
+                          className={`text-xs font-medium bg-slate-50 border border-slate-200 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300`}
+                        >
+                            <option value="Unplaced">Unplaced</option>
+                            <option value="Eligible">Eligible</option>
+                            <option value="Shortlisted">Shortlisted</option>
+                            <option value="Interviewing">Interviewing</option>
+                            <option value="Placed">Placed</option>
+                            <option value="Opted-out">Opted-out</option>
+                        </select>
+                        {s.status === "Placed" && s.companyName && (
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 max-w-[120px] truncate" title={s.companyName}>
+                                @ {s.companyName}
+                            </span>
+                        )}
+                      </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium">
                       <button
@@ -381,6 +541,83 @@ export default function StudentManagement() {
         </div>
       )}
 
+      {/* --- BULK ACTION TOOLBAR (floating) --- */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl shadow-2xl px-6 py-3.5 flex items-center gap-4 animate-in slide-in-from-bottom-4 fade-in duration-300">
+            <span className="text-sm font-semibold">
+                {selectedIds.size} student{selectedIds.size > 1 ? "s" : ""} selected
+            </span>
+            <div className="h-5 w-px bg-slate-600 dark:bg-slate-300"></div>
+
+            {/* Bulk Status Change */}
+            <div className="flex items-center gap-2">
+                <select
+                    value={bulkStatus}
+                    onChange={e => setBulkStatus(e.target.value)}
+                    className="bg-slate-800 dark:bg-slate-100 border border-slate-600 dark:border-slate-300 rounded-md px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                >
+                    <option value="">Set Status...</option>
+                    <option value="Eligible">Eligible</option>
+                    <option value="Shortlisted">Shortlisted</option>
+                    <option value="Interviewing">Interviewing</option>
+                    <option value="Placed">Placed</option>
+                    <option value="Opted-out">Opted-out</option>
+                </select>
+                <button
+                    onClick={handleBulkStatusChange}
+                    disabled={!bulkStatus || isBulkUpdating}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 rounded-md text-xs font-semibold transition-colors"
+                >
+                    {isBulkUpdating ? <RefreshCw size={13} className="animate-spin" /> : <CheckCircle size={13} />}
+                    Apply
+                </button>
+            </div>
+
+            <div className="h-5 w-px bg-slate-600 dark:bg-slate-300"></div>
+
+            {/* Export */}
+            <button
+                onClick={handleExportCSV}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-md text-xs font-semibold transition-colors"
+            >
+                <Download size={13} /> Export CSV
+            </button>
+
+            {/* Deselect */}
+            <button
+                onClick={() => setSelectedIds(new Set())}
+                className="p-1.5 rounded-full hover:bg-slate-700 dark:hover:bg-slate-200 transition-colors ml-2"
+                title="Clear selection"
+            >
+                <X size={16} />
+            </button>
+        </div>
+      )}
+
+      {/* --- STATUS UPDATE MODAL --- */}
+      {statusModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl w-full max-w-md p-6">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Mark as Placed</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">You are marking <strong>{statusModal.student.name}</strong> as Placed. Please provide the details below.</p>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Company Name</label>
+                        <input type="text" value={placedCompany} onChange={e => setPlacedCompany(e.target.value)} className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="e.g. Google" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Offer Letter Link (Optional)</label>
+                        <input type="url" value={placedOfferUrl} onChange={e => setPlacedOfferUrl(e.target.value)} className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="https://..." />
+                    </div>
+                </div>
+                <div className="mt-6 flex justify-end gap-3">
+                    <button onClick={() => setStatusModal(null)} className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Cancel</button>
+                    <button onClick={handleSavePlacedStatus} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">Save Details</button>
+                </div>
+            </div>
+        </div>
+      )}
+
       {/* --- QUICK RESUME PREVIEW MODAL --- */}
       {selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -405,20 +642,65 @@ export default function StudentManagement() {
               </button>
             </div>
 
-            {/* Modal Body (Resume Viewer) */}
-            <div className="flex-1 bg-slate-100 dark:bg-slate-950 p-4 relative">
-              {selectedStudent.resumeUrl ? (
-                <iframe
-                  src={selectedStudent.resumeUrl}
-                  className="w-full h-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white"
-                  title={`${selectedStudent.name} Resume`}
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
-                  <FileText size={48} className="mb-4 opacity-20" />
-                  <p>No resume uploaded for this student yet.</p>
+            {/* Modal Body (Resume Viewer with Sidebar) */}
+            <div className="flex-1 flex overflow-hidden">
+                {/* Resume Preview */}
+                <div className="flex-1 bg-slate-100 dark:bg-slate-950 p-4 relative overflow-hidden">
+                {selectedStudent.resumeUrl ? (
+                    <iframe
+                    src={selectedStudent.resumeUrl}
+                    className="w-full h-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white"
+                    title={`${selectedStudent.name} Resume`}
+                    />
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
+                    <FileText size={48} className="mb-4 opacity-20" />
+                    <p>No resume uploaded for this student yet.</p>
+                    </div>
+                )}
                 </div>
-              )}
+
+                {/* Admin Review Sidebar */}
+                <div className="w-80 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 flex flex-col items-stretch overflow-y-auto">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">Admin Review</h3>
+                    
+                    <div className="mb-6 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                checked={resumeReview.isVerified}
+                                onChange={(e) => setResumeReview(prev => ({...prev, isVerified: e.target.checked}))}
+                                className="mt-1 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:border-slate-600"
+                            />
+                            <div>
+                                <span className={`text-sm font-medium flex items-center gap-1.5 ${resumeReview.isVerified ? 'text-green-600 dark:text-green-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                                    {resumeReview.isVerified ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+                                    {resumeReview.isVerified ? "Resume Verified" : "Needs Revision"}
+                                </span>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Check this to approve the resume for recruiter view.</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div className="mb-6 flex-1 flex flex-col">
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase">Review Comments</label>
+                        <textarea 
+                            value={resumeReview.comment}
+                            onChange={(e) => setResumeReview(prev => ({...prev, comment: e.target.value}))}
+                            placeholder="Add comments or revision notes for the student..."
+                            className="w-full flex-1 min-h-[120px] rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white resize-none"
+                        ></textarea>
+                    </div>
+
+                    <button 
+                        onClick={handleSaveResumeReview}
+                        disabled={isUpdatingResume}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                        {isUpdatingResume ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                        Save Review
+                    </button>
+                </div>
             </div>
           </div>
         </div>
