@@ -136,58 +136,7 @@ export default function StudentHome() {
   const shortlisted = applications.filter((a) => a.status === "Shortlisted" || a.status === "Offered").length;
   const pending = applications.filter((a) => !["Offered", "Rejected", "Final Decision"].includes(a.status)).length;
 
-  // ── ML-powered recommended companies sorting ──────────────────
-  const [mlRecommendations, setMlRecommendations] = useState([]);
 
-  const fetchMlRecommendations = useCallback(async () => {
-    if (!user?.uid) return;
-    try {
-      // Fetch real coding stats
-      const statsRes = await fetch(`${API_BASE_URL}/api/student/coding-stats/${user.uid}`);
-      const statsData = await statsRes.json();
-      if (!statsData.success || !statsData.platforms) return;
-
-      const leetcode = statsData.platforms.find(p => p.id === "leetcode");
-      const codeforces = statsData.platforms.find(p => p.id === "codeforces");
-      const github = statsData.platforms.find(p => p.id === "github");
-
-      const dsaScore = Math.min(100, ((typeof leetcode?.solved === "number" ? leetcode.solved : 0) / 500) * 100);
-      const cpScore = Math.min(100, ((typeof codeforces?.rating === "number" ? codeforces.rating : 0) / 2400) * 100);
-      const devScore = Math.min(100, ((typeof github?.repos === "number" ? github.repos : 0) / 50) * 100);
-
-      // Fetch ML recommendations
-      const mlRes = await fetch(`${API_BASE_URL}/api/student/recommendations`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentProfile: [dsaScore, devScore, cpScore] }),
-      });
-      const mlData = await mlRes.json();
-      setMlRecommendations(mlData.recommendations || []);
-    } catch (err) {
-      console.error("ML recommendations fetch error:", err);
-    }
-  }, [user?.uid]);
-
-  useEffect(() => { fetchMlRecommendations(); }, [fetchMlRecommendations]);
-
-  // Sort companies by ML confidence — matched ones first, then rest
-  const sortedRecommendations = (() => {
-    if (mlRecommendations.length === 0) return companies.slice(0, 3);
-
-    const mlMap = {};
-    mlRecommendations.forEach(r => {
-      mlMap[r.placedCompany.toLowerCase()] = r.confidenceScore;
-    });
-
-    // Score each company: ML confidence if name matches, else 0
-    const scored = companies.map(c => ({
-      ...c,
-      score: mlMap[c.name?.toLowerCase()] || 0,
-    }));
-
-    scored.sort((a, b) => b.score - a.score);
-    return scored.slice(0, 3);
-  })();
 
   // Build recommended questions based on applied companies
   const appliedCompanyNames = [...new Set(applications.map(a => a.company).filter(Boolean))];
@@ -298,36 +247,6 @@ export default function StudentHome() {
               </div>
             </section>
 
-            {/* Recommended Drives (ML-sorted) */}
-            <section>
-              <div className="mb-4 flex items-center gap-2">
-                <TrendingUp size={20} className="text-slate-500 dark:text-slate-400" />
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Recommended Drives</h2>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {sortedRecommendations.map((c) => (
-                  <Link
-                    key={c.id}
-                    to={`/student/company/${c.id}`}
-                    className="group relative flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-blue-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-500"
-                  >
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-bold text-slate-900 dark:text-white">{c.name}</h3>
-                        <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:bg-slate-700 dark:text-slate-300">{c.type || "FTE"}</span>
-                      </div>
-                      <div className="mt-3 space-y-1 text-xs text-slate-500 dark:text-slate-400">
-                        <p>Match Score: <span className="font-medium text-green-600 dark:text-green-400">{c.score}%</span></p>
-                        <p>CGPA Criteria: <span className="font-medium text-slate-700 dark:text-slate-300">{c.cgpaCutoff}+</span></p>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between border-t border-slate-50 pt-3 text-sm font-medium text-blue-600 group-hover:text-blue-700 dark:border-slate-700 dark:text-blue-400">
-                      View Details <ChevronRight size={16} />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
           </div>
 
           {/* Right Sidebar */}

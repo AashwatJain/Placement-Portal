@@ -62,7 +62,7 @@ router.post("/solved-questions/:uid", dataController.toggleSolvedQuestion);
 // 10. LeetCode Auto-Sync
 router.post("/sync-leetcode/:uid", dataController.syncLeetCodeSolved);
 
-// 11. ML-powered Placement Recommendations (proxied to Python mlServer on port 5000)
+// 11. ML-powered Placement Recommendations (proxied to Python mlServer on port 5005)
 import recommendationController from "../controllers/recommendationController.js";
 router.post("/recommendations",  recommendationController.getRecommendations);
 router.post("/company-chances",  recommendationController.getCompanyChances);

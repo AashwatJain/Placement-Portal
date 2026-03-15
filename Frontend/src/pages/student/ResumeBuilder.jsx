@@ -28,6 +28,13 @@ export default function ResumeBuilder() {
 
   const [resumes, setResumes] = useState([]);
 
+  // ATS Match state
+  const [atsFile, setAtsFile] = useState(null);
+  const [atsScore, setAtsScore] = useState(null);
+  const [isCalculatingAts, setIsCalculatingAts] = useState(false);
+  const [atsError, setAtsError] = useState(null);
+  const atsFileInputRef = useRef(null);
+
   useEffect(() => {
     let allResumes = [];
 
@@ -118,6 +125,34 @@ export default function ResumeBuilder() {
 
   const isPrimary = (resumeId) => user?.primaryResumeId === resumeId;
 
+  // ── ATS Match handler ──────────────────────────────────────────────────────
+  const handleCalculateAts = async () => {
+    if (!atsFile) return;
+    setIsCalculatingAts(true);
+    setAtsError(null);
+    setAtsScore(null);
+    try {
+      const formData = new FormData();
+      formData.append("resumeFile", atsFile);
+      const response = await axios.post(`${API_BASE_URL}/api/ats/calculate`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 20000,
+      });
+      setAtsScore(response.data.atsScore ?? null);
+    } catch (err) {
+      console.error("ATS scoring error:", err);
+      setAtsError(err.response?.data?.error || "Failed to calculate ATS score. Ensure ML server is running.");
+    } finally {
+      setIsCalculatingAts(false);
+    }
+  };
+
+  const getAtsScoreColor = (score) => {
+    if (score > 75) return { text: "text-emerald-600 dark:text-emerald-400", bar: "from-emerald-400 to-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800", label: "Excellent Match", tip: "Your resume is packed with strong keywords. Focus on interview prep!" };
+    if (score >= 50) return { text: "text-amber-600 dark:text-amber-400", bar: "from-amber-400 to-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800", label: "Moderate Match", tip: "Add more relevant skills like DSA, projects, or backend technologies to boost your score." };
+    return { text: "text-rose-600 dark:text-rose-400", bar: "from-rose-400 to-rose-600", bg: "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800", label: "Needs Work", tip: "Add competitive programming achievements (ICPC, Codeforces), projects, databases, and leadership roles." };
+  };
+
   return (
     <div className="mx-auto max-w-5xl space-y-8 relative">
 
@@ -152,6 +187,103 @@ export default function ResumeBuilder() {
         </h3>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">PDF, DOCX up to 5MB</p>
       </div>
+
+      {/* ── ATS Match Section ─────────────────────────────────────────── */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-4 flex items-center gap-2">
+          <BarChart size={20} className="text-indigo-600 dark:text-indigo-400" />
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">ATS Resume Match</h2>
+          <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400">AI Powered</span>
+        </div>
+        <p className="mb-5 text-sm text-slate-500 dark:text-slate-400">
+          Upload your resume PDF and we'll score it against an ideal placement-ready benchmark — covering DSA, CP, ICPC, backend, databases, projects, leadership & more.
+        </p>
+
+        {/* File picker */}
+        <div className="mb-5">
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Resume PDF</label>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => atsFileInputRef.current?.click()}
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              <UploadCloud size={16} />
+              {atsFile ? "Change File" : "Choose PDF"}
+            </button>
+            {atsFile && (
+              <span className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
+                <FileText size={14} className="text-indigo-500" />
+                <span className="max-w-[200px] truncate font-medium">{atsFile.name}</span>
+              </span>
+            )}
+            <input
+              ref={atsFileInputRef}
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={(e) => { setAtsFile(e.target.files[0] || null); setAtsScore(null); setAtsError(null); }}
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleCalculateAts}
+          disabled={isCalculatingAts || !atsFile}
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+        >
+          {isCalculatingAts ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Analyzing...
+            </>
+          ) : (
+            <>
+              <BarChart size={16} />
+              Calculate ATS Match
+            </>
+          )}
+        </button>
+
+        {/* Error */}
+        {atsError && (
+          <div className="mt-4 flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-400">
+            <AlertCircle size={16} className="shrink-0" />
+            {atsError}
+          </div>
+        )}
+
+        {/* Score Result */}
+        {atsScore !== null && !isCalculatingAts && (() => {
+          const scoreStyle = getAtsScoreColor(atsScore);
+          return (
+            <div className={`mt-5 rounded-xl border p-5 ${scoreStyle.bg}`}>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">ATS Compatibility Score</p>
+                  <p className={`mt-0.5 text-sm font-bold ${scoreStyle.text}`}>{scoreStyle.label}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-4xl font-black tabular-nums ${scoreStyle.text}`}>
+                    {atsScore}<span className="text-lg text-slate-400">%</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                <div
+                  className={`h-full rounded-full bg-gradient-to-r ${scoreStyle.bar} transition-all duration-1000 ease-out`}
+                  style={{ width: `${atsScore}%` }}
+                />
+              </div>
+
+              <p className="mt-3 rounded-lg bg-white/60 px-4 py-2.5 text-xs font-medium text-slate-600 dark:bg-slate-800/60 dark:text-slate-400">
+                💡 {scoreStyle.tip}
+              </p>
+            </div>
+          );
+        })()}
+      </section>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pb-24">
         {resumes.length === 0 ? (
