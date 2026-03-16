@@ -20,6 +20,7 @@ export const getAllStudents = async (req, res) => {
                 id: uid,
                 uid,
                 ...userData,
+                name: userData.name || userData.fullName || "Unknown",
             }))
             .filter(u => u.role === "student"); // Only return students
 
@@ -261,6 +262,19 @@ export const updateJaf = async (req, res) => {
     }
 };
 
+// 8b. DELETE a JAF/Company
+export const deleteJaf = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const firestore = admin.firestore();
+        await firestore.collection("opportunities").doc(id).delete();
+        res.status(200).json({ message: "JAF deleted successfully", id });
+    } catch (error) {
+        console.error("Error deleting JAF:", error);
+        res.status(500).json({ error: "Failed to delete JAF" });
+    }
+};
+
 // ── Admin Dashboard & Analytics ─────────
 
 // 9. GET Placement Overview Stats
@@ -351,3 +365,90 @@ export const getNotifications = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch notifications" });
     }
 };
+
+// ── 12. Update a student's application timeline step ─────────
+// PUT /admin/students/:id/applications/:oppId/timeline
+export const updateStudentApplication = async (req, res) => {
+    try {
+        const { id, oppId } = req.params;
+        const { stepIndex, done, date, newStatus } = req.body;
+
+        const db = admin.database();
+        const appRef = db.ref(`users/${id}/applications/${oppId}`);
+        const appSnap = await appRef.once("value");
+
+        if (!appSnap.exists()) {
+            return res.status(404).json({ error: "Application not found" });
+        }
+
+        const appData = appSnap.val();
+        const timeline = appData.timeline || [];
+
+        // Update timeline step if stepIndex provided
+        // Cascade: marking a step done → all previous steps also done
+        //          unmarking a step → all later steps also unmarked
+        if (stepIndex !== undefined && stepIndex >= 0 && stepIndex < timeline.length) {
+            if (done) {
+                // Mark this step + all previous steps as done
+                const today = date || new Date().toISOString().slice(0, 10);
+                for (let i = 0; i <= stepIndex; i++) {
+                    timeline[i].done = true;
+                    if (!timeline[i].date) timeline[i].date = today;
+                }
+            } else {
+                // Unmark this step + all later steps
+                for (let i = stepIndex; i < timeline.length; i++) {
+                    timeline[i].done = false;
+                }
+            }
+        }
+
+        // Determine application status
+        const status = newStatus || appData.status;
+
+        await appRef.update({ timeline, status });
+
+        // Create a notification for the student
+        const stepName = stepIndex !== undefined ? timeline[stepIndex]?.step : status;
+        const company = appData.company || "a company";
+
+        // Professional, student-friendly notification messages
+        const stepMessages = {
+            "Applied":           `Your application for ${company} has been received and confirmed by the placement cell.`,
+            "Shortlisted":       `Great news! You've been shortlisted for ${company}. Keep an eye out for next steps.`,
+            "Online Assessment": `The Online Assessment round for ${company} has been updated. Please check your timeline for details.`,
+            "OA/Assessment":     `The OA/Assessment round for ${company} has been updated. Please check your timeline for details.`,
+            "OA Result":         `OA results for ${company} are out! Check your application timeline for details.`,
+            "Interview":         `Interview update for ${company} — please check your application timeline for schedule details.`,
+            "Interview Result":  `Interview results for ${company} have been updated. Check your timeline now!`,
+            "Final Decision":    `🎉 Final decision for ${company} is in! Check your application for the outcome.`,
+            "Decision Pending":  `Your application for ${company} is under final review. Hang tight!`,
+            "Rejected":          `We're sorry — your application for ${company} was not shortlisted this time. Don't lose heart, keep preparing!`,
+            "Offered":           `🎉 Congratulations! You've received an offer from ${company}! Check your application for details.`,
+        };
+
+        let notifText;
+        if (done && stepMessages[stepName]) {
+            notifText = stepMessages[stepName];
+        } else if (done) {
+            notifText = `Update from Placement Cell: "${stepName}" stage for ${company} has been completed.`;
+        } else {
+            notifText = `Placement Cell has revised the "${stepName}" stage for your ${company} application. Please review your timeline.`;
+        }
+
+        const firestore = admin.firestore();
+        await firestore.collection("notifications").add({
+            text: notifText,
+            type: "shortlist",
+            target: id,
+            read: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        res.status(200).json({ message: "Application updated & student notified", timeline, status });
+    } catch (error) {
+        console.error("Error updating student application:", error);
+        res.status(500).json({ error: "Failed to update application" });
+    }
+};
+

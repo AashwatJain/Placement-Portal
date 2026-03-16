@@ -8,6 +8,7 @@ router.get("/students", adminController.getAllStudents);
 router.get("/students/filter", adminController.getStudentsByFilter);
 router.put("/students/:id/status", adminController.updateStudentStatus);
 router.put("/students/:id/resume", adminController.updateStudentResume);
+router.put("/students/:id/applications/:oppId/timeline", adminController.updateStudentApplication);
 
 // 2. Question Bank CRUD
 router.get("/questions", adminController.getQuestions);
@@ -19,6 +20,7 @@ router.post("/questions/:id/reject", adminController.rejectQuestion);
 router.get("/jafs", adminController.getJafs);
 router.post("/jafs", adminController.createJaf);
 router.put("/jafs/:id", adminController.updateJaf);
+router.delete("/jafs/:id", adminController.deleteJaf);
 
 // 4. Admin Dashboard
 router.get("/stats/placement-overview", adminController.getPlacementOverview);

@@ -1,6 +1,6 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Building2, Edit, Trash2, X, Filter, Users, Upload, CheckSquare, Send, Loader2 } from "lucide-react";
-import { fetchFilteredStudents } from "../../services/adminApi";
+import { fetchJafs, createJaf, updateJaf, deleteJaf, fetchFilteredStudents } from "../../services/adminApi";
 
 const BRANCH_OPTIONS = ["CSE", "IT", "ECE", "EE", "ME", "CE"];
 
@@ -11,25 +11,21 @@ const initialForm = {
   cgpaCutoff: "",
   type: "On-campus",
   rounds: [],
-  allowedBranches: [], // Branch whitelist
-  noBacklogs: false, // Backlog filter
+  allowedBranches: [],
+  noBacklogs: false,
 };
-
-const initialCompanies = [
-  { id: 1, name: "Google", offerType: "Placement", roles: "SDE", cgpaCutoff: "8.0", type: "On-campus", rounds: [{ name: "Aptitude", date: "2024-10-15", venue: "Lab 1" }], allowedBranches: ["CSE", "IT"], noBacklogs: true },
-  { id: 2, name: "Microsoft", offerType: "Internship", roles: "Data Science", cgpaCutoff: "8.5", type: "On-campus", rounds: [], allowedBranches: ["CSE", "IT", "ECE"], noBacklogs: false },
-  { id: 3, name: "De Shaw", offerType: "Intern + PPO", roles: "QAE", cgpaCutoff: "8.0", type: "On-campus", rounds: [], allowedBranches: [], noBacklogs: true },
-];
 
 export default function CompanyAdd() {
   const [form, setForm] = useState(initialForm);
-  const [companies, setCompanies] = useState(initialCompanies);
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [editId, setEditId] = useState(null);
 
   // Shortlist Manager State
-  const [shortlistModal, setShortlistModal] = useState(null); // stores the company object being managed
-  const [shortlistTab, setShortlistTab] = useState("auto"); // "auto" or "csv"
+  const [shortlistModal, setShortlistModal] = useState(null);
+  const [shortlistTab, setShortlistTab] = useState("auto");
   const [autoFilter, setAutoFilter] = useState({ branch: "", minCgpa: "" });
   const [shortlistCandidates, setShortlistCandidates] = useState([]);
   const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
@@ -41,27 +37,49 @@ export default function CompanyAdd() {
   const [driveTypeFilter, setDriveTypeFilter] = useState("All");
   const [cgpaFilter, setCgpaFilter] = useState("All");
 
+  // Load companies from backend on mount
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await fetchJafs();
+        setCompanies(data);
+      } catch (err) {
+        console.error("Failed to fetch companies:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
   const update = (key, value) => {
     setForm((f) => ({ ...f, [key]: value }));
     setSaved(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (editId) {
-      setCompanies(companies.map(company => 
-        company.id === editId ? { ...company, ...form } : company
-      ));
-    } else {
-      const newCompany = { id: Date.now(), ...form };
-      setCompanies([...companies, newCompany]);
-    }
+    setSaving(true);
 
-    setSaved(true);
-    setForm(initialForm);
-    setEditId(null);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      if (editId) {
+        await updateJaf(editId, form);
+        setCompanies(companies.map(c => c.id === editId ? { ...c, ...form } : c));
+      } else {
+        const result = await createJaf(form);
+        setCompanies([{ id: result.id, ...form }, ...companies]);
+      }
+
+      setSaved(true);
+      setForm(initialForm);
+      setEditId(null);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error("Failed to save company:", err);
+      alert("Failed to save company. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (company) => {
@@ -84,17 +102,24 @@ export default function CompanyAdd() {
     setEditId(null);
   };
 
-  const handleDelete = (id) => {
-    setCompanies(companies.filter(company => company.id !== id));
-    if (editId === id) cancelEdit();
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this company?")) return;
+    try {
+      await deleteJaf(id);
+      setCompanies(companies.filter(c => c.id !== id));
+      if (editId === id) cancelEdit();
+    } catch (err) {
+      console.error("Failed to delete company:", err);
+      alert("Failed to delete company.");
+    }
   };
 
   // --- FILTERING LOGIC ---
   const filteredCompanies = useMemo(() => {
     return companies.filter((c) => {
       const matchesSearch = 
-        c.name.toLowerCase().includes(search.toLowerCase()) || 
-        c.roles.toLowerCase().includes(search.toLowerCase());
+        (c.name || "").toLowerCase().includes(search.toLowerCase()) || 
+        (c.roles || "").toLowerCase().includes(search.toLowerCase());
       
       const matchesOffer = offerTypeFilter === "All" || c.offerType === offerTypeFilter;
       const matchesDrive = driveTypeFilter === "All" || c.type === driveTypeFilter;
@@ -149,7 +174,6 @@ export default function CompanyAdd() {
     reader.onload = (event) => {
         const text = event.target.result;
         const rows = text.split('\n').map(row => row.split(','));
-        // Assume first row is header, look for email or name
         const parsed = rows.slice(1).filter(r => r.length > 1 && r[0].trim() !== '').map((row, i) => ({
             id: `csv-${i}`,
             name: row[0]?.trim() || "Unknown",
@@ -168,12 +192,18 @@ export default function CompanyAdd() {
   };
 
   const saveShortlist = () => {
-      // Here you would typically send the shortlist to the backend
       const selectedCount = shortlistCandidates.filter(c => c.selected).length;
       alert(`Successfully saved shortlist of ${selectedCount} candidates for ${shortlistModal.name}! Notifications will be sent shortly.`);
       setShortlistModal(null);
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-10">
@@ -375,14 +405,15 @@ export default function CompanyAdd() {
         
         <div className="mt-8 flex items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-5">
           <button 
-            type="submit" 
-            className={`rounded-lg px-6 py-2.5 font-bold text-white shadow-lg transition-all active:scale-95 ${
+            type="submit"
+            disabled={saving}
+            className={`rounded-lg px-6 py-2.5 font-bold text-white shadow-lg transition-all active:scale-95 disabled:opacity-60 ${
               editId 
                 ? "bg-amber-500 shadow-amber-500/20 hover:bg-amber-600" 
                 : "bg-indigo-600 shadow-indigo-500/20 hover:bg-indigo-700"
             }`}
           >
-            {editId ? "Update company" : "Add company"}
+            {saving ? "Saving..." : editId ? "Update company" : "Add company"}
           </button>
           
           {editId && (

@@ -31,6 +31,12 @@ export async function updateStudentResume(id, data) {
     return response.data;
 }
 
+export async function updateStudentApplication(studentId, oppId, data) {
+    const response = await axios.put(`${API_BASE_URL}/api/admin/students/${studentId}/applications/${oppId}/timeline`, data);
+    return response.data;
+}
+
+
 // ── Questions (Admin Question Bank) ─────────────────────────
 
 export async function fetchQuestions() {
@@ -71,9 +77,24 @@ export async function updateJaf(id, data) {
     return response.data;
 }
 
+export async function deleteJaf(id) {
+    const response = await axios.delete(`${API_BASE_URL}/api/admin/jafs/${id}`);
+    return response.data;
+}
+
 // ── Admin Dashboard API ─────────
 export async function fetchPlacementOverview() {
     const response = await axios.get(`${API_BASE_URL}/api/admin/stats/placement-overview`);
+    return response.data;
+}
+
+export async function fetchDashboardBranch() {
+    const response = await axios.get(`${API_BASE_URL}/api/admin/dashboard/branch`);
+    return response.data;
+}
+
+export async function fetchDashboardTrend() {
+    const response = await axios.get(`${API_BASE_URL}/api/admin/dashboard/trend`);
     return response.data;
 }
 

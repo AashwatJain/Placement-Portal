@@ -49,13 +49,7 @@ const roleNav = {
   ],
   recruiter: [
     { to: "/recruiter", label: "Candidate Search", icon: Search },
-    { to: "/recruiter/shortlisted", label: "Shortlisted Candidates", icon: Star },
-    { to: "/recruiter/jafs", label: "Job Postings (JAFs)", icon: FileText },
-    { to: "/recruiter/drives", label: "Active Drives", icon: Briefcase },
-    { to: "/recruiter/announcements", label: "Broadcasts", icon: Megaphone },
-    { to: "/recruiter/messages", label: "TnP Connect", icon: MessageSquare },
     { to: "/recruiter/profile", label: "My Profile", icon: User },
-    { to: "/calendar", label: "Calendar", icon: CalendarDays },
   ],
 };
 

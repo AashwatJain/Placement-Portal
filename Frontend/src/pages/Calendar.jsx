@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { onUserApplications } from "../services/firebaseDb";
+import { fetchOpportunities } from "../services/studentApi";
 import {
   ChevronLeft, ChevronRight, Calendar as CalendarIcon,
   Clock, ExternalLink, Loader2, Briefcase, LayoutGrid, Rows3,
@@ -94,12 +95,59 @@ export default function Calendar() {
 
   useEffect(() => {
     if (!user?.uid) { setLoading(false); return; }
+
+    const role = user.role || user.accountType || "student";
+
+    if (role === "admin") {
+      // Admin: fetch all opportunities and show their timelines as events
+      (async () => {
+        try {
+          const opps = await fetchOpportunities();
+          // Convert opportunities into application-like objects for extractEvents
+          const fakeApps = opps.map(opp => {
+            const rounds = opp.rounds || [];
+            const timeline = rounds
+              .map(r => ({
+                step: r.name || r.step || r.round || "Step",
+                date: r.expectedDate || r.date || null,
+                done: r.done || false,
+              }))
+              .filter(r => r.date); // Only include rounds with actual dates
+
+            // Also add the opportunity deadline as an "Application Deadline" event
+            if (opp.deadline) {
+              timeline.unshift({
+                step: "Application Deadline",
+                date: opp.deadline,
+                done: false,
+              });
+            }
+
+            return {
+              id: opp.id,
+              company: opp.name || opp.company || opp.title || "Unknown",
+              role: opp.roles || opp.role || opp.jobTitle || "",
+              status: opp.status || "Active",
+              timeline,
+            };
+          });
+          setApplications(fakeApps);
+        } catch (err) {
+          console.error("Failed to fetch opportunities for calendar:", err);
+        } finally {
+          setLoading(false);
+        }
+      })();
+      return;
+    }
+
+    // Student: personal applications
     const unsub = onUserApplications(user.uid, (apps) => {
       setApplications(apps || []);
       setLoading(false);
     });
     return () => unsub();
-  }, [user?.uid]);
+  }, [user?.uid, user?.role, user?.accountType]);
 
   const events = extractEvents(applications);
 
@@ -406,13 +454,15 @@ export default function Calendar() {
                 <Briefcase size={36} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No events on your calendar yet</p>
                 <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                  Register for opportunities and your timeline will appear here automatically.
+                  {(user?.role || user?.accountType) === "admin"
+                    ? "Add companies with timeline dates and they'll appear here automatically."
+                    : "Register for opportunities and your timeline will appear here automatically."}
                 </p>
                 <Link
-                  to="/student/opportunities"
+                  to={(user?.role || user?.accountType) === "admin" ? "/admin/companies" : "/student/opportunities"}
                   className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition-all shadow-sm"
                 >
-                  <Briefcase size={14} /> Browse Opportunities
+                  <Briefcase size={14} /> {(user?.role || user?.accountType) === "admin" ? "Manage Companies" : "Browse Opportunities"}
                 </Link>
               </div>
             )}
@@ -488,7 +538,7 @@ export default function Calendar() {
                     <div
                       key={ev.id}
                       className="relative flex gap-3 rounded-lg border border-slate-100 p-2.5 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/50 transition cursor-pointer"
-                      onClick={() => navigate("/student/applications")}
+                      onClick={() => navigate((user?.role || user?.accountType) === "admin" ? "/admin/students" : "/student/applications")}
                     >
                       <div className="flex flex-col items-center justify-center rounded bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
                         <span className="text-[9px] font-bold uppercase">{new Date(ev.date + "T00:00:00").toLocaleString("default", { month: "short" })}</span>

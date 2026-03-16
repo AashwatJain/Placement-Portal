@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { fetchAllStudents, updateStudentStatus, updateStudentResume } from "../../services/adminApi";
-import { ArrowUpDown, X, FileText, Code2, Filter, Loader2, CheckCircle, AlertCircle, Save, CheckSquare, Square, Download, Bell, RefreshCw } from "lucide-react";
+import { fetchAllStudents, updateStudentStatus, updateStudentResume, updateStudentApplication } from "../../services/adminApi";
+import { ArrowUpDown, X, FileText, Filter, Loader2, CheckCircle, AlertCircle, Save, CheckSquare, Square, Download, Bell, RefreshCw, Briefcase, ChevronDown, ChevronRight, Clock, Calendar as CalendarIcon } from "lucide-react";
 
 // Custom weights for specific columns
 const BRANCH_WEIGHTS = {
@@ -25,20 +25,12 @@ const getStatusStyles = (status) => {
   if (s === "interviewing") return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400";
   if (s.includes("appli")) return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
   if (s === "eligible") return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+  if (s === "rejected") return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+  if (s === "offered") return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400";
   return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400";
 };
 
-// Helper to color-code Codeforces ratings
-const getRatingColor = (rating) => {
-  if (!rating) return "text-slate-500 dark:text-slate-400"; // Unrated
-  if (rating >= 2400) return "text-red-500 font-bold"; // Grandmaster
-  if (rating >= 2100) return "text-orange-500 font-bold"; // Master
-  if (rating >= 1900) return "text-purple-500 font-bold"; // Candidate Master
-  if (rating >= 1600) return "text-blue-500 font-semibold"; // Expert
-  if (rating >= 1400) return "text-cyan-500 font-semibold"; // Specialist
-  if (rating >= 1200) return "text-green-500 font-medium"; // Pupil
-  return "text-slate-500 font-medium"; // Newbie
-};
+
 
 export default function StudentManagement() {
   const [students, setStudents] = useState([]);
@@ -51,10 +43,13 @@ export default function StudentManagement() {
   const [branchFilter, setBranchFilter] = useState("All");
   const [yearFilter, setYearFilter] = useState("All");
   const [minCgpa, setMinCgpa] = useState("");
-  const [minRating, setMinRating] = useState("");
+
 
   // Modal State
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [modalTab, setModalTab] = useState("applications"); // "applications" | "resume"
+  const [expandedApp, setExpandedApp] = useState(null); // oppId of expanded app
+  const [updatingStep, setUpdatingStep] = useState(null); // "oppId-stepIndex"
 
   // Status Modal State
   const [statusModal, setStatusModal] = useState(null); // { student, newStatus: 'Placed' }
@@ -161,14 +156,14 @@ export default function StudentManagement() {
     return students.filter((s) => {
       // 1. Search Match
       const matchesSearch =
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.branch.toLowerCase().includes(search.toLowerCase());
+        (s.name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (s.branch || "").toLowerCase().includes(search.toLowerCase());
 
       // 2. Status Match
       const matchesStatus = statusFilter === "All" || s.status === statusFilter;
 
       // 3. Branch Match
-      const matchesBranch = branchFilter === "All" || s.branch.toUpperCase() === branchFilter.toUpperCase();
+      const matchesBranch = branchFilter === "All" || (s.branch || "").toUpperCase() === branchFilter.toUpperCase();
 
       // 4. Year Match
       const matchesYear = yearFilter === "All" || String(s.year) === String(yearFilter);
@@ -177,13 +172,11 @@ export default function StudentManagement() {
       const cgpaThreshold = parseFloat(minCgpa);
       const matchesCGPA = isNaN(cgpaThreshold) || s.cgpa >= cgpaThreshold;
 
-      // 6. Custom Min CF Rating Match
-      const ratingThreshold = parseInt(minRating);
-      const matchesRating = isNaN(ratingThreshold) || (s.codeforcesRating && s.codeforcesRating >= ratingThreshold);
 
-      return matchesSearch && matchesStatus && matchesBranch && matchesYear && matchesCGPA && matchesRating;
+
+      return matchesSearch && matchesStatus && matchesBranch && matchesYear && matchesCGPA;
     });
-  }, [search, statusFilter, branchFilter, yearFilter, minCgpa, minRating]);
+  }, [students, search, statusFilter, branchFilter, yearFilter, minCgpa]);
 
   // Handle Custom Sorting
   const sortedStudents = useMemo(() => {
@@ -194,13 +187,6 @@ export default function StudentManagement() {
         let valA = a[sortConfig.key];
         let valB = b[sortConfig.key];
 
-        if (sortConfig.key === "codeforcesRating") {
-          let ratingA = valA || 0;
-          let ratingB = valB || 0;
-          if (ratingA < ratingB) return sortConfig.direction === "asc" ? -1 : 1;
-          if (ratingA > ratingB) return sortConfig.direction === "asc" ? 1 : -1;
-          return 0;
-        }
 
         if (sortConfig.key === "branch") {
           let weightA = BRANCH_WEIGHTS[valA?.toUpperCase()] || 0;
@@ -238,6 +224,76 @@ export default function StudentManagement() {
 
   const handleRowClick = (student) => {
     setSelectedStudent(student);
+    setModalTab("applications");
+    setExpandedApp(null);
+  };
+
+  // --- Application Timeline Step Toggle ---
+  const handleToggleStep = async (oppId, stepIndex, currentDone, timeline) => {
+    if (!selectedStudent) return;
+    const newDone = !currentDone;
+    const today = new Date().toISOString().slice(0, 10);
+    setUpdatingStep(`${oppId}-${stepIndex}`);
+    try {
+      const result = await updateStudentApplication(selectedStudent.id, oppId, {
+        stepIndex,
+        done: newDone,
+        date: newDone ? today : null,
+        newStatus: newDone ? timeline[stepIndex]?.step : undefined,
+      });
+      // Update local state
+      setStudents(prev => prev.map(s => {
+        if (s.id !== selectedStudent.id) return s;
+        const apps = { ...s.applications };
+        if (apps[oppId]) {
+          apps[oppId] = { ...apps[oppId], timeline: result.timeline, status: result.status };
+        }
+        return { ...s, applications: apps };
+      }));
+      setSelectedStudent(prev => {
+        const apps = { ...prev.applications };
+        if (apps[oppId]) {
+          apps[oppId] = { ...apps[oppId], timeline: result.timeline, status: result.status };
+        }
+        return { ...prev, applications: apps };
+      });
+    } catch (err) {
+      console.error("Failed to update step", err);
+      alert("Failed to update application step.");
+    } finally {
+      setUpdatingStep(null);
+    }
+  };
+
+  const handleRejectApplication = async (oppId) => {
+    if (!selectedStudent) return;
+    const currentApp = selectedStudent.applications?.[oppId];
+    const isRejected = currentApp?.status === "Rejected";
+    const targetStatus = isRejected ? "Applied" : "Rejected";
+
+    if (!isRejected && !confirm(`Are you sure you want to reject this application?`)) return;
+    setUpdatingStep(`${oppId}-reject`);
+    try {
+      await updateStudentApplication(selectedStudent.id, oppId, {
+        newStatus: targetStatus,
+      });
+      setStudents(prev => prev.map(s => {
+        if (s.id !== selectedStudent.id) return s;
+        const apps = { ...s.applications };
+        if (apps[oppId]) apps[oppId] = { ...apps[oppId], status: targetStatus };
+        return { ...s, applications: apps };
+      }));
+      setSelectedStudent(prev => {
+        const apps = { ...prev.applications };
+        if (apps[oppId]) apps[oppId] = { ...apps[oppId], status: targetStatus };
+        return { ...prev, applications: apps };
+      });
+    } catch (err) {
+      console.error("Failed to update application", err);
+      alert("Failed to update application.");
+    } finally {
+      setUpdatingStep(null);
+    }
   };
 
   const clearAllFilters = () => {
@@ -246,7 +302,6 @@ export default function StudentManagement() {
     setBranchFilter("All");
     setYearFilter("All");
     setMinCgpa("");
-    setMinRating("");
   };
 
   // --- Bulk-Action Handlers ---
@@ -385,19 +440,6 @@ export default function StudentManagement() {
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Min CF Rating</label>
-            <input
-              type="number"
-              step="100"
-              min="0"
-              max="4000"
-              placeholder="e.g. 1400"
-              value={minRating}
-              onChange={(e) => setMinRating(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
-            />
-          </div>
         </div>
 
       </div>
@@ -421,14 +463,14 @@ export default function StudentManagement() {
                       {selectedIds.size > 0 && selectedIds.size === sortedStudents.length ? <CheckSquare size={18} /> : <Square size={18} />}
                     </button>
                   </th>
-                  {["name", "branch", "year", "cgpa", "codeforcesRating", "status"].map((col) => (
+                  {["name", "branch", "year", "cgpa", "status"].map((col) => (
                     <th
                       key={col}
                       onClick={() => requestSort(col)}
                       className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors select-none"
                     >
                       <div className="flex items-center gap-2">
-                        {col === "codeforcesRating" ? "Coding Profile" : col}
+                        {col}
                         <ArrowUpDown size={12} className={`transition-opacity ${sortConfig.key === col ? 'opacity-100 text-indigo-500' : 'opacity-50'}`} />
                       </div>
                     </th>
@@ -464,29 +506,7 @@ export default function StudentManagement() {
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
                       {s.cgpa}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm">
-                      {/* CODING PROFILE LINK */}
-                      {s.codeforcesHandle ? (
-                        <a
-                          href={`https://codeforces.com/profile/${s.codeforcesHandle}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 p-1 -ml-1 rounded transition-colors group/link"
-                          title={`View ${s.codeforcesHandle} on Codeforces`}
-                        >
-                          <Code2 size={14} className="text-indigo-500 group-hover/link:text-indigo-600 dark:group-hover/link:text-indigo-400" />
-                          <span className={`${getRatingColor(s.codeforcesRating)} group-hover/link:underline`}>
-                            {s.codeforcesRating ? s.codeforcesRating : "Unrated"}
-                          </span>
-                        </a>
-                      ) : (
-                        <div className="flex items-center gap-1.5 p-1 -ml-1">
-                          <Code2 size={14} className="text-slate-400" />
-                          <span className="text-slate-500 dark:text-slate-400">Unrated</span>
-                        </div>
-                      )}
-                    </td>
+
                     <td className="whitespace-nowrap px-4 py-3 text-sm">
                       <div className="flex flex-col items-start gap-1">
                         <select
@@ -618,7 +638,7 @@ export default function StudentManagement() {
         </div>
       )}
 
-      {/* --- QUICK RESUME PREVIEW MODAL --- */}
+      {/* --- STUDENT DETAIL MODAL (TABBED) --- */}
       {selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
@@ -627,12 +647,12 @@ export default function StudentManagement() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  {selectedStudent.name}'s Resume
+                  {selectedStudent.name}
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${getStatusStyles(selectedStudent.status)}`}>
                     {selectedStudent.status}
                   </span>
                 </h2>
-                <p className="text-sm text-slate-500">{selectedStudent.branch} • Year: {selectedStudent.year} • CGPA: {selectedStudent.cgpa} • CF Rating: {selectedStudent.codeforcesRating || "N/A"}</p>
+                <p className="text-sm text-slate-500">{selectedStudent.branch} • Year: {selectedStudent.year} • CGPA: {selectedStudent.cgpa}</p>
               </div>
               <button
                 onClick={() => setSelectedStudent(null)}
@@ -642,65 +662,221 @@ export default function StudentManagement() {
               </button>
             </div>
 
-            {/* Modal Body (Resume Viewer with Sidebar) */}
-            <div className="flex-1 flex overflow-hidden">
-                {/* Resume Preview */}
-                <div className="flex-1 bg-slate-100 dark:bg-slate-950 p-4 relative overflow-hidden">
-                {selectedStudent.resumeUrl ? (
-                    <iframe
-                    src={selectedStudent.resumeUrl}
-                    className="w-full h-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white"
-                    title={`${selectedStudent.name} Resume`}
-                    />
-                ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
-                    <FileText size={48} className="mb-4 opacity-20" />
-                    <p>No resume uploaded for this student yet.</p>
-                    </div>
+            {/* Tab Switcher */}
+            <div className="flex border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+              <button
+                onClick={() => setModalTab("applications")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${
+                  modalTab === "applications"
+                    ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                }`}
+              >
+                <Briefcase size={16} /> Applications
+                {selectedStudent.applications && (
+                  <span className="ml-1 text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">
+                    {Object.keys(selectedStudent.applications).length}
+                  </span>
                 )}
-                </div>
+              </button>
+              <button
+                onClick={() => setModalTab("resume")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${
+                  modalTab === "resume"
+                    ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                }`}
+              >
+                <FileText size={16} /> Resume
+              </button>
+            </div>
 
-                {/* Admin Review Sidebar */}
-                <div className="w-80 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 flex flex-col items-stretch overflow-y-auto">
+            {/* Tab Content */}
+            <div className="flex-1 overflow-y-auto">
+
+              {/* ═══ APPLICATIONS TAB ═══ */}
+              {modalTab === "applications" && (
+                <div className="p-6 space-y-3">
+                  {!selectedStudent.applications || Object.keys(selectedStudent.applications).length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-slate-500">
+                      <Briefcase size={40} className="mb-3 opacity-20" />
+                      <p className="font-medium">No applications yet.</p>
+                      <p className="text-sm mt-1">This student hasn't applied to any companies.</p>
+                    </div>
+                  ) : (
+                    Object.entries(selectedStudent.applications).map(([oppId, app]) => {
+                      const isExpanded = expandedApp === oppId;
+                      const timeline = app.timeline || [];
+                      const doneCount = timeline.filter(s => s.done).length;
+                      const progress = timeline.length ? Math.round((doneCount / timeline.length) * 100) : 0;
+
+                      return (
+                        <div key={oppId} className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden transition-all">
+                          {/* Company Row */}
+                          <button
+                            onClick={() => setExpandedApp(isExpanded ? null : oppId)}
+                            className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                          >
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-bold text-white shadow">
+                              {(app.company || "?").charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-slate-900 dark:text-white">{app.company}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">{app.role} • {app.offerType || "Placement"} • Applied: {app.appliedOn || "—"}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusStyles(app.status)}`}>
+                                {app.status}
+                              </span>
+                              <div className="hidden sm:flex items-center gap-1.5">
+                                <div className="h-1.5 w-16 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                                  <div className="h-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-400">{progress}%</span>
+                              </div>
+                              {isExpanded ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
+                            </div>
+                          </button>
+
+                          {/* Expanded Timeline */}
+                          {isExpanded && (
+                            <div className="border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 px-5 py-5">
+                              {app.status === "Rejected" && (
+                                <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2">
+                                  <X size={14} /> This application has been rejected
+                                </div>
+                              )}
+                              <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-4">Selection Timeline</h4>
+                              <div className={`relative ml-1 space-y-0 ${app.status === "Rejected" ? "opacity-40 pointer-events-none" : ""}`}>
+                                {timeline.map((step, idx) => {
+                                  const isLast = idx === timeline.length - 1;
+                                  const isLoading = updatingStep === `${oppId}-${idx}`;
+                                  return (
+                                    <div key={idx} className="relative flex items-start gap-4 pb-5">
+                                      {/* Connecting line */}
+                                      {!isLast && (
+                                        <div className={`absolute left-[15px] top-8 w-0.5 h-[calc(100%-10px)] transition-colors ${
+                                          step.done ? "bg-green-400 dark:bg-green-600" : "bg-slate-200 dark:bg-slate-700"
+                                        }`} />
+                                      )}
+                                      {/* Step dot / checkbox */}
+                                      <button
+                                        onClick={() => handleToggleStep(oppId, idx, step.done, timeline)}
+                                        disabled={isLoading}
+                                        className={`relative z-10 shrink-0 flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all cursor-pointer ${
+                                          step.done
+                                            ? "border-green-500 bg-green-500 text-white shadow-md shadow-green-500/20"
+                                            : "border-slate-300 bg-white text-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-500 hover:border-indigo-400 hover:text-indigo-500"
+                                        }`}
+                                        title={step.done ? "Mark as not done" : "Mark as done"}
+                                      >
+                                        {isLoading ? <Loader2 size={14} className="animate-spin" /> : step.done ? <CheckCircle size={14} /> : <Clock size={14} />}
+                                      </button>
+                                      {/* Step info */}
+                                      <div className="flex-1 min-w-0 pt-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <p className={`text-sm font-bold ${step.done ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>{step.step}</p>
+                                          {step.done && <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium">✓ Done</span>}
+                                        </div>
+                                        {step.date && (
+                                          <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                                            <CalendarIcon size={10} /> {step.date}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                <button
+                                  onClick={() => handleRejectApplication(oppId)}
+                                  disabled={updatingStep === `${oppId}-reject`}
+                                  className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                                    app.status === "Rejected"
+                                      ? "bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/10 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                      : "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20"
+                                  }`}
+                                >
+                                  {updatingStep === `${oppId}-reject` ? <Loader2 size={13} className="animate-spin" /> : app.status === "Rejected" ? <RefreshCw size={13} /> : <X size={13} />}
+                                  {app.status === "Rejected" ? "Undo Reject" : "Reject Application"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+
+              {/* ═══ RESUME TAB ═══ */}
+              {modalTab === "resume" && (
+                <div className="flex-1 flex h-full" style={{ minHeight: "calc(85vh - 130px)" }}>
+                  {/* Resume Preview */}
+                  <div className="flex-1 bg-slate-100 dark:bg-slate-950 p-4 relative overflow-hidden">
+                    {selectedStudent.resumeUrl ? (
+                      <iframe
+                        src={selectedStudent.resumeUrl}
+                        className="w-full h-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white"
+                        style={{ minHeight: "500px" }}
+                        title={`${selectedStudent.name} Resume`}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
+                        <FileText size={48} className="mb-4 opacity-20" />
+                        <p>No resume uploaded for this student yet.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Admin Review Sidebar */}
+                  <div className="w-80 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 flex flex-col items-stretch overflow-y-auto">
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">Admin Review</h3>
                     
                     <div className="mb-6 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <label className="flex items-start gap-3 cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                checked={resumeReview.isVerified}
-                                onChange={(e) => setResumeReview(prev => ({...prev, isVerified: e.target.checked}))}
-                                className="mt-1 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:border-slate-600"
-                            />
-                            <div>
-                                <span className={`text-sm font-medium flex items-center gap-1.5 ${resumeReview.isVerified ? 'text-green-600 dark:text-green-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                                    {resumeReview.isVerified ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
-                                    {resumeReview.isVerified ? "Resume Verified" : "Needs Revision"}
-                                </span>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Check this to approve the resume for recruiter view.</p>
-                            </div>
-                        </label>
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={resumeReview.isVerified}
+                          onChange={(e) => setResumeReview(prev => ({...prev, isVerified: e.target.checked}))}
+                          className="mt-1 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:border-slate-600"
+                        />
+                        <div>
+                          <span className={`text-sm font-medium flex items-center gap-1.5 ${resumeReview.isVerified ? 'text-green-600 dark:text-green-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                            {resumeReview.isVerified ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+                            {resumeReview.isVerified ? "Resume Verified" : "Needs Revision"}
+                          </span>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Check this to approve the resume for recruiter view.</p>
+                        </div>
+                      </label>
                     </div>
 
                     <div className="mb-6 flex-1 flex flex-col">
-                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase">Review Comments</label>
-                        <textarea 
-                            value={resumeReview.comment}
-                            onChange={(e) => setResumeReview(prev => ({...prev, comment: e.target.value}))}
-                            placeholder="Add comments or revision notes for the student..."
-                            className="w-full flex-1 min-h-[120px] rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white resize-none"
-                        ></textarea>
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase">Review Comments</label>
+                      <textarea 
+                        value={resumeReview.comment}
+                        onChange={(e) => setResumeReview(prev => ({...prev, comment: e.target.value}))}
+                        placeholder="Add comments or revision notes for the student..."
+                        className="w-full flex-1 min-h-[120px] rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white resize-none"
+                      ></textarea>
                     </div>
 
                     <button 
-                        onClick={handleSaveResumeReview}
-                        disabled={isUpdatingResume}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                      onClick={handleSaveResumeReview}
+                      disabled={isUpdatingResume}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
                     >
-                        {isUpdatingResume ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                        Save Review
+                      {isUpdatingResume ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                      Save Review
                     </button>
+                  </div>
                 </div>
+              )}
+
             </div>
           </div>
         </div>
