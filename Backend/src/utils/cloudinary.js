@@ -10,7 +10,6 @@ const uploadOnCloudinary = async (localFilePath) => {
 
   try {
     if (!localFilePath) return null;
-    const isPdf = localFilePath.toLowerCase().endsWith(".pdf");
     const uploadOptions = {
       resource_type: "auto"
     };

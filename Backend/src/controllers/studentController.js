@@ -116,11 +116,8 @@ const uploadVaultResume = async (req, res) => {
       id: resumeId,
       name: req.file.originalname,
       target: "General",
-      score: null,
-      status: "Pending Analysis",
       date: new Date().toLocaleDateString(),
-      url: uploadResult.secure_url, // The permanent Cloudinary link
-      analysis: { keywordsFound: [], missingKeywords: [], formatting: null, impact: null }
+      url: uploadResult.secure_url,
     };
 
     // Write to the one-to-many structure in Firebase (users/uid/resumes/unique_id)

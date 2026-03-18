@@ -6,13 +6,13 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
-  Eye,
   BarChart,
   X,
-  Target,
   ExternalLink,
   Clock,
-  Star
+  Star,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config/api";
@@ -24,6 +24,7 @@ export default function ResumeBuilder() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
   const [settingPrimary, setSettingPrimary] = useState(null);
+  const [metricsLoading, setMetricsLoading] = useState(null);
   const fileInputRef = useRef(null);
 
   const [resumes, setResumes] = useState([]);
@@ -73,10 +74,6 @@ export default function ResumeBuilder() {
         await refreshUser();
       }
 
-      if (response.data && response.data.resume) {
-        setResumes(prevResumes => [response.data.resume, ...prevResumes]);
-      }
-
       alert("Resume uploaded to vault successfully!");
     } catch (error) {
       console.error("Vault Upload Error:", error);
@@ -116,14 +113,33 @@ export default function ResumeBuilder() {
     }
   };
 
-  const getScoreColor = (score) => {
-    if (score == null) return "text-slate-400 bg-slate-200";
-    if (score >= 80) return "text-emerald-500 bg-emerald-500";
-    if (score >= 60) return "text-amber-500 bg-amber-500";
-    return "text-red-500 bg-red-500";
-  };
-
   const isPrimary = (resumeId) => user?.primaryResumeId === resumeId;
+
+  // ── Metrics handler ────────────────────────────────────────────────────────
+  const handleMetrics = async (resume) => {
+    setMetricsLoading(resume.id);
+    try {
+      const pdfResponse = await axios.get(resume.url, { responseType: "blob" });
+      const pdfBlob = new Blob([pdfResponse.data], { type: "application/pdf" });
+      const pdfFile = new File([pdfBlob], resume.name, { type: "application/pdf" });
+
+      const formData = new FormData();
+      formData.append("resumeFile", pdfFile);
+
+      const atsResponse = await axios.post(`${API_BASE_URL}/api/ats/calculate`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 25000,
+      });
+
+      setSelectedAnalysis({ ...resume, score: atsResponse.data.atsScore ?? null });
+    } catch (err) {
+      console.error("Metrics error:", err);
+      setSelectedAnalysis(resume);
+      alert("Could not calculate ATS score. " + (err.response?.data?.error || "Make sure ML server is running."));
+    } finally {
+      setMetricsLoading(null);
+    }
+  };
 
   // ── ATS Match handler ──────────────────────────────────────────────────────
   const handleCalculateAts = async () => {
@@ -147,74 +163,98 @@ export default function ResumeBuilder() {
     }
   };
 
-  const getAtsScoreColor = (score) => {
-    if (score > 75) return { text: "text-emerald-600 dark:text-emerald-400", bar: "from-emerald-400 to-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800", label: "Excellent Match", tip: "Your resume is packed with strong keywords. Focus on interview prep!" };
-    if (score >= 50) return { text: "text-amber-600 dark:text-amber-400", bar: "from-amber-400 to-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800", label: "Moderate Match", tip: "Add more relevant skills like DSA, projects, or backend technologies to boost your score." };
-    return { text: "text-rose-600 dark:text-rose-400", bar: "from-rose-400 to-rose-600", bg: "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800", label: "Needs Work", tip: "Add competitive programming achievements (ICPC, Codeforces), projects, databases, and leadership roles." };
+  const getScoreInfo = (score) => {
+    if (score == null) return { color: "text-slate-400", ringColor: "stroke-slate-300 dark:stroke-slate-700", label: "Not Scored", emoji: "—" };
+    if (score >= 80) return { color: "text-emerald-500", ringColor: "stroke-emerald-500", label: "Excellent", emoji: "🔥" };
+    if (score >= 60) return { color: "text-amber-500", ringColor: "stroke-amber-500", label: "Good", emoji: "👍" };
+    if (score >= 40) return { color: "text-orange-500", ringColor: "stroke-orange-500", label: "Average", emoji: "⚡" };
+    return { color: "text-red-500", ringColor: "stroke-red-500", label: "Needs Work", emoji: "📝" };
+  };
+
+  const getAtsBarColor = (score) => {
+    if (score > 75) return "from-emerald-400 to-emerald-600";
+    if (score >= 50) return "from-amber-400 to-amber-600";
+    return "from-rose-400 to-rose-600";
+  };
+
+  const getAtsLabel = (score) => {
+    if (score > 75) return { label: "Excellent Match", tip: "Your resume is packed with strong keywords. Focus on interview prep!" };
+    if (score >= 50) return { label: "Moderate Match", tip: "Add more relevant skills like DSA, projects, or backend technologies." };
+    return { label: "Needs Work", tip: "Add CP achievements, projects, databases, and leadership roles." };
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 relative">
+    <div className="mx-auto max-w-5xl space-y-6 pb-16 relative">
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Resume Vault & ATS Scanner</h1>
-        <p className="text-slate-500 dark:text-slate-400">Manage tailored resumes for different companies and check their ATS compatibility.</p>
+      {/* ═══ HEADER ═══ */}
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Resume Vault</h1>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Upload resumes, set your primary, and check ATS scores.</p>
+        </div>
+        <div className="hidden sm:flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+            <FileText size={12} /> {resumes.length} file{resumes.length !== 1 ? "s" : ""}
+          </span>
+        </div>
       </div>
 
-      {/* Upload Area */}
-      <div
-        onClick={handleBoxClick}
-        className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 py-10 transition-all hover:border-indigo-500 hover:bg-indigo-50/50 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:border-indigo-500 dark:hover:bg-indigo-900/10 ${isAnalyzing ? 'pointer-events-none opacity-70' : ''}`}
-      >
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          accept=".pdf,.doc,.docx"
-        />
+      {/* ═══ UPLOAD + ATS SCANNER — TWO COLUMN ═══ */}
+      <div className="grid gap-5 lg:grid-cols-5">
 
-        <div className="mb-4 rounded-full bg-indigo-100 p-4 dark:bg-indigo-900/30">
-          {isAnalyzing ? (
-            <Loader2 className="animate-spin text-indigo-600 dark:text-indigo-400" size={32} />
-          ) : (
-            <UploadCloud className="text-indigo-600 dark:text-indigo-400" size={32} />
-          )}
+        {/* Upload Card */}
+        <div
+          onClick={handleBoxClick}
+          className={`lg:col-span-2 group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white py-10 transition-all hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-500/5 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-500 ${isAnalyzing ? 'pointer-events-none opacity-70' : ''}`}
+        >
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept=".pdf,.doc,.docx"
+          />
+          <div className="mb-3 rounded-2xl bg-indigo-50 p-4 transition-transform group-hover:scale-110 dark:bg-indigo-900/20">
+            {isAnalyzing ? (
+              <Loader2 className="animate-spin text-indigo-600 dark:text-indigo-400" size={28} />
+            ) : (
+              <UploadCloud className="text-indigo-600 dark:text-indigo-400" size={28} />
+            )}
+          </div>
+          <p className="text-sm font-semibold text-slate-800 dark:text-white">
+            {isAnalyzing ? "Uploading..." : "Upload Resume"}
+          </p>
+          <p className="mt-0.5 text-xs text-slate-400">PDF, DOCX up to 5MB</p>
         </div>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-          {isAnalyzing ? "Uploading to Database..." : "Click to Upload New Resume"}
-        </h3>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">PDF, DOCX up to 5MB</p>
-      </div>
 
-      {/* ── ATS Match Section ─────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="mb-4 flex items-center gap-2">
-          <BarChart size={20} className="text-indigo-600 dark:text-indigo-400" />
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">ATS Resume Match</h2>
-          <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400">AI Powered</span>
-        </div>
-        <p className="mb-5 text-sm text-slate-500 dark:text-slate-400">
-          Upload your resume PDF and we'll score it against an ideal placement-ready benchmark — covering DSA, CP, ICPC, backend, databases, projects, leadership & more.
-        </p>
+        {/* ATS Scanner Card */}
+        <div className="lg:col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-white">
+              <TrendingUp size={16} />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">ATS Resume Match</h2>
+              <p className="text-[11px] text-slate-400">Score your resume against placement benchmarks</p>
+            </div>
+            <span className="ml-auto rounded-md bg-indigo-50 px-2 py-0.5 text-[10px] font-bold uppercase text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+              AI
+            </span>
+          </div>
 
-        {/* File picker */}
-        <div className="mb-5">
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Resume PDF</label>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => atsFileInputRef.current?.click()}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             >
-              <UploadCloud size={16} />
-              {atsFile ? "Change File" : "Choose PDF"}
+              <UploadCloud size={14} />
+              {atsFile ? "Change" : "Choose PDF"}
             </button>
             {atsFile && (
-              <span className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
-                <FileText size={14} className="text-indigo-500" />
-                <span className="max-w-[200px] truncate font-medium">{atsFile.name}</span>
+              <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 min-w-0">
+                <FileText size={13} className="text-indigo-500 shrink-0" />
+                <span className="truncate font-medium max-w-[140px]">{atsFile.name}</span>
               </span>
             )}
             <input
@@ -224,271 +264,258 @@ export default function ResumeBuilder() {
               className="hidden"
               onChange={(e) => { setAtsFile(e.target.files[0] || null); setAtsScore(null); setAtsError(null); }}
             />
+            <button
+              onClick={handleCalculateAts}
+              disabled={isCalculatingAts || !atsFile}
+              className="ml-auto flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isCalculatingAts ? (
+                <><Loader2 size={13} className="animate-spin" /> Scoring...</>
+              ) : (
+                <><Sparkles size={13} /> Calculate</>
+              )}
+            </button>
           </div>
+
+          {atsError && (
+            <div className="mt-3 flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-400">
+              <AlertCircle size={14} className="shrink-0" /> {atsError}
+            </div>
+          )}
+
+          {atsScore !== null && !isCalculatingAts && (() => {
+            const barColor = getAtsBarColor(atsScore);
+            const { label, tip } = getAtsLabel(atsScore);
+            const scoreColor = atsScore > 75 ? "text-emerald-500" : atsScore >= 50 ? "text-amber-500" : "text-rose-500";
+            return (
+              <div className="mt-4 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">ATS Score</p>
+                    <p className={`text-xs font-bold ${scoreColor}`}>{label}</p>
+                  </div>
+                  <span className={`text-3xl font-black tabular-nums ${scoreColor}`}>
+                    {atsScore}<span className="text-sm text-slate-400">%</span>
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r ${barColor} transition-all duration-1000 ease-out`}
+                    style={{ width: `${atsScore}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">💡 {tip}</p>
+              </div>
+            );
+          })()}
+        </div>
+      </div>
+
+      {/* ═══ MY RESUMES ═══ */}
+      <div>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">My Resumes</h2>
+          <span className="text-xs font-medium text-slate-400">{resumes.length} file{resumes.length !== 1 ? "s" : ""}</span>
         </div>
 
-        <button
-          onClick={handleCalculateAts}
-          disabled={isCalculatingAts || !atsFile}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-        >
-          {isCalculatingAts ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <BarChart size={16} />
-              Calculate ATS Match
-            </>
-          )}
-        </button>
-
-        {/* Error */}
-        {atsError && (
-          <div className="mt-4 flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-400">
-            <AlertCircle size={16} className="shrink-0" />
-            {atsError}
-          </div>
-        )}
-
-        {/* Score Result */}
-        {atsScore !== null && !isCalculatingAts && (() => {
-          const scoreStyle = getAtsScoreColor(atsScore);
-          return (
-            <div className={`mt-5 rounded-xl border p-5 ${scoreStyle.bg}`}>
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">ATS Compatibility Score</p>
-                  <p className={`mt-0.5 text-sm font-bold ${scoreStyle.text}`}>{scoreStyle.label}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-4xl font-black tabular-nums ${scoreStyle.text}`}>
-                    {atsScore}<span className="text-lg text-slate-400">%</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                <div
-                  className={`h-full rounded-full bg-gradient-to-r ${scoreStyle.bar} transition-all duration-1000 ease-out`}
-                  style={{ width: `${atsScore}%` }}
-                />
-              </div>
-
-              <p className="mt-3 rounded-lg bg-white/60 px-4 py-2.5 text-xs font-medium text-slate-600 dark:bg-slate-800/60 dark:text-slate-400">
-                💡 {scoreStyle.tip}
-              </p>
-            </div>
-          );
-        })()}
-      </section>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pb-24">
         {resumes.length === 0 ? (
-          <div className="col-span-full py-10 text-center text-slate-500">
-            No resumes found. Upload one to get started.
+          <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-16 text-center dark:border-slate-800 dark:bg-slate-900/50">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+              <FileText size={24} className="text-slate-400" />
+            </div>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No resumes yet</p>
+            <p className="text-xs text-slate-400 mt-1">Upload your first resume to get started</p>
           </div>
         ) : (
-          resumes.map((resume) => (
-            <div key={resume.id} className={`group relative overflow-hidden rounded-xl border p-5 shadow-sm transition-all hover:shadow-md dark:bg-slate-900 ${
-              isPrimary(resume.id)
-                ? "border-indigo-400 bg-indigo-50/30 ring-1 ring-indigo-400/50 dark:border-indigo-600 dark:bg-indigo-900/10"
-                : "border-slate-200 bg-white hover:border-indigo-200 dark:border-slate-800 dark:hover:border-indigo-900"
-            }`}>
-
-              {/* Primary Badge */}
-              {isPrimary(resume.id) && (
-                <div className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-full bg-indigo-600 px-2.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
-                  <Star size={10} className="fill-current" /> Primary
-                </div>
-              )}
-
-              <div className="mb-4 flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <div className="space-y-3">
+            {resumes.map((resume) => {
+              const primary = isPrimary(resume.id);
+              const isLoadingMetrics = metricsLoading === resume.id;
+              return (
+                <div
+                  key={resume.id}
+                  className={`group relative flex items-center gap-4 rounded-xl border p-4 transition-all hover:shadow-md ${
+                    primary
+                      ? "border-indigo-300 bg-gradient-to-r from-indigo-50/70 via-white to-white ring-1 ring-indigo-300/40 dark:from-indigo-950/20 dark:via-slate-900 dark:to-slate-900 dark:border-indigo-700 dark:ring-indigo-700/20"
+                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
+                  }`}
+                >
+                  {/* Left: Icon */}
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                    primary
+                      ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400"
+                      : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                  }`}>
                     <FileText size={20} />
                   </div>
-                  <div>
-                    <h4 className="max-w-[120px] truncate text-sm font-bold text-slate-900 dark:text-white" title={resume.name}>
-                      {resume.name}
-                    </h4>
-                    <p className="text-xs text-slate-500">{resume.date}</p>
+
+                  {/* Middle: Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="truncate text-sm font-semibold text-slate-900 dark:text-white" title={resume.name}>
+                        {resume.name}
+                      </h4>
+                      {primary && (
+                        <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider">
+                          <Star size={8} className="fill-current" /> Primary
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
+                      <span>{resume.date}</span>
+                      <span className="text-slate-300 dark:text-slate-700">•</span>
+                      <span className="text-slate-500 dark:text-slate-400">{resume.target}</span>
+                    </div>
+                  </div>
+
+                  {/* Right: Actions */}
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      onClick={() => handleMetrics(resume)}
+                      disabled={isLoadingMetrics}
+                      className="flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-100 transition-all dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:bg-indigo-900/40 disabled:opacity-50 disabled:cursor-wait"
+                      title="Calculate ATS Score"
+                    >
+                      {isLoadingMetrics ? (
+                        <><Loader2 size={12} className="animate-spin" /> Scoring...</>
+                      ) : (
+                        <><BarChart size={12} /> ATS Score</>
+                      )}
+                    </button>
+
+                    {resume.url && (
+                      <a
+                        href={resume.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-all"
+                        title="Open PDF"
+                      >
+                        <ExternalLink size={15} />
+                      </a>
+                    )}
+
+                    {!primary && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleSetPrimary(resume.id); }}
+                        disabled={settingPrimary === resume.id}
+                        className="rounded-lg p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-amber-900/20 dark:hover:text-amber-400 transition-all disabled:opacity-50"
+                        title="Set as primary"
+                      >
+                        {settingPrimary === resume.id ? <Loader2 size={15} className="animate-spin" /> : <Star size={15} />}
+                      </button>
+                    )}
+
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteResume(resume.id); }}
+                      className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 transition-all"
+                      title="Delete"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
                 </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); deleteResume(resume.id); }}
-                  className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 transition-all z-10"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-
-              <div className="mb-4 flex items-center justify-between">
-                <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                  Target: {resume.target}
-                </span>
-
-                {!isPrimary(resume.id) && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleSetPrimary(resume.id); }}
-                    disabled={settingPrimary === resume.id}
-                    className="relative z-20 flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-100 transition-all disabled:opacity-60 dark:border-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
-                  >
-                    {settingPrimary === resume.id ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <Star size={12} />
-                    )}
-                    Set Primary
-                  </button>
-                )}
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between text-sm">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                    <BarChart size={14} /> ATS Score
-                  </span>
-                  <span className={`font-bold ${getScoreColor(resume.score).split(" ")[0]}`}>
-                    {resume.score == null ? "--" : `${resume.score}/100`}
-                  </span>
-                </div>
-
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                  <div
-                    className={`h-full rounded-full transition-all duration-1000 ${resume.score == null ? 'bg-slate-200 dark:bg-slate-700' : getScoreColor(resume.score).split(" ")[1]}`}
-                    style={{ width: resume.score == null ? '0%' : `${resume.score}%` }}
-                  ></div>
-                </div>
-
-                <div className="mt-3 flex items-center gap-2 text-xs">
-                  {resume.score == null ? (
-                    <Clock size={14} className="text-slate-400" />
-                  ) : resume.score >= 80 ? (
-                    <CheckCircle size={14} className="text-emerald-500" />
-                  ) : (
-                    <AlertCircle size={14} className={resume.score < 60 ? "text-red-500" : "text-amber-500"} />
-                  )}
-                  <span className="text-slate-500 dark:text-slate-400">
-                    {resume.score == null ? "Analysis to be integrated" : resume.score >= 80 ? "Excellent Match" : resume.score >= 60 ? "Needs Improvement" : "Critical Fixes Needed"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/90 opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100 dark:bg-slate-900/90 gap-2">
-                {resume.url && (
-                  <a
-                    href={resume.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pointer-events-auto flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-slate-900 hover:scale-105 transition-all"
-                  >
-                    <ExternalLink size={16} /> Open
-                  </a>
-                )}
-                <button
-                  onClick={() => setSelectedAnalysis(resume)}
-                  className="pointer-events-auto flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-indigo-700 hover:scale-105 transition-all"
-                >
-                  <Eye size={16} /> Metrics
-                </button>
-              </div>
-
-            </div>
-          ))
+              );
+            })}
+          </div>
         )}
       </div>
 
-      {/* ANALYSIS MODAL */}
-      {selectedAnalysis && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
+      {/* ═══ ATS SCORE MODAL ═══ */}
+      {selectedAnalysis && (() => {
+        const score = selectedAnalysis.score;
+        const info = getScoreInfo(score);
+        const circumference = 2 * Math.PI * 58;
+        const dashOffset = score != null ? circumference - (circumference * score / 100) : circumference;
 
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${getScoreColor(selectedAnalysis.score).replace('text-', 'bg-').replace('500', '100')} ${getScoreColor(selectedAnalysis.score).split(' ')[0]}`}>
-                  <BarChart size={24} />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">ATS Analysis Report</h2>
-                  <p className="text-sm text-slate-500">File: {selectedAnalysis.name}</p>
-                </div>
-              </div>
-              <button onClick={() => setSelectedAnalysis(null)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                <X size={20} />
-              </button>
-            </div>
+        return (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setSelectedAnalysis(null)}>
+            <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden animate-in" onClick={(e) => e.stopPropagation()}>
 
-            <div className="p-6 overflow-y-auto">
-              <div className="grid grid-cols-3 gap-4 mb-8">
-                <div className="rounded-xl bg-slate-50 p-4 text-center dark:bg-slate-800/50">
-                  <p className="text-xs font-semibold uppercase text-slate-500">Overall Score</p>
-                  <p className={`text-3xl font-black ${getScoreColor(selectedAnalysis.score).split(" ")[0]}`}>{selectedAnalysis.score == null ? "--" : selectedAnalysis.score}</p>
-                </div>
-                <div className="rounded-xl bg-slate-50 p-4 text-center dark:bg-slate-800/50">
-                  <p className="text-xs font-semibold uppercase text-slate-500">Formatting</p>
-                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{selectedAnalysis.analysis.formatting == null ? "--" : `${selectedAnalysis.analysis.formatting}%`}</p>
-                </div>
-                <div className="rounded-xl bg-slate-50 p-4 text-center dark:bg-slate-800/50">
-                  <p className="text-xs font-semibold uppercase text-slate-500">Impact</p>
-                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{selectedAnalysis.analysis.impact == null ? "--" : `${selectedAnalysis.analysis.impact}%`}</p>
+              {/* Modal Header */}
+              <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 to-violet-700 px-6 py-5 text-white">
+                <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+                <div className="relative z-10 flex items-center justify-between">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200">ATS Analysis</p>
+                    <h2 className="truncate text-base font-bold mt-0.5" title={selectedAnalysis.name}>{selectedAnalysis.name}</h2>
+                  </div>
+                  <button onClick={() => setSelectedAnalysis(null)} className="rounded-lg p-1.5 text-white/60 hover:text-white hover:bg-white/10 transition-all">
+                    <X size={18} />
+                  </button>
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                    <CheckCircle size={16} className="text-emerald-500" /> Found Keywords
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedAnalysis.analysis.keywordsFound.length > 0 ? selectedAnalysis.analysis.keywordsFound.map(k => (
-                      <span key={k} className="rounded-md bg-emerald-50 px-2.5 py-1 text-sm font-medium text-emerald-700 border border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/50">
-                        {k}
-                      </span>
-                    )) : <span className="text-sm text-slate-500">Pending backend analysis.</span>}
+              {/* Score Ring */}
+              <div className="flex flex-col items-center py-8">
+                <div className="relative">
+                  <svg width="150" height="150" className="-rotate-90">
+                    <circle cx="75" cy="75" r="58" fill="none" strokeWidth="12" className="stroke-slate-100 dark:stroke-slate-800" />
+                    <circle cx="75" cy="75" r="58" fill="none" strokeWidth="12" strokeLinecap="round"
+                      className={info.ringColor}
+                      style={{
+                        strokeDasharray: circumference,
+                        strokeDashoffset: dashOffset,
+                        transition: "stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)"
+                      }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className={`text-4xl font-black tabular-nums ${info.color}`}>
+                      {score != null ? score : "—"}
+                    </span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">out of 100</span>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                    <Target size={16} className="text-red-500" /> Missing Critical Keywords
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedAnalysis.analysis.missingKeywords.length > 0 ? selectedAnalysis.analysis.missingKeywords.map(k => (
-                      <span key={k} className="rounded-md bg-red-50 px-2.5 py-1 text-sm font-medium text-red-700 border border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/50">
-                        {k}
-                      </span>
-                    )) : <span className="text-sm text-slate-500">Pending backend analysis.</span>}
-                  </div>
+                <div className={`mt-4 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider ${
+                  score == null ? "bg-slate-100 text-slate-400 dark:bg-slate-800" :
+                  score >= 80 ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400" :
+                  score >= 60 ? "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400" :
+                  score >= 40 ? "bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400" :
+                  "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
+                }`}>
+                  {score != null && score >= 80 ? <CheckCircle size={13} /> : score != null ? <AlertCircle size={13} /> : <Clock size={13} />}
+                  {info.label}
                 </div>
+
+                {score != null && (
+                  <p className="mt-4 px-8 text-center text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {score >= 80
+                      ? "Your resume is strong! Focus on interview preparation."
+                      : score >= 60
+                      ? "Good start — add more relevant skills, projects, or CP achievements."
+                      : score >= 40
+                      ? "Include DSA, backend tech, competitive programming, and leadership."
+                      : "Add projects, CP ratings, databases, and extracurriculars to improve."}
+                  </p>
+                )}
               </div>
-            </div>
 
-            <div className="border-t border-slate-100 p-4 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50 flex justify-end gap-3">
-              <button
-                onClick={() => setSelectedAnalysis(null)}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg dark:text-slate-300 dark:hover:bg-slate-700"
-              >
-                Close
-              </button>
-
-              {selectedAnalysis.url && (
-                <a
-                  href={selectedAnalysis.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-lg dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800"
+              {/* Footer */}
+              <div className="border-t border-slate-100 px-5 py-3 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-800/20 flex justify-end gap-2">
+                <button
+                  onClick={() => setSelectedAnalysis(null)}
+                  className="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg dark:text-slate-400 dark:hover:bg-slate-800 transition-all"
                 >
-                  Open Original PDF <ExternalLink size={16} />
-                </a>
-              )}
-            </div>
+                  Close
+                </button>
+                {selectedAnalysis.url && (
+                  <a
+                    href={selectedAnalysis.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 transition-all shadow-sm"
+                  >
+                    Open PDF <ExternalLink size={12} />
+                  </a>
+                )}
+              </div>
 
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

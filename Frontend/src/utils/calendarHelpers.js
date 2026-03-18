@@ -37,22 +37,6 @@ export function buildGCalUrl(company, step) {
 }
 
 /**
- * Build a Google Calendar URL from company name, step label, and date string.
- * Used in the Calendar page sidebar.
- */
-export function buildGCalUrlSimple(company, stepName, date) {
-  const d = (date || "").replace(/-/g, "");
-  if (!d) return "#";
-  const p = new URLSearchParams({
-    action: "TEMPLATE",
-    text: `${company} — ${stepName}`,
-    dates: `${d}/${d}`,
-    details: `Company: ${company}\nStep: ${stepName}`,
-  });
-  return `https://calendar.google.com/calendar/render?${p}`;
-}
-
-/**
  * Build the application timeline array from an opportunity object.
  * Used when registering for an opportunity.
  */

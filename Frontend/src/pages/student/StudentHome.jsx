@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { onUserApplications } from "../../services/firebaseDb";
@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useCompanies } from "../../hooks/useCompanies";
 
-import { API_BASE_URL } from "../../config/api";
+
 
 // ── Mini Donut (for dashboard widget) ────────────────────────
 function MiniDonut({ solved, total, size = 64, strokeWidth = 6 }) {

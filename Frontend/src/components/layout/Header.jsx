@@ -14,7 +14,6 @@ import {
   Info,
   User,
   LogOut,
-  Settings,
   Trash2
 } from "lucide-react";
 import { fetchNotifications, markNotificationsRead, deleteNotificationApi } from "../../services/studentApi";
@@ -327,10 +326,7 @@ export default function Header({ toggleSidebar }) {
                   <User size={16} /> My Profile
                 </Link>
 
-                {/* Optional: Settings Link */}
-                {/* <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-colors">
-                     <Settings size={16} /> Settings
-                   </button> */}
+
               </div>
 
               {/* Logout */}

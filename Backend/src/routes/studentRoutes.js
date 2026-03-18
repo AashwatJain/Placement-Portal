@@ -10,24 +10,27 @@ router.put("/update-profile", studentController.updateStudentProfile);
 // 2. Route for Profile Section: Uploading Avatar and Primary Resume
 // Uses upload.fields() to handle multiple distinct files in the same form
 router.post(
-    "/upload-docs",
-    upload.fields([
-        { name: "avatar", maxCount: 1 },
-        { name: "resume", maxCount: 1 }
-    ]),
-    studentController.uploadDocuments
+  "/upload-docs",
+  upload.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "resume", maxCount: 1 },
+  ]),
+  studentController.uploadDocuments,
 );
 
 // 3. Route for Vault Section: Uploading a single target-specific resume
 // Uses upload.single() because it only expects one file named 'vaultResume'
 router.post(
-    "/upload-vault",
-    upload.single("vaultResume"),
-    studentController.uploadVaultResume
+  "/upload-vault",
+  upload.single("vaultResume"),
+  studentController.uploadVaultResume,
 );
 
 // 4. Route for Vault Section: Deleting a single target-specific resume
-router.delete("/delete-vault-resume/:uid/:id", studentController.deleteVaultResume);
+router.delete(
+  "/delete-vault-resume/:uid/:id",
+  studentController.deleteVaultResume,
+);
 
 // 4b. Route for setting a vault resume as primary
 router.put("/set-primary-resume", studentController.setPrimaryResume);
@@ -41,12 +44,18 @@ import * as dataController from "../controllers/dataController.js";
 router.get("/companies", dataController.getCompanies);
 router.get("/opportunities", dataController.getOpportunities);
 router.get("/applications/:uid", dataController.getUserApplications);
-router.post("/applications/:uid/register", dataController.registerUserApplication);
+router.post(
+  "/applications/:uid/register",
+  dataController.registerUserApplication,
+);
 
 // 7. Routes for Interview Experiences
 router.get("/experiences", dataController.getExperiences);
 router.post("/experiences", dataController.addExperience);
-router.post("/experiences/:id/toggle-like", dataController.toggleExperienceLike);
+router.post(
+  "/experiences/:id/toggle-like",
+  dataController.toggleExperienceLike,
+);
 
 // 8. Routes for Notifications
 router.get("/notifications", dataController.getNotifications);
@@ -64,7 +73,7 @@ router.post("/sync-leetcode/:uid", dataController.syncLeetCodeSolved);
 
 // 11. ML-powered Placement Recommendations (proxied to Python mlServer on port 5005)
 import recommendationController from "../controllers/recommendationController.js";
-router.post("/recommendations",  recommendationController.getRecommendations);
-router.post("/company-chances",  recommendationController.getCompanyChances);
+router.post("/recommendations", recommendationController.getRecommendations);
+router.post("/company-chances", recommendationController.getCompanyChances);
 
 export default router;

@@ -65,8 +65,7 @@ function AppRoutes() {
         <Route path="student" element={<StudentHome />} />
         <Route path="student/profile" element={<Profile />} />
         <Route path="student/coding-profiles" element={<CodingProfiles />} />
-        <Route path="student/resume-builder" element={<ResumeBuilder />} />{" "}
-        {/* <--- NEW ROUTE ADDED HERE */}
+        <Route path="student/resume-builder" element={<ResumeBuilder />} />
         <Route path="student/applications" element={<Applications />} />
         <Route path="student/opportunities" element={<Opportunities />} />
         <Route path="student/company" element={<Company />} />
