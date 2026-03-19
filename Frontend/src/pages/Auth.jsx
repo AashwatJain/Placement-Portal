@@ -55,6 +55,16 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      // Domain restriction for student sign-up
+      if (!isLogin && role === "student") {
+        const domain = email.split("@")[1];
+        if (domain !== "nitkkr.ac.in") {
+          alert("Only @nitkkr.ac.in email addresses are allowed for student registration.");
+          setLoading(false);
+          return;
+        }
+      }
+
       if (isLogin) {
         const loggedInUser = await login(email, password);
         const path = loggedInUser.role === "student" ? "/student" : loggedInUser.role === "admin" ? "/admin/students" : "/recruiter";

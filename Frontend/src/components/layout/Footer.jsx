@@ -6,7 +6,6 @@ import {
   Linkedin,
   Twitter,
   Instagram,
-  Heart
 } from "lucide-react";
 
 export default function Footer({ role }) {
@@ -122,15 +121,10 @@ export default function Footer({ role }) {
         </div>
 
         {/* Bottom Bar: Copyright & Credit */}
-        <div className="border-t border-slate-200 py-6 text-center text-sm dark:border-slate-800 sm:text-left">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <p>
-              &copy; {currentYear} NIT Kurukshetra. All rights reserved.
-            </p>
-            <p className="flex items-center gap-1 text-slate-500 dark:text-slate-500">
-              Designed & Developed with <Heart size={14} className="fill-red-500 text-red-500" />
-            </p>
-          </div>
+        <div className="border-t border-slate-200 py-6 text-center text-sm dark:border-slate-800">
+          <p>
+            &copy; {currentYear} NIT Kurukshetra. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

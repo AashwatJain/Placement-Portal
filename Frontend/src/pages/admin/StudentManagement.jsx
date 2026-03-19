@@ -4,10 +4,14 @@ import { ArrowUpDown, X, FileText, Filter, Loader2, CheckCircle, AlertCircle, Sa
 
 // Custom weights for specific columns
 const BRANCH_WEIGHTS = {
-  CSE: 4,
-  IT: 4,
+  CS: 8,
+  IT: 7,
+  AIML: 6,
+  AIDS: 5,
+  MNC: 4,
   ECE: 3,
-  MECH: 2,
+  Robotics: 2,
+  IIOT: 1,
 };
 
 const STATUS_WEIGHTS = {
@@ -383,7 +387,7 @@ export default function StudentManagement() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
             >
-              <option value="All">All Statuses</option>
+              <option value="All">All Status</option>
               <option value="Placed">Placed</option>
               <option value="Shortlisted">Shortlisted</option>
               <option value="Interviewing">Interviewing</option>
@@ -399,12 +403,14 @@ export default function StudentManagement() {
               className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
             >
               <option value="All">All Branches</option>
-              <option value="CSE">CSE</option>
+              <option value="CS">CS</option>
               <option value="IT">IT</option>
+              <option value="AIML">AIML</option>
+              <option value="AIDS">AIDS</option>
+              <option value="MNC">MNC</option>
               <option value="ECE">ECE</option>
-              <option value="MECH">MECH</option>
-              <option value="CIVIL">CIVIL</option>
-              <option value="ELECTRICAL">ELECTRICAL</option>
+              <option value="Robotics">Robotics</option>
+              <option value="IIOT">IIOT</option>
             </select>
           </div>
         </div>
@@ -475,9 +481,6 @@ export default function StudentManagement() {
                       </div>
                     </th>
                   ))}
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Actions
-                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-900">
@@ -528,17 +531,6 @@ export default function StudentManagement() {
                             </span>
                         )}
                       </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          alert(`Edit modal for ${s.name} coming soon!`);
-                        }}
-                        className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
-                      >
-                        Edit
-                      </button>
                     </td>
                   </tr>
                 ))}

@@ -254,7 +254,7 @@ export default function CodingProfiles() {
 
           {/* LIVE RATINGS */}
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-            <h3 className="mb-5 font-bold text-slate-900 dark:text-white">Live Ratings</h3>
+            <h3 className="mb-5 font-bold text-slate-900 dark:text-white">Ratings</h3>
             <div className="space-y-3">
               <RatingBadge
                 icon={<TrendingUp size={16} />}

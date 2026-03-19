@@ -27,16 +27,16 @@ import {
 const roleNav = {
   student: [
     { to: "/student", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/student/profile", label: "My Profile", icon: User },
+    { to: "/student/opportunities", label: "Opportunities", icon: Briefcase },
+    { to: "/student/company", label: "Companies", icon: Building2 },
+    { to: "/student/applications", label: "My Applications", icon: FileText },
     { to: "/student/placement-insights", label: "Placement Insights", icon: Brain },
     { to: "/student/coding-profiles", label: "Coding Stats", icon: Code },
     { to: "/student/resume-builder", label: "Resume Vault", icon: FileUser },
-    { to: "/student/applications", label: "My Applications", icon: FileText },
-    { to: "/student/company", label: "Companies", icon: Building2 },
-    { to: "/student/opportunities", label: "Opportunities", icon: Briefcase },
-    { to: "/student/interview-experiences", label: "Interview Exp.", icon: FileQuestion },
     { to: "/student/practice", label: "Practice", icon: BookOpen },
+    { to: "/student/interview-experiences", label: "Interview Exp.", icon: FileQuestion },
     { to: "/calendar", label: "Calendar", icon: CalendarDays },
+    { to: "/student/profile", label: "My Profile", icon: User },
   ],
   admin: [
     { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },

@@ -1,6 +1,6 @@
 // src/services/adminApi.js
 // ─────────────────────────────────────────────────────────────
-// API calls for Admin and Recruiter pages.
+// API calls for Admin pages.
 // ─────────────────────────────────────────────────────────────
 
 import axios from "axios";
@@ -59,7 +59,7 @@ export async function rejectQuestion(id, reason) {
     return response.data;
 }
 
-// ── Recruiter JAFs ──────────────────────────────────────────
+// ── Company JAFs (Admin Company Management) ────────────────
 
 export async function fetchJafs(companyName) {
     const url = companyName ? `${API_BASE_URL}/api/admin/jafs?companyName=${encodeURIComponent(companyName)}` : `${API_BASE_URL}/api/admin/jafs`;

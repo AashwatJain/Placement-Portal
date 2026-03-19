@@ -46,25 +46,29 @@ function buildGCalUrl(company, stepName, date) {
 }
 
 // ── Extract events from applications ─────────────────────────
-function extractEvents(applications) {
+function extractEvents(applications, isAdmin = false) {
   const events = [];
+  const seen = new Set(); // de-duplicate by company+step+date
   for (const app of applications) {
     if (app.status === "Rejected") continue;
     const tl = app.timeline || [];
     for (let i = 0; i < tl.length; i++) {
       const step = tl[i];
-      // Relaxed filtering: show any event with a date that is from the past 14 days or upcoming
       if (!step.date) continue;
-      
-      const eventDate = new Date(step.date + "T00:00:00");
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const diffTime = eventDate - today;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      // Hide very old events (more than 14 days ago) unless they are marked done and we want to keep them longer
-      if (diffDays < -14 && !step.done) continue;
+
+      // De-duplicate: for admin, many students may have the same company+step+date
+      const dedupeKey = `${app.company}|${step.step}|${step.date}`;
+      if (isAdmin && seen.has(dedupeKey)) continue;
+      if (isAdmin) seen.add(dedupeKey);
+
+      // For students, hide very old events (>14 days ago) unless done
+      if (!isAdmin) {
+        const eventDate = new Date(step.date + "T00:00:00");
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const diffDays = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
+        if (diffDays < -14 && !step.done) continue;
+      }
 
       events.push({
         id: `${app.id}-${i}`,
@@ -93,47 +97,64 @@ export default function Calendar() {
   const [viewMode, setViewMode] = useState("month"); // "month" | "week"
   const [selectedDay, setSelectedDay] = useState(null);
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     if (!user?.uid) { setLoading(false); return; }
 
     const role = user.role || user.accountType || "student";
 
     if (role === "admin") {
-      // Admin: fetch all opportunities and show their timelines as events
+      setIsAdmin(true);
+      // Admin: fetch all opportunities and build calendar events from their schedules
       (async () => {
         try {
           const opps = await fetchOpportunities();
-          // Convert opportunities into application-like objects for extractEvents
-          const fakeApps = opps.map(opp => {
-            const rounds = opp.rounds || [];
-            const timeline = rounds
-              .map(r => ({
-                step: r.name || r.step || r.round || "Step",
-                date: r.expectedDate || r.date || null,
-                done: r.done || false,
-              }))
-              .filter(r => r.date); // Only include rounds with actual dates
 
-            // Also add the opportunity deadline as an "Application Deadline" event
-            if (opp.deadline) {
-              timeline.unshift({
-                step: "Application Deadline",
-                date: opp.deadline,
-                done: false,
-              });
+          const allApps = opps.map(opp => {
+            const timeline = [];
+            const companyName = opp.name || opp.company || opp.title || "Unknown";
+
+            // 1. Add any top-level date fields as events
+            const dateFields = [
+              { key: "deadline",            step: "Application Deadline" },
+              { key: "oaDate",              step: "OA" },
+              { key: "resumeShortlistDate", step: "Shortlist" },
+              { key: "interviewDate",       step: "Interview" },
+              { key: "offerDate",           step: "Decision" },
+              { key: "joiningDate",         step: "Final" },
+            ];
+            for (const { key, step } of dateFields) {
+              if (opp[key]) {
+                timeline.push({ step, date: opp[key], done: false });
+              }
+            }
+
+            // 2. Add all round schedule dates
+            const rounds = opp.rounds || [];
+            for (const r of rounds) {
+              const date = r.date || r.expectedDate || null;
+              if (date) {
+                timeline.push({
+                  step: r.name || r.step || r.round || "Round",
+                  date,
+                  done: r.done || false,
+                });
+              }
             }
 
             return {
               id: opp.id,
-              company: opp.name || opp.company || opp.title || "Unknown",
-              role: opp.roles || opp.role || opp.jobTitle || "",
+              company: companyName,
+              role: opp.roles || opp.role || "",
               status: opp.status || "Active",
               timeline,
             };
           });
-          setApplications(fakeApps);
+
+          setApplications(allApps);
         } catch (err) {
-          console.error("Failed to fetch opportunities for calendar:", err);
+          console.error("Failed to fetch calendar data:", err);
         } finally {
           setLoading(false);
         }
@@ -149,7 +170,7 @@ export default function Calendar() {
     return () => unsub();
   }, [user?.uid, user?.role, user?.accountType]);
 
-  const events = extractEvents(applications);
+  const events = extractEvents(applications, isAdmin);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
