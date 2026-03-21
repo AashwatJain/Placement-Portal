@@ -40,9 +40,9 @@ function DonutChart({ solved, total, size = 140, strokeWidth = 14 }) {
 
   const getColor = () => {
     if (percentage >= 80) return { stroke: "#10b981", text: "text-emerald-500" };
-    if (percentage >= 50) return { stroke: "#6366f1", text: "text-indigo-500" };
+    if (percentage >= 50) return { stroke: "#6366f1", text: "text-brand-amber-500/100" };
     if (percentage >= 25) return { stroke: "#f59e0b", text: "text-amber-500" };
-    return { stroke: "#94a3b8", text: "text-slate-400" };
+    return { stroke: "#94a3b8", text: "text-brand-brown-400" };
   };
   const color = getColor();
 
@@ -52,7 +52,7 @@ function DonutChart({ solved, total, size = 140, strokeWidth = 14 }) {
         <circle
           cx={size / 2} cy={size / 2} r={radius}
           fill="none" strokeWidth={strokeWidth}
-          className="stroke-slate-100 dark:stroke-slate-800"
+          className="stroke-brand-beige-100 dark:stroke-brand-brown-800"
         />
         <circle
           cx={size / 2} cy={size / 2} r={radius}
@@ -67,7 +67,7 @@ function DonutChart({ solved, total, size = 140, strokeWidth = 14 }) {
         <span className={`text-2xl font-black ${color.text}`}>
           {Math.round(percentage)}%
         </span>
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-brand-brown-400">
           {solved}/{total}
         </span>
       </div>
@@ -110,7 +110,7 @@ function PieChart({ easy, medium, hard, size = 120 }) {
     <div className="flex items-center gap-4">
       <svg width={size} height={size} className="drop-shadow-sm">
         {paths}
-        <circle cx={cx} cy={cy} r={r * 0.45} className="fill-white dark:fill-slate-900" />
+        <circle cx={cx} cy={cy} r={r * 0.45} className="fill-white dark:fill-brand-brown-900" />
       </svg>
       <div className="space-y-1.5">
         {[
@@ -120,8 +120,8 @@ function PieChart({ easy, medium, hard, size = 120 }) {
         ].map((s) => (
           <div key={s.label} className="flex items-center gap-2 text-xs">
             <div className={`h-2.5 w-2.5 rounded-full ${s.color}`} />
-            <span className="font-medium text-slate-600 dark:text-slate-300">{s.label}</span>
-            <span className="font-bold text-slate-900 dark:text-white">{s.count}</span>
+            <span className="font-medium text-brand-brown-600 dark:text-brand-beige-300">{s.label}</span>
+            <span className="font-bold text-brand-brown-900 dark:text-white">{s.count}</span>
           </div>
         ))}
       </div>
@@ -140,10 +140,10 @@ function CompanyBarChart({ companies, maxBars = 6 }) {
       {top.map((c) => (
         <div key={c.id} className="group">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[120px]">{c.name}</span>
-            <span className="text-[10px] font-bold text-slate-500">{c.solvedCount}/{c.totalCount}</span>
+            <span className="text-xs font-semibold text-brand-brown-700 dark:text-brand-beige-300 truncate max-w-[120px]">{c.name}</span>
+            <span className="text-[10px] font-bold text-brand-cream-500">{c.solvedCount}/{c.totalCount}</span>
           </div>
-          <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+          <div className="h-2 rounded-full bg-brand-beige-100 dark:bg-[#2A1810] overflow-hidden">
             <div
               className="h-2 rounded-full transition-all duration-700"
               style={{
@@ -163,13 +163,13 @@ function MiniProgress({ solved, total }) {
   const pct = total > 0 ? (solved / total) * 100 : 0;
   return (
     <div className="flex items-center gap-2">
-      <div className="h-1.5 flex-1 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+      <div className="h-1.5 flex-1 rounded-full bg-brand-beige-100 dark:bg-[#2A1810] overflow-hidden">
         <div
-          className="h-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700"
+          className="h-1.5 rounded-full bg-gradient-to-r from-brand-amber-500/100 to-violet-500 transition-all duration-700"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-[10px] font-bold text-slate-500">{solved}/{total}</span>
+      <span className="text-[10px] font-bold text-brand-cream-500">{solved}/{total}</span>
     </div>
   );
 }
@@ -292,10 +292,10 @@ export default function Practice() {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
         <div className="relative">
-          <div className="h-12 w-12 rounded-full border-4 border-indigo-100 dark:border-indigo-900/50" />
-          <Loader2 className="absolute inset-0 h-12 w-12 animate-spin text-indigo-600" />
+          <div className="h-12 w-12 rounded-full border-4 border-brand-amber-500/20 dark:border-brand-amber-800/50" />
+          <Loader2 className="absolute inset-0 h-12 w-12 animate-spin text-brand-amber-500" />
         </div>
-        <span className="text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">
+        <span className="text-sm font-medium text-brand-cream-500 dark:text-brand-beige-400 animate-pulse">
           Loading practice questions...
         </span>
       </div>
@@ -307,24 +307,24 @@ export default function Practice() {
       {/* HEADER */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-            <Sparkles size={24} className="text-indigo-500" />
+          <h1 className="text-2xl font-extrabold text-brand-brown-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Sparkles size={24} className="text-brand-amber-500/100" />
             Practice Arena
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-sm text-brand-cream-500 dark:text-brand-beige-400 mt-1">
             Company-wise questions • Track your progress • Ace the interviews
           </p>
         </div>
 
         {!selectedCompany && (
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-brown-400" />
             <input
               type="text"
               placeholder="Search company..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-white pl-9 pr-4 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white w-full sm:w-64"
+              className="h-10 rounded-lg border border-brand-beige-200 bg-white pl-9 pr-4 text-sm focus:border-brand-amber-500/100 focus:outline-none dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white w-full sm:w-64"
             />
           </div>
         )}
@@ -334,23 +334,23 @@ export default function Practice() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-3 lg:col-span-1">
-          <StatCard title="Total" value={totalQuestions} icon={<BookOpen size={18} />} gradient="from-indigo-500 to-violet-600" />
+          <StatCard title="Total" value={totalQuestions} icon={<BookOpen size={18} />} gradient="from-brand-amber-500/100 to-violet-600" />
           <StatCard title="Solved" value={totalSolved} icon={<CheckCircle2 size={18} />} gradient="from-emerald-500 to-teal-600" />
           <StatCard title="Companies" value={companiesWithQuestions.length} icon={<Building2 size={18} />} gradient="from-amber-500 to-orange-600" />
           <StatCard title="Accuracy" value={totalQuestions > 0 ? `${Math.round((totalSolved / totalQuestions) * 100)}%` : "—"} icon={<Target size={18} />} gradient="from-rose-500 to-pink-600" />
         </div>
 
         {/* Pie Chart — Difficulty Distribution */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 flex flex-col items-center justify-center">
-          <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-            <BarChart3 size={14} className="text-indigo-500" /> Difficulty Distribution
+        <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-5 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80 flex flex-col items-center justify-center">
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand-cream-500 flex items-center gap-1.5">
+            <BarChart3 size={14} className="text-brand-amber-500/100" /> Difficulty Distribution
           </h3>
           <PieChart easy={easyCount} medium={mediumCount} hard={hardCount} />
         </div>
 
         {/* Bar Chart — Top Companies Progress */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-          <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+        <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-5 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand-cream-500 flex items-center gap-1.5">
             <Trophy size={14} className="text-amber-500" /> Company Progress
           </h3>
           <CompanyBarChart companies={companiesWithQuestions} />
@@ -359,24 +359,24 @@ export default function Practice() {
 
       {/* ── RECOMMENDED FOR YOU ── */}
       {!selectedCompany && recommendedCompanies.length > 0 && (
-        <div className="rounded-2xl border-2 border-dashed border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-950/20 p-5">
-          <h3 className="mb-3 text-sm font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
-            <Star size={16} className="text-indigo-500" /> Recommended for You
-            <span className="text-[10px] font-medium text-indigo-500 dark:text-indigo-400 ml-1">Based on your applications</span>
+        <div className="rounded-2xl border-2 border-dashed border-brand-amber-500/40 dark:border-brand-amber-600 bg-brand-amber-500/10/50 dark:bg-brand-amber-900/20 p-5">
+          <h3 className="mb-3 text-sm font-bold text-brand-amber-800 dark:text-brand-amber-500/40 flex items-center gap-2">
+            <Star size={16} className="text-brand-amber-500/100" /> Recommended for You
+            <span className="text-[10px] font-medium text-brand-amber-500/100 dark:text-brand-amber-500 ml-1">Based on your applications</span>
           </h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {recommendedCompanies.map((company) => (
               <button
                 key={company.id}
                 onClick={() => setSelectedCompany(company.id)}
-                className="group flex items-center gap-3 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 p-3 text-left transition-all hover:shadow-md hover:border-indigo-400 dark:hover:border-indigo-600"
+                className="group flex items-center gap-3 rounded-xl border border-brand-amber-500/30 dark:border-brand-amber-700 bg-white dark:bg-[#1A0F08] p-3 text-left transition-all hover:shadow-md hover:border-brand-amber-500 dark:hover:border-brand-amber-500"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-bold text-white shadow">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-amber-500/100 to-violet-600 text-sm font-bold text-white shadow">
                   {(company.name || "?").charAt(0)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{company.name}</p>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-sm font-bold text-brand-brown-900 dark:text-white truncate">{company.name}</p>
+                  <p className="text-[10px] text-brand-cream-500">
                     {company.totalCount - company.solvedCount} unsolved • {company.totalCount} total
                   </p>
                 </div>
@@ -395,20 +395,20 @@ export default function Practice() {
               <button
                 key={company.id}
                 onClick={() => setSelectedCompany(company.id)}
-                className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 hover:border-indigo-400 dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-indigo-600"
+                className="group relative flex flex-col justify-between rounded-2xl border border-brand-beige-200/80 bg-white p-5 text-left shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 hover:border-brand-amber-500 dark:border-[#3E2315] dark:bg-[#1A0F08]/80 dark:hover:border-brand-amber-500"
               >
                 {/* Top gradient accent */}
-                <div className="absolute top-0 left-4 right-4 h-0.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 opacity-40 group-hover:opacity-80 transition-opacity" />
+                <div className="absolute top-0 left-4 right-4 h-0.5 rounded-full bg-gradient-to-r from-brand-amber-500/100 to-violet-500 opacity-40 group-hover:opacity-80 transition-opacity" />
 
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-xl font-bold text-white shadow-md">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-amber-500/100 to-violet-600 text-xl font-bold text-white shadow-md">
                     {(company.name || "?").charAt(0)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    <h3 className="font-bold text-brand-brown-900 dark:text-white truncate group-hover:text-brand-amber-500 dark:group-hover:text-brand-amber-500 transition-colors">
                       {company.name}
                     </h3>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-brand-brown-400">
                       {company.totalCount} question{company.totalCount !== 1 ? "s" : ""}
                     </p>
                   </div>
@@ -423,8 +423,8 @@ export default function Practice() {
           </div>
 
           {filteredCompanies.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-500">
-              <BookOpen size={48} className="mb-4 text-slate-300 dark:text-slate-600" />
+            <div className="flex flex-col items-center justify-center py-16 text-brand-cream-500">
+              <BookOpen size={48} className="mb-4 text-brand-beige-300 dark:text-brand-brown-600" />
               <p className="font-medium">No companies with questions found.</p>
               <p className="text-sm mt-1">Questions will appear once the admin adds them to the question bank.</p>
             </div>
@@ -439,22 +439,22 @@ export default function Practice() {
             <div className="flex items-center justify-between">
               <button
                 onClick={() => { setSelectedCompany(null); setDiffFilter("All"); }}
-                className="flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                className="flex items-center gap-2 text-sm font-medium text-brand-amber-500 hover:text-brand-amber-600 dark:text-brand-amber-500 dark:hover:text-brand-amber-500/40 transition-colors"
               >
                 <ArrowLeft size={16} /> Back to Companies
               </button>
 
               {/* Difficulty filter */}
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
-                <Filter size={12} className="ml-2 text-slate-400" />
+              <div className="flex items-center gap-1 bg-brand-beige-100 dark:bg-[#2A1810] rounded-lg p-0.5">
+                <Filter size={12} className="ml-2 text-brand-brown-400" />
                 {["All", "Easy", "Medium", "Hard"].map(d => (
                   <button
                     key={d}
                     onClick={() => setDiffFilter(d)}
                     className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all ${
                       diffFilter === d
-                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
-                        : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                        ? "bg-white dark:bg-brand-brown-700 text-brand-brown-900 dark:text-white shadow-sm"
+                        : "text-brand-cream-500 hover:text-brand-brown-700 dark:hover:text-brand-beige-300"
                     }`}
                   >
                     {d}
@@ -464,14 +464,14 @@ export default function Practice() {
             </div>
 
             <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-xl font-bold text-white shadow-md">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-amber-500/100 to-violet-600 text-xl font-bold text-white shadow-md">
                 {(selectedCompanyData?.name || "?").charAt(0)}
               </div>
               <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                <h2 className="text-xl font-bold text-brand-brown-900 dark:text-white">
                   {selectedCompanyData?.name}
                 </h2>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-brand-cream-500">
                   {selectedCompanyData?.solvedCount || 0} of {selectedCompanyData?.totalCount || 0} solved
                 </p>
               </div>
@@ -487,7 +487,7 @@ export default function Practice() {
                     className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-200 ${
                       isSolved
                         ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-900/10"
-                        : "border-slate-200 bg-white hover:border-indigo-200 dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-indigo-900"
+                        : "border-brand-beige-200 bg-white hover:border-brand-amber-500/30 dark:border-[#3E2315] dark:bg-[#1A0F08]/80 dark:hover:border-brand-amber-800"
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -498,7 +498,7 @@ export default function Practice() {
                         className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-all duration-200 ${
                           isSolved
                             ? "border-emerald-500 bg-emerald-500 text-white"
-                            : "border-slate-300 bg-white hover:border-indigo-400 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-indigo-500"
+                            : "border-brand-beige-300 bg-white hover:border-brand-amber-500 dark:border-[#7A543A] dark:bg-[#2A1810] dark:hover:border-brand-amber-500/100"
                         } ${toggling === q.id ? "opacity-50" : ""}`}
                       >
                         {toggling === q.id ? (
@@ -506,7 +506,7 @@ export default function Practice() {
                         ) : isSolved ? (
                           <CheckCircle2 size={14} />
                         ) : (
-                          <span className="text-[10px] font-bold text-slate-400">{idx + 1}</span>
+                          <span className="text-[10px] font-bold text-brand-brown-400">{idx + 1}</span>
                         )}
                       </button>
 
@@ -519,7 +519,7 @@ export default function Practice() {
                           </span>
                           {/* Topic tags */}
                           {(q.tags || []).map(tag => (
-                            <span key={tag} className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-400">
+                            <span key={tag} className="inline-flex items-center rounded-md bg-brand-beige-100 dark:bg-[#2A1810] px-1.5 py-0.5 text-[10px] font-medium text-brand-brown-600 dark:text-brand-beige-400">
                               {tag}
                             </span>
                           ))}
@@ -528,8 +528,8 @@ export default function Practice() {
                         <p
                           className={`text-sm leading-relaxed ${
                             isSolved
-                              ? "text-slate-500 line-through dark:text-slate-400"
-                              : "text-slate-800 dark:text-slate-200"
+                              ? "text-brand-cream-500 line-through dark:text-brand-beige-400"
+                              : "text-brand-brown-800 dark:text-brand-beige-200"
                           }`}
                         >
                           {q.text}
@@ -541,13 +541,13 @@ export default function Practice() {
                               href={q.link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 text-[11px] font-bold text-indigo-600 hover:bg-indigo-100 dark:text-indigo-400 dark:hover:bg-indigo-900/40 transition-colors border border-indigo-200 dark:border-indigo-800"
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-amber-500/10 dark:bg-brand-amber-800/20 px-3 py-1.5 text-[11px] font-bold text-brand-amber-500 hover:bg-brand-amber-500/20 dark:text-brand-amber-500 dark:hover:bg-brand-amber-800/40 transition-colors border border-brand-amber-500/30 dark:border-brand-amber-700"
                             >
                               <ExternalLink size={12} /> Solve on Platform
                             </a>
                           )}
                           {q.author && (
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-[10px] text-brand-brown-400">
                               by {q.author}
                             </span>
                           )}
@@ -559,8 +559,8 @@ export default function Practice() {
               })}
 
               {filteredQuestions.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                  <BookOpen size={36} className="mb-3 text-slate-300 dark:text-slate-600" />
+                <div className="flex flex-col items-center justify-center py-12 text-brand-cream-500">
+                  <BookOpen size={36} className="mb-3 text-brand-beige-300 dark:text-brand-brown-600" />
                   <p className="text-sm font-medium">
                     {diffFilter !== "All"
                       ? `No ${diffFilter} questions for this company.`
@@ -574,9 +574,9 @@ export default function Practice() {
           {/* RIGHT: Donut chart & stats sidebar */}
           <div className="space-y-6">
             {/* Donut */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-              <h3 className="mb-5 font-bold text-slate-900 dark:text-white text-center flex items-center justify-center gap-2">
-                <BarChart3 size={16} className="text-indigo-500" /> Progress
+            <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-6 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
+              <h3 className="mb-5 font-bold text-brand-brown-900 dark:text-white text-center flex items-center justify-center gap-2">
+                <BarChart3 size={16} className="text-brand-amber-500/100" /> Progress
               </h3>
               <div className="flex justify-center mb-4">
                 <DonutChart
@@ -593,11 +593,11 @@ export default function Practice() {
                     {selectedCompanyData?.solvedCount || 0}
                   </p>
                 </div>
-                <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3 text-center">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                <div className="rounded-xl bg-brand-cream-50 dark:bg-[#2A1810]/50 p-3 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-brand-cream-500 mb-1">
                     Remaining
                   </p>
-                  <p className="text-2xl font-black text-slate-700 dark:text-slate-300">
+                  <p className="text-2xl font-black text-brand-brown-700 dark:text-brand-beige-300">
                     {(selectedCompanyData?.totalCount || 0) - (selectedCompanyData?.solvedCount || 0)}
                   </p>
                 </div>
@@ -605,8 +605,8 @@ export default function Practice() {
             </div>
 
             {/* Difficulty breakdown for this company */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-              <h3 className="mb-4 font-bold text-slate-900 dark:text-white text-center text-sm">Difficulty Breakdown</h3>
+            <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-6 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
+              <h3 className="mb-4 font-bold text-brand-brown-900 dark:text-white text-center text-sm">Difficulty Breakdown</h3>
               <PieChart
                 easy={(selectedCompanyData?.questions || []).filter(q => (q.difficulty || "Medium") === "Easy").length}
                 medium={(selectedCompanyData?.questions || []).filter(q => (q.difficulty || "Medium") === "Medium").length}
@@ -616,14 +616,14 @@ export default function Practice() {
             </div>
 
             {/* Overall Summary Donut */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-              <h3 className="mb-5 font-bold text-slate-900 dark:text-white text-center flex items-center justify-center gap-2">
+            <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-6 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
+              <h3 className="mb-5 font-bold text-brand-brown-900 dark:text-white text-center flex items-center justify-center gap-2">
                 <Trophy size={16} className="text-amber-500" /> Overall
               </h3>
               <div className="flex justify-center mb-4">
                 <DonutChart solved={totalSolved} total={totalQuestions} size={120} strokeWidth={12} />
               </div>
-              <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-center text-xs text-brand-cream-500 dark:text-brand-beige-400">
                 {totalSolved} of {totalQuestions} total questions solved across all companies
               </p>
             </div>
@@ -638,16 +638,16 @@ export default function Practice() {
 
 function StatCard({ title, value, icon, gradient }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-slate-800 dark:bg-slate-900/80">
+    <div className="group relative overflow-hidden rounded-2xl border border-brand-beige-200/80 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
       <div className={`absolute top-0 right-0 h-16 w-16 rounded-full bg-gradient-to-br ${gradient} opacity-[0.05] -translate-y-10 translate-x-10 group-hover:opacity-[0.08] transition-opacity`} />
       <div className="relative">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{title}</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-brand-brown-400">{title}</span>
           <div className={`flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} text-white shadow-sm`}>
             {icon}
           </div>
         </div>
-        <div className="text-2xl font-black text-slate-900 dark:text-white">{value}</div>
+        <div className="text-2xl font-black text-brand-brown-900 dark:text-white">{value}</div>
       </div>
     </div>
   );

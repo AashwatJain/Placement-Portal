@@ -31,7 +31,7 @@ function MiniDonut({ solved, total, size = 56, strokeWidth = 5 }) {
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg className="-rotate-90" width={size} height={size}>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} className="stroke-slate-100 dark:stroke-slate-700" />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} className="stroke-brand-beige-100 dark:stroke-brand-brown-700" />
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} stroke={color} strokeLinecap="round"
           strokeDasharray={circumference} strokeDashoffset={offset}
           style={{ transition: "stroke-dashoffset 0.8s ease-out" }} />
@@ -161,10 +161,10 @@ export default function StudentHome() {
   const getStatusStyle = (status) => {
     switch (status) {
       case "Shortlisted": return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800";
-      case "Applied": return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
+      case "Applied": return "bg-brand-amber-500/20 text-brand-amber-600 border-brand-amber-500/30 dark:bg-blue-900/30 dark:text-brand-amber-500 dark:border-brand-amber-700";
       case "Rejected": return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800";
       case "Offered": return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800";
-      default: return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600";
+      default: return "bg-brand-beige-100 text-brand-brown-700 border-brand-beige-200 dark:bg-brand-brown-700 dark:text-brand-beige-300 dark:border-[#7A543A]";
     }
   };
 
@@ -181,18 +181,18 @@ export default function StudentHome() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">
             Welcome back, {user?.fullName?.split(" ")[0] || "Student"} 👋
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-brand-brown-600 dark:text-brand-beige-400">
             Here's what's happening with your placement journey.
           </p>
         </div>
         <div className="flex gap-2">
-          <Link to="/student/profile" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 transition shadow-sm">
+          <Link to="/student/profile" className="rounded-lg bg-brand-brown-900 px-4 py-2 text-sm font-medium text-white hover:bg-brand-brown-800 dark:bg-brand-amber-500 dark:hover:bg-[#E89B60] transition shadow-sm">
             Update Profile
           </Link>
-          <Link to="/student/opportunities" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition shadow-sm">
+          <Link to="/student/opportunities" className="rounded-lg border border-brand-beige-200 bg-white px-4 py-2 text-sm font-medium text-brand-brown-800 hover:bg-brand-beige-50 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-brand-beige-300 dark:hover:bg-[#3E2315] transition shadow-sm">
             Browse Drives
           </Link>
         </div>
@@ -201,15 +201,17 @@ export default function StudentHome() {
       {/* Stats Row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
-          { label: "Total Applied", value: totalApplied, icon: Briefcase, gradient: "from-blue-500 to-blue-600", iconBg: "bg-blue-50 dark:bg-blue-900/20", iconColor: "text-blue-500" },
-          { label: "Shortlisted / Offered", value: shortlisted, icon: CheckCircle, gradient: "from-emerald-500 to-emerald-600", iconBg: "bg-emerald-50 dark:bg-emerald-900/20", iconColor: "text-emerald-500" },
-          { label: "In Progress", value: pending, icon: Clock, gradient: "from-amber-500 to-amber-600", iconBg: "bg-amber-50 dark:bg-amber-900/20", iconColor: "text-amber-500" },
+          { label: "Total Applied", value: totalApplied, icon: Briefcase, iconBg: "bg-brand-beige-100 dark:bg-[#3E2315]", iconColor: "text-brand-brown-800 dark:text-brand-beige-200" },
+          { label: "Shortlisted / Offered", value: shortlisted, icon: CheckCircle, iconBg: "bg-emerald-50 dark:bg-emerald-900/20", iconColor: "text-emerald-500" },
+          { label: "In Progress", value: pending, icon: Clock, iconBg: "bg-brand-amber-500/10 dark:bg-[#C07840]/20", iconColor: "text-brand-amber-500" },
         ].map(({ label, value, icon: Icon, iconBg, iconColor }) => (
-          <div key={label} className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
-            <div className="flex items-center justify-between">
+          <div key={label} className="group relative overflow-hidden rounded-xl border border-brand-beige-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-[#5A3D2B] dark:bg-[#1A0F08]">
+            {/* Dashed inner border effect from mockup */}
+            <div className="absolute inset-1 rounded-lg border border-dashed border-brand-beige-300/50 dark:border-[#5A3D2B]/50 pointer-events-none"></div>
+            <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{label}</p>
-                <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{value}</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-brand-brown-600 dark:text-brand-beige-400">{label}</p>
+                <p className="mt-2 text-3xl font-black text-brand-brown-900 dark:text-white">{value}</p>
               </div>
               <div className={`rounded-xl p-3 ${iconBg}`}>
                 <Icon size={22} className={iconColor} />
@@ -224,47 +226,47 @@ export default function StudentHome() {
         {/* ── Left Column ── */}
         <div className="lg:col-span-3 space-y-5">
           {/* Application Status */}
-          <section className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden dark:border-slate-700 dark:bg-slate-800">
-            <div className="border-b border-slate-100 px-5 py-4 flex items-center justify-between dark:border-slate-700">
-              <h2 className="font-semibold text-slate-800 flex items-center gap-2 dark:text-slate-100">
-                <FileText size={16} className="text-slate-400" /> Application Status
+          <section className="rounded-xl border border-brand-beige-200 bg-white shadow-sm overflow-hidden dark:border-[#5A3D2B] dark:bg-[#1A0F08]">
+            <div className="border-b border-brand-beige-100 px-5 py-4 flex items-center justify-between dark:border-[#3E2315]">
+              <h2 className="font-semibold text-brand-brown-900 flex items-center gap-2 dark:text-brand-beige-100">
+                <FileText size={16} className="text-brand-brown-600" /> Recent Applications
               </h2>
-              <Link to="/student/applications" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
+              <Link to="/student/applications" className="text-xs font-bold text-brand-amber-500 hover:text-[#E89B60] dark:text-brand-amber-500 flex items-center gap-1">
                 View All <ChevronRight size={14} />
               </Link>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-500 dark:bg-slate-700/50 dark:text-slate-400">
+                <thead className="bg-brand-cream-50 text-brand-brown-600 dark:bg-[#2A1810] dark:text-brand-beige-400">
                   <tr>
                     <th className="px-5 py-3 font-semibold uppercase text-[10px] tracking-wider">Company</th>
                     <th className="px-5 py-3 font-semibold uppercase text-[10px] tracking-wider">Role</th>
                     <th className="px-5 py-3 font-semibold uppercase text-[10px] tracking-wider">Status</th>
-                    <th className="px-5 py-3 font-semibold uppercase text-[10px] tracking-wider">Date</th>
+                    <th className="px-5 py-3 font-semibold uppercase text-[10px] tracking-wider">Applied Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                <tbody className="divide-y divide-brand-beige-100 dark:divide-[#3E2315]">
                   {applications.length === 0 && (
                     <tr>
                       <td colSpan={4} className="px-5 py-10 text-center">
-                        <Briefcase size={32} className="mx-auto mb-2 text-slate-200 dark:text-slate-700" />
-                        <p className="text-sm text-slate-400">No applications yet.</p>
-                        <Link to="/student/opportunities" className="mt-1 inline-flex items-center text-xs font-bold text-indigo-500 hover:underline">
+                        <Briefcase size={32} className="mx-auto mb-2 text-brand-beige-200 dark:text-brand-brown-700" />
+                        <p className="text-sm text-brand-brown-400">No applications yet.</p>
+                        <Link to="/student/opportunities" className="mt-1 inline-flex items-center text-xs font-bold text-brand-amber-500/100 hover:underline">
                           Browse opportunities <ArrowUpRight size={12} className="ml-0.5" />
                         </Link>
                       </td>
                     </tr>
                   )}
                   {applications.slice(0, 5).map((app) => (
-                    <tr key={app.id} className="hover:bg-slate-50 transition-colors dark:hover:bg-slate-700/50">
-                      <td className="px-5 py-3.5 font-semibold text-slate-900 dark:text-slate-100">{app.company}</td>
-                      <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">{app.role || "SDE"}</td>
+                    <tr key={app.id} className="hover:bg-brand-cream-50 transition-colors dark:hover:bg-[#2A1810]">
+                      <td className="px-5 py-3.5 font-semibold text-brand-brown-900 dark:text-brand-beige-100">{app.company}</td>
+                      <td className="px-5 py-3.5 text-brand-brown-700 dark:text-brand-beige-300">{app.role || "SDE"}</td>
                       <td className="px-5 py-3.5">
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${getStatusStyle(app.status)}`}>
                           {app.status}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-xs text-slate-400 dark:text-slate-500">{app.appliedOn}</td>
+                      <td className="px-5 py-3.5 text-xs text-brand-brown-600 dark:text-brand-beige-400">{app.appliedOn}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -273,37 +275,37 @@ export default function StudentHome() {
           </section>
 
           {/* Upcoming Drives */}
-          <section className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <div className="border-b border-slate-100 px-5 py-4 flex items-center justify-between dark:border-slate-700">
-              <h2 className="font-semibold text-slate-800 flex items-center gap-2 dark:text-slate-100">
-                <CalendarDays size={16} className="text-slate-400" /> Upcoming Drives
+          <section className="rounded-xl border border-brand-beige-200 bg-white shadow-sm dark:border-[#5A3D2B] dark:bg-[#1A0F08]">
+            <div className="border-b border-brand-beige-100 px-5 py-4 flex items-center justify-between dark:border-[#3E2315]">
+              <h2 className="font-semibold text-brand-brown-900 flex items-center gap-2 dark:text-brand-beige-100">
+                <CalendarDays size={16} className="text-brand-brown-600" /> Upcoming Drives
               </h2>
-              <Link to="/student/opportunities" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
+              <Link to="/student/opportunities" className="text-xs font-bold text-brand-amber-500 hover:text-[#E89B60] dark:text-brand-amber-500 flex items-center gap-1">
                 All Drives <ChevronRight size={14} />
               </Link>
             </div>
             <div className="p-4">
               {drivesLoading ? (
-                <div className="flex justify-center py-6"><Loader2 size={20} className="animate-spin text-slate-400" /></div>
+                <div className="flex justify-center py-6"><Loader2 size={20} className="animate-spin text-brand-amber-500" /></div>
               ) : upcomingDrives.length > 0 ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {upcomingDrives.map(drive => (
-                    <div key={drive.id} className="group rounded-lg border border-slate-100 bg-slate-50/50 p-4 transition-all hover:border-indigo-200 hover:bg-indigo-50/30 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/20">
+                    <div key={drive.id} className="group rounded-lg border border-brand-beige-200 bg-brand-cream-50 p-4 transition-all hover:border-brand-amber-500/50 hover:bg-brand-beige-100 dark:border-[#3E2315] dark:bg-[#2A1810] dark:hover:border-[#C07840]/50 dark:hover:bg-[#3E2315]">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2.5">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
-                            <Building2 size={16} className="text-indigo-600 dark:text-indigo-400" />
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-beige-200 dark:bg-[#3E2315]">
+                            <Building2 size={16} className="text-brand-brown-800 dark:text-brand-beige-300" />
                           </div>
                           <div>
-                            <p className="font-semibold text-sm text-slate-900 dark:text-white">{drive.name}</p>
-                            <p className="text-[10px] text-slate-400">{drive.roles}</p>
+                            <p className="font-semibold text-sm text-brand-brown-900 dark:text-white">{drive.name}</p>
+                            <p className="text-[10px] text-brand-brown-600 dark:text-brand-beige-400">{drive.roles}</p>
                           </div>
                         </div>
-                        <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                        <span className="rounded-md bg-white border border-brand-beige-200 px-1.5 py-0.5 text-[9px] font-bold text-brand-brown-600 dark:bg-[#1A0F08] dark:border-[#3E2315] dark:text-brand-beige-400">
                           {drive.type}
                         </span>
                       </div>
-                      <div className="mt-3 flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
+                      <div className="mt-3 flex items-center gap-3 text-[10px] text-brand-brown-700 dark:text-brand-beige-300">
                         {drive.nextRound && (
                           <span className="flex items-center gap-1">
                             <CalendarDays size={10} />{drive.nextRound.name}: {formatDate(drive.nextRound.date)}
@@ -320,8 +322,8 @@ export default function StudentHome() {
                 </div>
               ) : (
                 <div className="text-center py-6">
-                  <CalendarDays size={28} className="mx-auto mb-2 text-slate-200 dark:text-slate-700" />
-                  <p className="text-sm text-slate-400">No upcoming drives scheduled.</p>
+                  <CalendarDays size={28} className="mx-auto mb-2 text-brand-beige-200 dark:text-brand-brown-700" />
+                  <p className="text-sm text-brand-brown-400">No upcoming drives scheduled.</p>
                 </div>
               )}
             </div>
@@ -331,38 +333,38 @@ export default function StudentHome() {
         {/* ── Right Sidebar ── */}
         <div className="lg:col-span-2 space-y-5">
           {/* Practice */}
-          <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50/80 to-white p-5 shadow-sm dark:border-indigo-900/50 dark:from-indigo-950/20 dark:to-slate-800">
+          <div className="rounded-xl border border-brand-beige-200 bg-white p-5 shadow-sm dark:border-[#5A3D2B] dark:bg-[#1A0F08]">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="flex items-center gap-2 text-sm font-bold text-indigo-900 dark:text-indigo-300">
-                <Sparkles size={14} className="text-indigo-500" /> Practice
+              <h3 className="flex items-center gap-2 text-sm font-bold text-brand-brown-900 dark:text-brand-beige-100">
+                <Sparkles size={14} className="text-brand-amber-500" /> Practice
               </h3>
-              <MiniDonut solved={totalSolved} total={totalQuestions} />
+              <MiniDonut solved={totalSolved} total={totalQuestions} color="#C07840" />
             </div>
 
             {practiceLoading ? (
-              <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin text-indigo-400" /></div>
+              <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin text-brand-amber-500" /></div>
             ) : recommendedQuestions.length > 0 ? (
               <>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-2">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-brand-amber-500 dark:text-brand-beige-400 mb-2">
                   Recommended for your companies
                 </p>
                 <div className="space-y-2">
                   {recommendedQuestions.map((q) => (
-                    <div key={q.id} className="flex items-start gap-2 rounded-lg border border-indigo-100 dark:border-indigo-900/40 bg-white dark:bg-slate-900 p-2.5 transition-all hover:shadow-sm">
+                    <div key={q.id} className="flex items-start gap-2 rounded-lg border border-brand-beige-100 dark:border-[#3E2315] bg-brand-cream-50 dark:bg-[#2A1810] p-2.5 transition-all hover:shadow-sm">
                       <button onClick={() => handleToggle(q.id)} disabled={toggling === q.id}
-                        className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 border-slate-300 bg-white hover:border-indigo-400 dark:border-slate-600 dark:bg-slate-800 transition-all">
-                        {toggling === q.id ? <Loader2 size={8} className="animate-spin" /> : <CheckCircle2 size={8} className="text-slate-300" />}
+                        className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 border-brand-beige-300 bg-white hover:border-brand-amber-500 dark:border-[#5A3D2B] dark:bg-[#1A0F08] transition-all">
+                        {toggling === q.id ? <Loader2 size={8} className="animate-spin" /> : <CheckCircle2 size={8} className="text-brand-beige-200 dark:text-[#3E2315]" />}
                       </button>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-slate-800 dark:text-slate-200 leading-snug line-clamp-2">{q.text}</p>
+                        <p className="text-xs font-medium text-brand-brown-900 dark:text-brand-beige-100 leading-snug line-clamp-2">{q.text}</p>
                         <div className="mt-1 flex items-center gap-2 flex-wrap">
                           <span className={`inline-flex rounded px-1 py-0.5 text-[8px] font-bold ${DIFF_COLORS[q.difficulty] || DIFF_COLORS.Medium}`}>
                             {q.difficulty || "Medium"}
                           </span>
-                          <span className="text-[9px] text-slate-400">{q.companyName}</span>
+                          <span className="text-[9px] text-brand-brown-600 dark:text-brand-beige-400">{q.companyName}</span>
                           {q.link && (
                             <a href={q.link} target="_blank" rel="noopener noreferrer"
-                              className="text-[9px] font-bold text-indigo-500 hover:underline flex items-center gap-0.5">
+                              className="text-[9px] font-bold text-brand-amber-500 hover:underline flex items-center gap-0.5">
                               <ExternalLink size={7} /> Solve
                             </a>
                           )}
@@ -373,19 +375,19 @@ export default function StudentHome() {
                 </div>
               </>
             ) : (
-              <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-3">
+              <p className="text-xs text-brand-brown-600 dark:text-brand-beige-400 text-center py-3">
                 {totalQuestions > 0 ? "🎉 All recommended questions solved!" : "No practice questions available yet."}
               </p>
             )}
             <Link to="/student/practice"
-              className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 transition-all shadow-sm">
+              className="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-brand-beige-200 bg-brand-cream-50 px-4 py-2 text-xs font-bold text-brand-brown-900 hover:bg-brand-beige-100 dark:border-[#3E2315] dark:bg-[#2A1810] dark:text-brand-beige-100 dark:hover:bg-[#3E2315] transition-all shadow-sm">
               View All Practice <ChevronRight size={14} />
             </Link>
           </div>
 
           {/* Quick Links */}
-          <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm dark:border-amber-900/50 dark:bg-amber-900/10">
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Quick Links</h3>
+          <div className="rounded-xl border border-brand-amber-500/20 bg-brand-amber-500/5 p-4 shadow-sm dark:border-[#C07840]/20 dark:bg-[#C07840]/10">
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-brand-amber-500">Quick Links</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { to: "/student/opportunities", label: "🎯 Opportunities", external: false },
@@ -394,12 +396,12 @@ export default function StudentHome() {
                 { to: "https://www.linkedin.com/company/training-and-placement-cell-nit-kurukshetra/", label: "💼 T&P LinkedIn", external: true },
               ].map(link => link.external ? (
                 <a key={link.label} href={link.to} target="_blank" rel="noopener noreferrer"
-                  className="rounded-lg border border-amber-100 bg-white/80 px-3 py-2 text-xs font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-900 dark:bg-slate-800 dark:text-amber-200 transition text-center">
+                  className="rounded-lg border border-brand-beige-200 bg-white px-3 py-2 text-xs font-medium text-brand-brown-900 hover:bg-brand-beige-50 dark:border-[#5A3D2B] dark:bg-[#1A0F08] dark:text-brand-beige-100 transition text-center">
                   {link.label}
                 </a>
               ) : (
                 <Link key={link.label} to={link.to}
-                  className="rounded-lg border border-amber-100 bg-white/80 px-3 py-2 text-xs font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-900 dark:bg-slate-800 dark:text-amber-200 transition text-center">
+                  className="rounded-lg border border-brand-beige-200 bg-white px-3 py-2 text-xs font-medium text-brand-brown-900 hover:bg-brand-beige-50 dark:border-[#5A3D2B] dark:bg-[#1A0F08] dark:text-brand-beige-100 transition text-center">
                   {link.label}
                 </Link>
               ))}

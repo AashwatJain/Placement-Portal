@@ -38,7 +38,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand-amber-500/100" />
       </div>
     );
   }
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
       title: "Total Students",
       value: stats.totalStudents,
       icon: Users,
-      color: "from-blue-500 to-indigo-600",
+      color: "from-brand-amber-500/100 to-brand-amber-500",
       description: "Registered for placements"
     },
     {
@@ -80,15 +80,15 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 pb-10">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white transition-colors flex items-center gap-2">
-            <Presentation className="text-indigo-600 dark:text-indigo-400" /> Administrative Dashboard
+        <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white transition-colors flex items-center gap-2">
+            <Presentation className="text-brand-amber-500 dark:text-brand-amber-500" /> Administrative Dashboard
         </h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-1 transition-colors">Overview of placement activities and statistics.</p>
+        <p className="text-brand-brown-600 dark:text-brand-beige-400 mt-1 transition-colors">Overview of placement activities and statistics.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((card, idx) => (
-          <div key={idx} className="bg-white dark:bg-slate-900 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md group">
+          <div key={idx} className="bg-white dark:bg-[#1A0F08] overflow-hidden rounded-2xl border border-brand-beige-200 dark:border-[#3E2315] shadow-sm transition-all hover:shadow-md group">
             <div className={`h-1.5 w-full bg-gradient-to-r ${card.color}`}></div>
             <div className="p-5 flex flex-col h-full">
                 <div className="flex justify-between items-start mb-4">
@@ -97,10 +97,10 @@ export default function AdminDashboard() {
                     </div>
                 </div>
                 <div>
-                    <h3 className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{card.title}</h3>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white">{card.value}</p>
+                    <h3 className="text-[13px] font-semibold text-brand-cream-500 dark:text-brand-beige-400 uppercase tracking-wider mb-1">{card.title}</h3>
+                    <p className="text-3xl font-bold text-brand-brown-900 dark:text-white">{card.value}</p>
                 </div>
-                <div className="mt-auto pt-4 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <div className="mt-auto pt-4 text-xs font-medium text-brand-cream-500 dark:text-brand-beige-400">
                     {card.description}
                 </div>
             </div>
@@ -110,14 +110,14 @@ export default function AdminDashboard() {
 
       {/* Branch Demographics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 relative overflow-hidden">
-            <h3 className="font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-                <Briefcase size={18} className="text-indigo-500" /> Branch Demographics
+        <div className="bg-white dark:bg-[#1A0F08] rounded-2xl border border-brand-beige-200 dark:border-[#3E2315] shadow-sm p-6 relative overflow-hidden">
+            <h3 className="font-semibold text-brand-brown-900 dark:text-white mb-1 flex items-center gap-2">
+                <Briefcase size={18} className="text-brand-amber-500/100" /> Branch Demographics
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">Placement rate and student count by branch</p>
+            <p className="text-xs text-brand-cream-500 dark:text-brand-beige-400 mb-5">Placement rate and student count by branch</p>
 
             {branchData.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+                <div className="flex flex-col items-center justify-center py-10 text-brand-brown-400">
                     <Users size={36} className="mb-3 opacity-20" />
                     <p className="text-sm">No student data available yet.</p>
                 </div>
@@ -129,15 +129,15 @@ export default function AdminDashboard() {
                         return (
                             <div key={b.branch}>
                                 <div className="flex items-center justify-between mb-1.5">
-                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{b.branch}</span>
-                                    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                                    <span className="text-sm font-semibold text-brand-brown-700 dark:text-brand-beige-300">{b.branch}</span>
+                                    <div className="flex items-center gap-3 text-xs text-brand-cream-500 dark:text-brand-beige-400">
                                         <span>{b.total} students</span>
                                         <span className="font-semibold text-emerald-600 dark:text-emerald-400">{b.placed} placed</span>
                                     </div>
                                 </div>
-                                <div className="relative h-6 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden" style={{ width: `${barWidth}%`, minWidth: '60px' }}>
+                                <div className="relative h-6 bg-brand-beige-100 dark:bg-[#2A1810] rounded-full overflow-hidden" style={{ width: `${barWidth}%`, minWidth: '60px' }}>
                                     <div
-                                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full transition-all duration-500"
+                                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-brand-amber-500/100 to-brand-amber-500 rounded-full transition-all duration-500"
                                         style={{ width: `${placedPct}%` }}
                                     />
                                     <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white mix-blend-difference">
@@ -152,11 +152,11 @@ export default function AdminDashboard() {
         </div>
 
         {/* Placement Summary */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 relative overflow-hidden">
-            <h3 className="font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+        <div className="bg-white dark:bg-[#1A0F08] rounded-2xl border border-brand-beige-200 dark:border-[#3E2315] shadow-sm p-6 relative overflow-hidden">
+            <h3 className="font-semibold text-brand-brown-900 dark:text-white mb-1 flex items-center gap-2">
                 <TrendingUp size={18} className="text-emerald-500" /> Placement Summary
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">Overall placement progress</p>
+            <p className="text-xs text-brand-cream-500 dark:text-brand-beige-400 mb-5">Overall placement progress</p>
 
             <div className="flex items-center justify-center py-4">
               {/* Donut-style progress */}
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
                     stroke="currentColor"
-                    className="text-slate-100 dark:text-slate-800"
+                    className="text-brand-beige-100 dark:text-brand-brown-800"
                     strokeWidth="3"
                   />
                   <path
@@ -185,24 +185,24 @@ export default function AdminDashboard() {
                   </defs>
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-bold text-slate-900 dark:text-white">{stats.placementPercentage}%</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Placed</span>
+                  <span className="text-3xl font-bold text-brand-brown-900 dark:text-white">{stats.placementPercentage}%</span>
+                  <span className="text-xs text-brand-cream-500 dark:text-brand-beige-400">Placed</span>
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3 mt-4">
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 text-center">
-                <p className="text-lg font-bold text-slate-900 dark:text-white">{stats.totalStudents}</p>
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">Total</p>
+              <div className="bg-brand-cream-50 dark:bg-[#2A1810]/50 rounded-xl p-3 text-center">
+                <p className="text-lg font-bold text-brand-brown-900 dark:text-white">{stats.totalStudents}</p>
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-brand-cream-500 dark:text-brand-beige-400">Total</p>
               </div>
               <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 text-center">
                 <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{stats.placedStudents}</p>
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">Placed</p>
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-brand-cream-500 dark:text-brand-beige-400">Placed</p>
               </div>
               <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 text-center">
                 <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{stats.totalStudents - stats.placedStudents}</p>
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">Unplaced</p>
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-brand-cream-500 dark:text-brand-beige-400">Unplaced</p>
               </div>
             </div>
         </div>

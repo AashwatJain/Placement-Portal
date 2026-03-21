@@ -12,7 +12,7 @@ export function offerBadge(type) {
   if (type === "Placement")
     return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800";
   if (type === "Internship")
-    return "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800";
+    return "bg-brand-amber-500/10 text-brand-amber-600 border-brand-amber-500/30 dark:bg-brand-amber-800/20 dark:text-brand-amber-500 dark:border-brand-amber-700";
   return "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800";
 }
 
@@ -32,7 +32,7 @@ export function deadlineLabel(lastDate) {
     return { text: "Last day!", color: "text-red-600 dark:text-red-400 font-bold", urgent: true };
   if (diff <= 3)
     return { text: `${diff} day${diff > 1 ? "s" : ""} left`, color: "text-amber-600 dark:text-amber-400 font-semibold", urgent: true };
-  return { text: `${diff} days left`, color: "text-slate-600 dark:text-slate-400", urgent: false };
+  return { text: `${diff} days left`, color: "text-brand-brown-600 dark:text-brand-beige-400", urgent: false };
 }
 
 /**
@@ -55,9 +55,9 @@ export function getStatusStyle(status) {
     case "Resume Shortlisting":
       return "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-800";
     case "Applied":
-      return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
+      return "bg-brand-amber-500/20 text-brand-amber-600 border-brand-amber-500/30 dark:bg-blue-900/30 dark:text-brand-amber-500 dark:border-brand-amber-700";
     default:
-      return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600";
+      return "bg-brand-beige-100 text-brand-brown-700 border-brand-beige-200 dark:bg-brand-brown-700 dark:text-brand-beige-300 dark:border-[#7A543A]";
   }
 }
 
@@ -71,5 +71,5 @@ export function stepDotColor(step, idx, timeline) {
   const currentIdx = timeline.findIndex((s) => !s.done);
   if (idx === currentIdx)
     return "bg-amber-400 border-amber-400 text-white animate-pulse";
-  return "bg-slate-200 border-slate-200 text-slate-400 dark:bg-slate-700 dark:border-slate-700";
+  return "bg-brand-beige-200 border-brand-beige-200 text-brand-brown-400 dark:bg-brand-brown-700 dark:border-[#5A3D2B]";
 }

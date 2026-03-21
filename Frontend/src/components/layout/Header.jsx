@@ -14,7 +14,8 @@ import {
   Info,
   User,
   LogOut,
-  Trash2
+  Trash2,
+  Search
 } from "lucide-react";
 import { fetchNotifications, markNotificationsRead, deleteNotificationApi } from "../../services/studentApi";
 
@@ -127,7 +128,7 @@ export default function Header({ toggleSidebar }) {
       case "alert": return <AlertCircle size={16} className="text-red-500" />;
       case "success": return <CheckCircle size={16} className="text-emerald-500" />;
       case "warning": return <AlertCircle size={16} className="text-amber-500" />;
-      default: return <Info size={16} className="text-blue-500" />;
+      default: return <Info size={16} className="text-brand-amber-500/100" />;
     }
   };
 
@@ -136,7 +137,7 @@ export default function Header({ toggleSidebar }) {
       case "alert": return "border-l-red-500";
       case "success": return "border-l-emerald-500";
       case "warning": return "border-l-amber-500";
-      default: return "border-l-blue-500";
+      default: return "border-l-brand-amber-500/100";
     }
   };
 
@@ -153,25 +154,34 @@ export default function Header({ toggleSidebar }) {
     : notifications.filter(n => n.rawType === notifFilter || (notifFilter === "info" && (n.rawType === "info" || n.rawType === "reminder")));
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-brand-beige-200 bg-brand-cream-50/90 px-4 backdrop-blur dark:border-[#3E2315] dark:bg-[#1A0F08]/90 sm:px-6">
 
-      {/* Mobile Menu & Greeting */}
+      {/* Mobile Menu */}
       <div className="flex items-center gap-4">
-        <button onClick={toggleSidebar} className="text-slate-500 hover:text-slate-700 dark:text-slate-400 md:hidden">
+        <button onClick={toggleSidebar} className="text-brand-brown-600 hover:text-brand-brown-900 dark:text-brand-beige-400 md:hidden">
           <Menu size={24} />
         </button>
-        <h2 className="hidden text-sm font-semibold text-slate-700 dark:text-slate-200 sm:block">
-          Welcome back, {displayName.split(" ")[0]} 👋
-        </h2>
       </div>
 
-      {/* Right Icons */}
+      {/* Right Icons: Search & Controls */}
       <div className="flex items-center gap-3">
+
+        {/* Search Bar */}
+        <div className="hidden sm:flex relative items-center mr-4">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <Search size={16} className="text-brand-brown-600 dark:text-brand-beige-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search"
+            className="block w-64 rounded-full border-0 py-1.5 pl-10 pr-4 text-sm text-brand-brown-900 bg-brand-beige-100 ring-1 ring-inset ring-brand-beige-200 placeholder:text-brand-brown-600 focus:ring-2 focus:ring-inset focus:ring-brand-amber-500 dark:bg-[#2A1810] dark:text-brand-beige-100 dark:ring-[#3E2315] dark:placeholder:text-brand-beige-400"
+          />
+        </div>
 
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
+          className="rounded-full p-2 text-brand-brown-600 hover:bg-brand-beige-100 dark:text-brand-beige-400 dark:hover:bg-[#2A1810] transition-colors"
         >
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
@@ -180,7 +190,7 @@ export default function Header({ toggleSidebar }) {
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => { const willOpen = !isNotifOpen; setIsNotifOpen(willOpen); setIsProfileOpen(false); if (willOpen) loadNotifications(); }}
-            className={`relative rounded-full p-2 transition-colors ${isNotifOpen ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400" : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"}`}
+            className={`relative rounded-full p-2 transition-colors ${isNotifOpen ? "bg-brand-beige-200 text-brand-brown-900 dark:bg-[#3E2315] dark:text-brand-beige-100" : "text-brand-brown-600 hover:bg-brand-beige-100 dark:text-brand-beige-400 dark:hover:bg-[#2A1810]"}`}
           >
             <Bell size={20} />
             {unreadCount > 0 && (
@@ -192,13 +202,13 @@ export default function Header({ toggleSidebar }) {
           </button>
 
           {isNotifOpen && (
-            <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 animate-in fade-in zoom-in-95 duration-100 origin-top-right rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 animate-in fade-in zoom-in-95 duration-100 origin-top-right rounded-xl border border-brand-beige-200 bg-white shadow-xl dark:border-[#3E2315] dark:bg-[#1A0F08]">
               {/* Notif Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <div className="flex items-center justify-between border-b border-brand-beige-100 px-4 py-3 dark:border-[#3E2315]">
+                <h3 className="font-semibold text-brand-brown-900 dark:text-white flex items-center gap-2">
                   Recent Alerts
                   {notifications.length > 0 && (
-                    <span className="inline-flex items-center justify-center rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+                    <span className="inline-flex items-center justify-center rounded-full bg-brand-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-brand-amber-500 dark:bg-[#3E2315]/50 dark:text-brand-amber-500">
                       {notifications.length}
                     </span>
                   )}
@@ -207,7 +217,7 @@ export default function Header({ toggleSidebar }) {
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllAsRead}
-                      className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                      className="flex items-center gap-1 text-xs font-medium text-brand-amber-500 hover:text-brand-amber-600 dark:text-brand-amber-500"
                       title="Mark all as read"
                     >
                       <CheckCheck size={14} /> Read
@@ -226,15 +236,15 @@ export default function Header({ toggleSidebar }) {
               </div>
 
               {/* Category Tabs */}
-              <div className="flex border-b border-slate-100 dark:border-slate-800 px-2 py-1.5 gap-1">
+              <div className="flex border-b border-brand-beige-100 dark:border-[#3E2315] px-2 py-1.5 gap-1">
                 {NOTIF_TABS.map(tab => (
                   <button
                     key={tab.key}
                     onClick={() => setNotifFilter(tab.key)}
                     className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition-all ${
                       notifFilter === tab.key
-                        ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
-                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                        ? "bg-brand-beige-100 text-brand-brown-900 dark:bg-[#3E2315] dark:text-white"
+                        : "text-brand-brown-600 hover:text-brand-brown-900 hover:bg-brand-beige-50 dark:hover:bg-[#2A1810] dark:hover:text-brand-beige-100"
                     }`}
                   >
                     {tab.label}
@@ -245,45 +255,45 @@ export default function Header({ toggleSidebar }) {
               {/* Notif List */}
               <div className="max-h-[350px] overflow-y-auto py-1">
                 {notifLoading ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-slate-500">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent mb-2"></div>
+                  <div className="flex flex-col items-center justify-center py-8 text-brand-cream-500">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-amber-500/100 border-t-transparent mb-2"></div>
                     <p className="text-xs">Loading...</p>
                   </div>
                 ) : filteredNotifications.length > 0 ? (
                   filteredNotifications.map((notif) => (
                     <div
                       key={notif.id}
-                      className={`relative flex gap-3 border-b border-l-[3px] border-b-slate-50 px-4 py-3 transition-colors last:border-b-0 hover:bg-slate-50 dark:border-b-slate-800/50 dark:hover:bg-slate-800/50 ${getBorderColor(notif.type)} ${!notif.read ? "bg-indigo-50/30 dark:bg-indigo-900/10" : ""}`}
+                      className={`relative flex gap-3 border-b border-l-[3px] border-b-brand-cream-50 px-4 py-3 transition-colors last:border-b-0 hover:bg-brand-cream-50 dark:border-b-brand-brown-800/50 dark:hover:bg-brand-brown-800/50 ${getBorderColor(notif.type)} ${!notif.read ? "bg-brand-amber-500/10/30 dark:bg-brand-amber-800/10" : ""}`}
                     >
-                      <div className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800`}>
+                      <div className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-beige-100 dark:bg-[#2A1810]`}>
                         {getIcon(notif.type)}
                       </div>
                       <div className="flex-1 space-y-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className={`text-sm font-medium leading-snug ${!notif.read ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-300"}`}>
+                          <p className={`text-sm font-medium leading-snug ${!notif.read ? "text-brand-brown-900 dark:text-white" : "text-brand-brown-600 dark:text-brand-beige-300"}`}>
                             {notif.title}
                           </p>
                           <button
                             onClick={(e) => { e.stopPropagation(); deleteNotification(notif.id); }}
-                            className="text-slate-400 hover:text-red-500 transition-colors"
+                            className="text-brand-brown-400 hover:text-red-500 transition-colors"
                           >
                             <X size={14} />
                           </button>
                         </div>
-                        <p className="text-[10px] text-slate-400">{notif.time}</p>
+                        <p className="text-[10px] text-brand-brown-400">{notif.time}</p>
                       </div>
                       {!notif.read && (
-                        <div className="absolute right-4 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-indigo-500"></div>
+                        <div className="absolute right-4 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-brand-amber-500/100"></div>
                       )}
                     </div>
                   ))
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-10 text-slate-500">
-                    <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                      <Bell size={24} className="text-slate-300 dark:text-slate-600" />
+                  <div className="flex flex-col items-center justify-center py-10 text-brand-cream-500">
+                    <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-brand-beige-100 dark:bg-[#2A1810]">
+                      <Bell size={24} className="text-brand-beige-300 dark:text-brand-brown-600" />
                     </div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">You're all caught up! 🎉</p>
-                    <p className="text-xs text-slate-400 mt-1">No {notifFilter !== "All" ? notifFilter.toLowerCase() : ""} notifications right now.</p>
+                    <p className="text-sm font-medium text-brand-brown-600 dark:text-brand-beige-300">You're all caught up! 🎉</p>
+                    <p className="text-xs text-brand-brown-400 mt-1">No {notifFilter !== "All" ? notifFilter.toLowerCase() : ""} notifications right now.</p>
                   </div>
                 )}
               </div>
@@ -296,8 +306,8 @@ export default function Header({ toggleSidebar }) {
           <button
             onClick={() => { setIsProfileOpen(!isProfileOpen); setIsNotifOpen(false); }}
             className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all overflow-hidden ${isProfileOpen
-              ? "bg-indigo-700 text-white ring-2 ring-indigo-200 dark:ring-indigo-900"
-              : "bg-indigo-600 text-white hover:bg-indigo-700"
+              ? "bg-brand-brown-900 text-white ring-2 ring-brand-brown-600 dark:ring-[#C07840]"
+              : "bg-brand-brown-800 text-brand-beige-100 hover:bg-brand-brown-900"
               }`}
           >
             {(user?.avatarUrl || user?.avatar) ? (
@@ -308,12 +318,12 @@ export default function Header({ toggleSidebar }) {
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 top-12 z-50 w-56 animate-in fade-in zoom-in-95 duration-100 origin-top-right rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 p-1.5">
+            <div className="absolute right-0 top-12 z-50 w-56 animate-in fade-in zoom-in-95 duration-100 origin-top-right rounded-xl border border-brand-beige-200 bg-white shadow-xl dark:border-[#3E2315] dark:bg-[#1A0F08] p-1.5">
 
               {/* User Info */}
-              <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
-                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{displayName}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
+              <div className="px-3 py-2 border-b border-brand-beige-100 dark:border-[#3E2315] mb-1">
+                <p className="text-sm font-bold text-brand-brown-900 dark:text-white truncate">{displayName}</p>
+                <p className="text-xs text-brand-brown-600 dark:text-brand-beige-400 truncate">{user?.email}</p>
               </div>
 
               {/* Menu Items */}
@@ -321,7 +331,7 @@ export default function Header({ toggleSidebar }) {
                 <Link
                   to={user?.role === "admin" ? "/admin/profile" : user?.role === "recruiter" ? "/recruiter/profile" : "/student/profile"}
                   onClick={() => setIsProfileOpen(false)}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-brand-brown-700 hover:bg-brand-beige-50 hover:text-brand-brown-900 dark:text-brand-beige-300 dark:hover:bg-[#2A1810] dark:hover:text-white transition-colors"
                 >
                   <User size={16} /> My Profile
                 </Link>
@@ -330,7 +340,7 @@ export default function Header({ toggleSidebar }) {
               </div>
 
               {/* Logout */}
-              <div className="mt-1 border-t border-slate-100 dark:border-slate-800 pt-1">
+              <div className="mt-1 border-t border-brand-beige-100 dark:border-[#3E2315] pt-1">
                 <button
                   onClick={logout}
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
