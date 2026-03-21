@@ -12,7 +12,7 @@ export default function Layout() {
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div className="flex h-screen overflow-hidden bg-brand-beige-100 dark:bg-[#1A0F08]">
 
       {/* 1. Desktop Sidebar (Fixed Left) */}
       <Sidebar />

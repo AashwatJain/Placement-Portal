@@ -2,8 +2,28 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-brand-brown-900: #3E2315;
+  --color-brand-brown-800: #4A2C1A;
+  --color-brand-brown-700: #5A3D2B;
+  --color-brand-brown-600: #8B7355;
+  --color-brand-amber-500: #C07840;
+  --color-brand-beige-400: #C9A882;
+  --color-brand-beige-300: #D4B896;
+  --color-brand-beige-200: #E8D5C4;
+  --color-brand-beige-100: #F5EDE3;
+  --color-brand-cream-50:  #FDF8F3;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
   font-family: "DM Sans", system-ui, sans-serif;
+  background-color: var(--color-brand-beige-100);
+  color: var(--color-brand-brown-900);
+}
+
+.dark body {
+  background-color: #1A0F08;
+  color: var(--color-brand-beige-100);
 }

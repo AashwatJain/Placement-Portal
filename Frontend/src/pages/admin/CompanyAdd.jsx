@@ -200,7 +200,7 @@ export default function CompanyAdd() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand-amber-500/100" />
       </div>
     );
   }
@@ -210,17 +210,17 @@ export default function CompanyAdd() {
       
       {/* HEADER */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Manage Companies</h1>
-        <p className="text-slate-600 dark:text-slate-400">Add new companies, filter drives, and update placement details.</p>
+        <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">Manage Companies</h1>
+        <p className="text-brand-brown-600 dark:text-brand-beige-400">Add new companies, filter drives, and update placement details.</p>
       </div>
 
       {/* ADD / EDIT FORM */}
       <form 
         onSubmit={handleSubmit} 
-        className={`rounded-xl border bg-white p-6 shadow-sm transition-all duration-300 dark:bg-slate-900 ${
+        className={`rounded-xl border bg-white p-6 shadow-sm transition-all duration-300 dark:bg-[#1A0F08] ${
           editId 
             ? "border-amber-400 dark:border-amber-500/50 ring-1 ring-amber-400 dark:ring-amber-500/50" 
-            : "border-slate-200 dark:border-slate-700"
+            : "border-brand-beige-200 dark:border-[#5A3D2B]"
         }`}
       >
         {editId && (
@@ -233,23 +233,23 @@ export default function CompanyAdd() {
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Company name</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase text-brand-cream-500 dark:text-brand-beige-400">Company name</label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => update("name", e.target.value)}
               required
               placeholder="e.g. Amazon"
-              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
+              className="w-full rounded-lg border border-brand-beige-300 bg-brand-cream-50 px-3 py-2.5 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none focus:ring-1 focus:ring-brand-amber-500/100 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white transition-colors"
             />
           </div>
           
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Offer Type</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase text-brand-cream-500 dark:text-brand-beige-400">Offer Type</label>
             <select
               value={form.offerType}
               onChange={(e) => update("offerType", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
+              className="w-full rounded-lg border border-brand-beige-300 bg-brand-cream-50 px-3 py-2.5 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none focus:ring-1 focus:ring-brand-amber-500/100 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white transition-colors"
             >
               <option value="Placement">Placement (FTE)</option>
               <option value="Internship">Internship</option>
@@ -258,11 +258,11 @@ export default function CompanyAdd() {
           </div>
           
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Drive Type</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase text-brand-cream-500 dark:text-brand-beige-400">Drive Type</label>
             <select
               value={form.type}
               onChange={(e) => update("type", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
+              className="w-full rounded-lg border border-brand-beige-300 bg-brand-cream-50 px-3 py-2.5 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none focus:ring-1 focus:ring-brand-amber-500/100 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white transition-colors"
             >
               <option value="On-campus">On-campus</option>
               <option value="Off-campus">Off-campus</option>
@@ -270,33 +270,33 @@ export default function CompanyAdd() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">CGPA cutoff</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase text-brand-cream-500 dark:text-brand-beige-400">CGPA cutoff</label>
             <input
               type="text"
               value={form.cgpaCutoff}
               onChange={(e) => update("cgpaCutoff", e.target.value)}
               placeholder="e.g. 7.5"
-              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
+              className="w-full rounded-lg border border-brand-beige-300 bg-brand-cream-50 px-3 py-2.5 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none focus:ring-1 focus:ring-brand-amber-500/100 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white transition-colors"
             />
           </div>
           
           <div className="sm:col-span-2">
-            <label className="mb-1.5 block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Roles (comma-separated)</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase text-brand-cream-500 dark:text-brand-beige-400">Roles (comma-separated)</label>
             <input
               type="text"
               value={form.roles}
               onChange={(e) => update("roles", e.target.value)}
               placeholder="SDE, ML, Data Analyst"
-              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
+              className="w-full rounded-lg border border-brand-beige-300 bg-brand-cream-50 px-3 py-2.5 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none focus:ring-1 focus:ring-brand-amber-500/100 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white transition-colors"
             />
           </div>
 
           {/* Eligibility Rules */}
-          <div className="sm:col-span-2 lg:col-span-3 mt-4 border-t border-slate-100 dark:border-slate-800 pt-4">
-              <label className="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-3">Eligibility Rules</label>
+          <div className="sm:col-span-2 lg:col-span-3 mt-4 border-t border-brand-beige-100 dark:border-[#3E2315] pt-4">
+              <label className="block text-xs font-semibold uppercase text-brand-cream-500 dark:text-brand-beige-400 mb-3">Eligibility Rules</label>
               <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Allowed Branches (leave empty for all)</label>
+                      <label className="block text-xs font-medium text-brand-cream-500 dark:text-brand-beige-400 mb-1.5">Allowed Branches (leave empty for all)</label>
                       <div className="flex flex-wrap gap-2">
                           {BRANCH_OPTIONS.map(br => (
                               <button
@@ -312,8 +312,8 @@ export default function CompanyAdd() {
                                   }}
                                   className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
                                       (form.allowedBranches || []).includes(br)
-                                          ? "bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700"
-                                          : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700"
+                                          ? "bg-brand-amber-500/20 text-brand-amber-600 border-brand-amber-500/40 dark:bg-brand-amber-800/30 dark:text-brand-amber-500 dark:border-brand-amber-600"
+                                          : "bg-brand-cream-50 text-brand-cream-500 border-brand-beige-200 hover:bg-brand-beige-100 dark:bg-[#2A1810] dark:text-brand-beige-400 dark:border-[#5A3D2B] dark:hover:bg-brand-brown-700"
                                   }`}
                               >
                                   {br}
@@ -329,31 +329,31 @@ export default function CompanyAdd() {
                               onChange={e => update("noBacklogs", e.target.checked)}
                               className="sr-only peer"
                           />
-                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                          <div className="w-9 h-5 bg-brand-beige-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-amber-500/40 rounded-full peer dark:bg-brand-brown-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-brand-beige-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-amber-500"></div>
                       </label>
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">No Active Backlogs Required</span>
+                      <span className="text-sm font-medium text-brand-brown-700 dark:text-brand-beige-300">No Active Backlogs Required</span>
                   </div>
               </div>
           </div>
 
-          <div className="sm:col-span-2 lg:col-span-3 mt-4 border-t border-slate-100 dark:border-slate-800 pt-4">
+          <div className="sm:col-span-2 lg:col-span-3 mt-4 border-t border-brand-beige-100 dark:border-[#3E2315] pt-4">
               <div className="flex items-center justify-between mb-3">
-                  <label className="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Drive Schedule (Rounds)</label>
+                  <label className="block text-xs font-semibold uppercase text-brand-cream-500 dark:text-brand-beige-400">Drive Schedule (Rounds)</label>
                   <button 
                       type="button" 
                       onClick={() => update("rounds", [...form.rounds, { name: "", date: "", venue: "" }])}
-                      className="text-xs font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                      className="text-xs font-medium text-brand-amber-500 hover:text-brand-amber-700 dark:text-brand-amber-500 dark:hover:text-brand-amber-500/40 transition-colors"
                   >
                       + Add Round
                   </button>
               </div>
               
               {form.rounds.length === 0 ? (
-                  <p className="text-sm text-slate-500 dark:text-slate-400 italic">No rounds scheduled yet. Click "+ Add Round" to begin.</p>
+                  <p className="text-sm text-brand-cream-500 dark:text-brand-beige-400 italic">No rounds scheduled yet. Click "+ Add Round" to begin.</p>
               ) : (
                   <div className="space-y-3">
                       {form.rounds.map((round, index) => (
-                          <div key={index} className="flex flex-wrap sm:flex-nowrap items-center gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                          <div key={index} className="flex flex-wrap sm:flex-nowrap items-center gap-3 bg-brand-cream-50 dark:bg-[#2A1810]/50 p-3 rounded-lg border border-brand-beige-200 dark:border-[#5A3D2B]">
                               <input 
                                   type="text" 
                                   placeholder="Round Name (e.g. Aptitude)" 
@@ -363,7 +363,7 @@ export default function CompanyAdd() {
                                       newRounds[index].name = e.target.value;
                                       update("rounds", newRounds);
                                   }}
-                                  className="flex-1 min-w-[150px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                                  className="flex-1 min-w-[150px] rounded-md border border-brand-beige-300 bg-white px-3 py-2 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#7A543A] dark:bg-[#1A0F08] dark:text-white"
                               />
                               <input 
                                   type="date" 
@@ -373,7 +373,7 @@ export default function CompanyAdd() {
                                       newRounds[index].date = e.target.value;
                                       update("rounds", newRounds);
                                   }}
-                                  className="w-[140px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                                  className="w-[140px] rounded-md border border-brand-beige-300 bg-white px-3 py-2 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#7A543A] dark:bg-[#1A0F08] dark:text-white"
                               />
                               <input 
                                   type="text" 
@@ -384,7 +384,7 @@ export default function CompanyAdd() {
                                       newRounds[index].venue = e.target.value;
                                       update("rounds", newRounds);
                                   }}
-                                  className="w-[140px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                                  className="w-[140px] rounded-md border border-brand-beige-300 bg-white px-3 py-2 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#7A543A] dark:bg-[#1A0F08] dark:text-white"
                               />
                               <button 
                                   type="button" 
@@ -392,7 +392,7 @@ export default function CompanyAdd() {
                                       const newRounds = form.rounds.filter((_, i) => i !== index);
                                       update("rounds", newRounds);
                                   }}
-                                  className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                                  className="p-2 text-brand-brown-400 hover:text-red-500 transition-colors"
                               >
                                   <X size={16} />
                               </button>
@@ -403,14 +403,14 @@ export default function CompanyAdd() {
           </div>
         </div>
         
-        <div className="mt-8 flex items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-5">
+        <div className="mt-8 flex items-center gap-4 border-t border-brand-beige-100 dark:border-[#3E2315] pt-5">
           <button 
             type="submit"
             disabled={saving}
             className={`rounded-lg px-6 py-2.5 font-bold text-white shadow-lg transition-all active:scale-95 disabled:opacity-60 ${
               editId 
                 ? "bg-amber-500 shadow-amber-500/20 hover:bg-amber-600" 
-                : "bg-indigo-600 shadow-indigo-500/20 hover:bg-indigo-700"
+                : "bg-brand-amber-500 shadow-brand-amber-500/100/20 hover:bg-brand-amber-600"
             }`}
           >
             {saving ? "Saving..." : editId ? "Update company" : "Add company"}
@@ -420,7 +420,7 @@ export default function CompanyAdd() {
             <button 
               type="button" 
               onClick={cancelEdit}
-              className="flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-medium text-brand-brown-600 hover:bg-brand-beige-100 dark:text-brand-beige-400 dark:hover:bg-brand-brown-800 transition-colors"
             >
               <X size={16} /> Cancel
             </button>
@@ -436,25 +436,25 @@ export default function CompanyAdd() {
 
       {/* FILTER SECTION */}
       <div className="pt-6">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Available Companies</h2>
+        <h2 className="text-lg font-bold text-brand-brown-900 dark:text-white mb-4">Available Companies</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 bg-white dark:bg-[#1A0F08] p-4 rounded-xl border border-brand-beige-200 dark:border-[#5A3D2B] shadow-sm">
           <div className="lg:col-span-1">
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Search</label>
+            <label className="block text-xs font-semibold text-brand-cream-500 mb-1.5 uppercase">Search</label>
             <input
               type="search"
               placeholder="Company or Role..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
+              className="w-full rounded-lg border border-brand-beige-300 bg-brand-cream-50 px-3 py-2 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white transition-colors"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Offer Type</label>
+            <label className="block text-xs font-semibold text-brand-cream-500 mb-1.5 uppercase">Offer Type</label>
             <select 
               value={offerTypeFilter}
               onChange={(e) => setOfferTypeFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
+              className="w-full rounded-lg border border-brand-beige-300 bg-brand-cream-50 px-3 py-2 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white transition-colors"
             >
               <option value="All">All Types</option>
               <option value="Placement">Placement (FTE)</option>
@@ -463,11 +463,11 @@ export default function CompanyAdd() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Drive Type</label>
+            <label className="block text-xs font-semibold text-brand-cream-500 mb-1.5 uppercase">Drive Type</label>
             <select 
               value={driveTypeFilter}
               onChange={(e) => setDriveTypeFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
+              className="w-full rounded-lg border border-brand-beige-300 bg-brand-cream-50 px-3 py-2 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white transition-colors"
             >
               <option value="All">All Drives</option>
               <option value="On-campus">On-campus</option>
@@ -475,11 +475,11 @@ export default function CompanyAdd() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">CGPA Cutoff</label>
+            <label className="block text-xs font-semibold text-brand-cream-500 mb-1.5 uppercase">CGPA Cutoff</label>
             <select 
               value={cgpaFilter}
               onChange={(e) => setCgpaFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition-colors"
+              className="w-full rounded-lg border border-brand-beige-300 bg-brand-cream-50 px-3 py-2 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white transition-colors"
             >
               <option value="All">All CGPA</option>
               <option value="> 9.0">&gt; 9.0</option>
@@ -491,27 +491,27 @@ export default function CompanyAdd() {
         </div>
 
         {/* TABLE */}
-        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm transition-colors">
+        <div className="overflow-hidden rounded-xl border border-brand-beige-200 dark:border-[#5A3D2B] bg-white dark:bg-[#1A0F08] shadow-sm transition-colors">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-              <thead className="bg-slate-50 dark:bg-slate-800/50">
+            <table className="min-w-full divide-y divide-brand-beige-200 dark:divide-brand-brown-700">
+              <thead className="bg-brand-cream-50 dark:bg-[#2A1810]/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Company</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Offer Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Roles</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">CGPA Cutoff</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Drive / Schedule</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-cream-500 dark:text-brand-beige-400">Company</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-cream-500 dark:text-brand-beige-400">Offer Type</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-cream-500 dark:text-brand-beige-400">Roles</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-cream-500 dark:text-brand-beige-400">CGPA Cutoff</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-cream-500 dark:text-brand-beige-400">Drive / Schedule</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-cream-500 dark:text-brand-beige-400">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-900">
+              <tbody className="divide-y divide-brand-beige-200 dark:divide-brand-brown-700 bg-white dark:bg-[#1A0F08]">
                 {filteredCompanies.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-4 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+                    <td colSpan="6" className="px-4 py-12 text-center text-sm text-brand-cream-500 dark:text-brand-beige-400">
                       <div className="flex flex-col items-center justify-center">
                         <Filter size={32} className="mb-3 opacity-20" />
                         <p>No companies found matching your filters.</p>
-                        <button onClick={clearFilters} className="mt-2 text-indigo-500 hover:underline text-sm">Clear all filters</button>
+                        <button onClick={clearFilters} className="mt-2 text-brand-amber-500/100 hover:underline text-sm">Clear all filters</button>
                       </div>
                     </td>
                   </tr>
@@ -522,11 +522,11 @@ export default function CompanyAdd() {
                       className={`transition-colors ${
                         editId === company.id 
                           ? "bg-amber-50/50 dark:bg-amber-900/10" 
-                          : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                          : "hover:bg-brand-cream-50 dark:hover:bg-brand-brown-800/50"
                       }`}
                     >
-                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-brand-brown-900 dark:text-white flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-beige-100 dark:bg-[#2A1810] text-brand-brown-600 dark:text-brand-beige-300">
                           <Building2 size={14} />
                         </div>
                         {company.name}
@@ -534,25 +534,25 @@ export default function CompanyAdd() {
                       <td className="whitespace-nowrap px-4 py-3 text-sm font-medium">
                         <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${
                           company.offerType === "Placement" ? "text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20" :
-                          company.offerType === "Internship" ? "text-indigo-700 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-900/20" :
+                          company.offerType === "Internship" ? "text-brand-amber-600 bg-brand-amber-500/10 dark:text-brand-amber-500 dark:bg-brand-amber-800/20" :
                           "text-purple-700 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/20"
                         }`}>
                           {company.offerType}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 max-w-[200px] truncate">
+                      <td className="px-4 py-3 text-sm text-brand-brown-600 dark:text-brand-beige-400 max-w-[200px] truncate">
                         {company.roles}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-brand-brown-700 dark:text-brand-beige-300">
                         {company.cgpaCutoff ? `${company.cgpaCutoff}+` : "N/A"}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
                         <div className="flex flex-col gap-1">
-                            <span className="text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider font-semibold">
+                            <span className="text-brand-brown-600 dark:text-brand-beige-400 text-xs uppercase tracking-wider font-semibold">
                             {company.type}
                             </span>
                             {company.rounds && company.rounds.length > 0 && (
-                                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">
+                                <span className="text-[10px] text-brand-amber-500 dark:text-brand-amber-500 font-medium">
                                     {company.rounds.length} round(s) scheduled
                                 </span>
                             )}
@@ -562,21 +562,21 @@ export default function CompanyAdd() {
                         <div className="flex items-center justify-end gap-2">
                           <button 
                             onClick={() => handleOpenShortlist(company)}
-                            className="p-1.5 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors" 
+                            className="p-1.5 text-brand-brown-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors" 
                             title="Manage Shortlist"
                           >
                             <Users size={16} />
                           </button>
                           <button 
                             onClick={() => handleEdit(company)}
-                            className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" 
+                            className="p-1.5 text-brand-brown-400 hover:text-brand-amber-500 dark:hover:text-brand-amber-500 transition-colors" 
                             title="Edit"
                           >
                             <Edit size={16} />
                           </button>
                           <button 
                             onClick={() => handleDelete(company.id)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" 
+                            className="p-1.5 text-brand-brown-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" 
                             title="Delete"
                           >
                             <Trash2 size={16} />
@@ -594,35 +594,35 @@ export default function CompanyAdd() {
 
       {/* SHORTLIST SETTINGS MODAL */}
       {shortlistModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-brown-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-[#1A0F08] border border-brand-beige-200 dark:border-[#5A3D2B] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-brand-beige-100 dark:border-[#3E2315] bg-brand-cream-50 dark:bg-[#2A1810]/50">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-brand-brown-900 dark:text-white flex items-center gap-2">
                         Manage Shortlist: {shortlistModal.name}
                         </h2>
-                        <p className="text-sm text-slate-500">Generate or upload a shortlist for this drive to notify students.</p>
+                        <p className="text-sm text-brand-cream-500">Generate or upload a shortlist for this drive to notify students.</p>
                     </div>
-                    <button onClick={() => setShortlistModal(null)} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200 dark:hover:text-white dark:hover:bg-slate-700 rounded-full transition-colors">
+                    <button onClick={() => setShortlistModal(null)} className="p-2 text-brand-brown-400 hover:text-brand-brown-700 hover:bg-brand-beige-200 dark:hover:text-white dark:hover:bg-brand-brown-700 rounded-full transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
                 <div className="flex flex-1 overflow-hidden">
                     {/* Left Sidebar: Controls */}
-                    <div className="w-80 border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 p-5 flex flex-col gap-6 overflow-y-auto">
+                    <div className="w-80 border-r border-brand-beige-200 dark:border-[#5A3D2B] bg-brand-cream-50 dark:bg-[#2A1810]/30 p-5 flex flex-col gap-6 overflow-y-auto">
                         
                         {/* Tabs */}
-                        <div className="flex bg-slate-200/50 dark:bg-slate-800 p-1 rounded-lg">
+                        <div className="flex bg-brand-beige-200/50 dark:bg-[#2A1810] p-1 rounded-lg">
                             <button 
                                 onClick={() => setShortlistTab("auto")} 
-                                className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${shortlistTab === "auto" ? "bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+                                className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${shortlistTab === "auto" ? "bg-white dark:bg-brand-brown-700 shadow-sm text-brand-brown-900 dark:text-white" : "text-brand-cream-500 hover:text-brand-brown-700 dark:hover:text-brand-beige-300"}`}
                             >
                                 Auto-Generate
                             </button>
                             <button 
                                 onClick={() => setShortlistTab("csv")} 
-                                className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${shortlistTab === "csv" ? "bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+                                className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${shortlistTab === "csv" ? "bg-white dark:bg-brand-brown-700 shadow-sm text-brand-brown-900 dark:text-white" : "text-brand-cream-500 hover:text-brand-brown-700 dark:hover:text-brand-beige-300"}`}
                             >
                                 CSV Upload
                             </button>
@@ -631,11 +631,11 @@ export default function CompanyAdd() {
                         {shortlistTab === "auto" ? (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1.5">Branch Filter</label>
+                                    <label className="block text-xs font-semibold uppercase text-brand-cream-500 dark:text-brand-beige-400 mb-1.5">Branch Filter</label>
                                     <select 
                                         value={autoFilter.branch} 
                                         onChange={e => setAutoFilter({...autoFilter, branch: e.target.value})}
-                                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:bg-slate-900 dark:border-slate-700"
+                                        className="w-full rounded-md border border-brand-beige-300 px-3 py-2 text-sm focus:border-brand-amber-500/100 focus:outline-none dark:bg-[#1A0F08] dark:border-[#5A3D2B]"
                                     >
                                         <option value="">All Branches</option>
                                         <option value="CSE">CSE</option>
@@ -644,19 +644,19 @@ export default function CompanyAdd() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-1.5">Min CGPA</label>
+                                    <label className="block text-xs font-semibold uppercase text-brand-cream-500 dark:text-brand-beige-400 mb-1.5">Min CGPA</label>
                                     <input 
                                         type="number" step="0.1" 
                                         value={autoFilter.minCgpa} 
                                         onChange={e => setAutoFilter({...autoFilter, minCgpa: e.target.value})}
                                         placeholder="e.g. 8.0"
-                                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:bg-slate-900 dark:border-slate-700"
+                                        className="w-full rounded-md border border-brand-beige-300 px-3 py-2 text-sm focus:border-brand-amber-500/100 focus:outline-none dark:bg-[#1A0F08] dark:border-[#5A3D2B]"
                                     />
                                 </div>
                                 <button 
                                     onClick={generateAutoShortlist}
                                     disabled={isLoadingCandidates}
-                                    className="w-full flex justify-center items-center gap-2 py-2 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-md font-medium text-sm transition-colors"
+                                    className="w-full flex justify-center items-center gap-2 py-2 bg-brand-amber-500/20 text-brand-amber-600 hover:bg-brand-amber-500/30 dark:bg-brand-amber-800/30 dark:text-brand-amber-500 dark:hover:bg-brand-amber-800/50 rounded-md font-medium text-sm transition-colors"
                                 >
                                     {isLoadingCandidates ? <Loader2 size={16} className="animate-spin" /> : <Filter size={16} />}
                                     Generate List
@@ -664,7 +664,7 @@ export default function CompanyAdd() {
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                <p className="text-xs text-slate-500 dark:text-slate-400">Upload a CSV file with columns: Name, Email, Branch, CGPA.</p>
+                                <p className="text-xs text-brand-cream-500 dark:text-brand-beige-400">Upload a CSV file with columns: Name, Email, Branch, CGPA.</p>
                                 <input 
                                     type="file" 
                                     accept=".csv"
@@ -674,7 +674,7 @@ export default function CompanyAdd() {
                                 />
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-full flex justify-center items-center gap-2 py-2 border border-dashed border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400 rounded-md font-medium text-sm transition-colors"
+                                    className="w-full flex justify-center items-center gap-2 py-2 border border-dashed border-brand-amber-500/40 bg-brand-amber-500/10 text-brand-amber-600 hover:bg-brand-amber-500/20 dark:border-brand-amber-600 dark:bg-brand-amber-800/20 dark:text-brand-amber-500 rounded-md font-medium text-sm transition-colors"
                                 >
                                     <Upload size={16} />
                                     Select CSV File
@@ -682,17 +682,17 @@ export default function CompanyAdd() {
                             </div>
                         )}
 
-                        <div className="mt-auto pt-6 border-t border-slate-200 dark:border-slate-700">
+                        <div className="mt-auto pt-6 border-t border-brand-beige-200 dark:border-[#5A3D2B]">
                             <div className="mb-4 flex items-center justify-between text-sm">
-                                <span className="text-slate-500">Selected</span>
-                                <span className="font-bold text-slate-900 dark:text-white">
+                                <span className="text-brand-cream-500">Selected</span>
+                                <span className="font-bold text-brand-brown-900 dark:text-white">
                                     {shortlistCandidates.filter(c => c.selected).length} / {shortlistCandidates.length}
                                 </span>
                             </div>
                             <button 
                                 onClick={saveShortlist}
                                 disabled={shortlistCandidates.filter(c => c.selected).length === 0}
-                                className="w-full flex justify-center items-center gap-2 py-2.5 bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 rounded-lg font-medium text-sm transition-colors shadow-sm"
+                                className="w-full flex justify-center items-center gap-2 py-2.5 bg-brand-amber-500 text-white hover:bg-brand-amber-600 disabled:opacity-50 rounded-lg font-medium text-sm transition-colors shadow-sm"
                             >
                                 <Send size={16} />
                                 Save & Notify Students
@@ -701,30 +701,30 @@ export default function CompanyAdd() {
                     </div>
 
                     {/* Right Content: Candidate List */}
-                    <div className="flex-1 bg-white dark:bg-slate-900 p-5 overflow-y-auto">
+                    <div className="flex-1 bg-white dark:bg-[#1A0F08] p-5 overflow-y-auto">
                         {shortlistCandidates.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                            <div className="h-full flex flex-col items-center justify-center text-brand-brown-400">
                                 <Users size={48} className="mb-4 opacity-20" />
                                 <p>No candidates generated yet.</p>
-                                <p className="text-sm mt-1 text-slate-500">Use the filters on the left or upload a CSV.</p>
+                                <p className="text-sm mt-1 text-brand-cream-500">Use the filters on the left or upload a CSV.</p>
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-4 px-2">
-                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Candidate</span>
-                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Include</span>
+                                <div className="flex items-center justify-between pb-2 border-b border-brand-beige-100 dark:border-[#3E2315] mb-4 px-2">
+                                    <span className="text-xs font-semibold text-brand-cream-500 uppercase tracking-wider">Candidate</span>
+                                    <span className="text-xs font-semibold text-brand-cream-500 uppercase tracking-wider">Include</span>
                                 </div>
                                 {shortlistCandidates.map(c => (
-                                    <div key={c.id} className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${c.selected ? 'border-indigo-200 bg-indigo-50/50 dark:border-indigo-900/50 dark:bg-indigo-900/10' : 'border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/30'}`}>
+                                    <div key={c.id} className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${c.selected ? 'border-brand-amber-500/30 bg-brand-amber-500/10/50 dark:border-brand-amber-800/50 dark:bg-brand-amber-800/10' : 'border-brand-beige-100 bg-brand-cream-50 dark:border-[#3E2315] dark:bg-[#2A1810]/30'}`}>
                                         <div>
-                                            <p className="font-medium text-sm text-slate-900 dark:text-white">{c.name}</p>
-                                            <p className="text-xs text-slate-500">{c.branch} • CGPA: {c.cgpa} {c.email && `• ${c.email}`}</p>
+                                            <p className="font-medium text-sm text-brand-brown-900 dark:text-white">{c.name}</p>
+                                            <p className="text-xs text-brand-cream-500">{c.branch} • CGPA: {c.cgpa} {c.email && `• ${c.email}`}</p>
                                         </div>
                                         <button 
                                             onClick={() => toggleCandidateSelection(c.id)}
-                                            className={`p-1.5 rounded transition-colors ${c.selected ? 'text-indigo-600 hover:bg-indigo-100 dark:text-indigo-400 dark:hover:bg-indigo-900/50' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                            className={`p-1.5 rounded transition-colors ${c.selected ? 'text-brand-amber-500 hover:bg-brand-amber-500/20 dark:text-brand-amber-500 dark:hover:bg-brand-amber-800/50' : 'text-brand-brown-400 hover:bg-brand-beige-200 dark:hover:bg-brand-brown-700'}`}
                                         >
-                                            {c.selected ? <CheckSquare size={20} /> : <div className="w-5 h-5 rounded border-2 border-slate-300 dark:border-slate-600"></div>}
+                                            {c.selected ? <CheckSquare size={20} /> : <div className="w-5 h-5 rounded border-2 border-brand-beige-300 dark:border-[#7A543A]"></div>}
                                         </button>
                                     </div>
                                 ))}

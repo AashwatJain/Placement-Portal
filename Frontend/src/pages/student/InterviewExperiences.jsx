@@ -165,16 +165,16 @@ export default function InterviewExperiences() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Interview Experiences</h1>
-          <p className="text-slate-500 dark:text-slate-400">Read past interview trends or help juniors by sharing yours.</p>
+          <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">Interview Experiences</h1>
+          <p className="text-brand-cream-500 dark:text-brand-beige-400">Read past interview trends or help juniors by sharing yours.</p>
         </div>
 
-        <div className="flex bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 w-fit">
+        <div className="flex bg-white dark:bg-[#2A1810] p-1 rounded-lg border border-brand-beige-200 dark:border-[#5A3D2B] w-fit">
           <button
             onClick={() => setActiveTab("browse")}
             className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === "browse"
-                ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"
-                : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                ? "bg-brand-amber-500/10 text-brand-amber-500 dark:bg-brand-amber-800/30 dark:text-brand-amber-500/40"
+                : "text-brand-brown-600 dark:text-brand-beige-400 hover:bg-brand-cream-50 dark:hover:bg-brand-brown-700"
               }`}
           >
             Browse Archives
@@ -182,8 +182,8 @@ export default function InterviewExperiences() {
           <button
             onClick={() => setActiveTab("contribute")}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === "contribute"
-                ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                ? "bg-brand-amber-500 text-white shadow-md"
+                : "text-brand-brown-600 dark:text-brand-beige-400 hover:bg-brand-cream-50 dark:hover:bg-brand-brown-700"
               }`}
           >
             <PenTool size={14} /> Share Experience
@@ -198,13 +198,13 @@ export default function InterviewExperiences() {
           {/* Search + Filters */}
           <div className="space-y-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-brown-400" />
               <input
                 type="text"
                 placeholder="Search by company or role..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-brand-beige-200 bg-white text-sm focus:border-brand-amber-500/100 focus:outline-none dark:border-[#3E2315] dark:bg-[#1A0F08] dark:text-white"
               />
             </div>
 
@@ -217,8 +217,8 @@ export default function InterviewExperiences() {
                     onClick={() => setDifficultyFilter(diff)}
                     className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
                       difficultyFilter === diff
-                        ? "bg-indigo-600 text-white border-indigo-600"
-                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700"
+                        ? "bg-brand-amber-500 text-white border-brand-amber-500"
+                        : "bg-white text-brand-brown-600 border-brand-beige-200 hover:bg-brand-cream-50 dark:bg-[#2A1810] dark:text-brand-beige-400 dark:border-[#5A3D2B] dark:hover:bg-brand-brown-700"
                     }`}
                   >
                     {diff}
@@ -228,11 +228,11 @@ export default function InterviewExperiences() {
 
               {/* Sort Dropdown */}
               <div className="flex items-center gap-1.5 ml-auto">
-                <ArrowUpDown size={14} className="text-slate-400" />
+                <ArrowUpDown size={14} className="text-brand-brown-400" />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="text-xs font-medium rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-slate-600 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  className="text-xs font-medium rounded-lg border border-brand-beige-200 bg-white px-2.5 py-1.5 text-brand-brown-600 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-brand-beige-300"
                 >
                   {SORT_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -245,13 +245,13 @@ export default function InterviewExperiences() {
           <div className="grid gap-4">
             {loading && (
               <div className="col-span-full flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-brand-amber-500/100" />
               </div>
             )}
 
             {!loading && filteredExperiences.length === 0 && (
-              <div className="col-span-full rounded-xl border border-dashed border-slate-300 p-12 text-center dark:border-slate-700">
-                <p className="text-slate-500 dark:text-slate-400">No interview experiences found. Be the first to share yours!</p>
+              <div className="col-span-full rounded-xl border border-dashed border-brand-beige-300 p-12 text-center dark:border-[#5A3D2B]">
+                <p className="text-brand-cream-500 dark:text-brand-beige-400">No interview experiences found. Be the first to share yours!</p>
               </div>
             )}
 
@@ -260,21 +260,21 @@ export default function InterviewExperiences() {
               return (
                 <div
                   key={exp.id}
-                  className={`group rounded-xl border bg-white shadow-sm transition-all dark:bg-slate-900 ${expandedId === exp.id
-                      ? "border-indigo-500 ring-1 ring-indigo-500 dark:border-indigo-500"
-                      : "border-slate-200 hover:border-indigo-300 dark:border-slate-800 dark:hover:border-indigo-700"
+                  className={`group rounded-xl border bg-white shadow-sm transition-all dark:bg-[#1A0F08] ${expandedId === exp.id
+                      ? "border-brand-amber-500/100 ring-1 ring-brand-amber-500/100 dark:border-brand-amber-500/100"
+                      : "border-brand-beige-200 hover:border-brand-amber-500/40 dark:border-[#3E2315] dark:hover:border-brand-amber-600"
                     }`}
                 >
                   <div className="p-5 cursor-pointer" onClick={() => toggleExpand(exp.id)}>
 
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold dark:bg-slate-800 dark:text-slate-300">
+                        <div className="h-10 w-10 rounded-full bg-brand-beige-100 flex items-center justify-center text-brand-brown-600 font-bold dark:bg-[#2A1810] dark:text-brand-beige-300">
                           {exp.company?.[0] || "?"}
                         </div>
                         <div>
-                          <h3 className="font-bold text-slate-900 dark:text-white">{exp.company}</h3>
-                          <p className="text-xs text-slate-500">{exp.role} • {exp.date}</p>
+                          <h3 className="font-bold text-brand-brown-900 dark:text-white">{exp.company}</h3>
+                          <p className="text-xs text-brand-cream-500">{exp.role} • {exp.date}</p>
                         </div>
                       </div>
                       <div className={`px-2.5 py-1 rounded text-xs font-medium border ${exp.status === "Selected"
@@ -287,18 +287,18 @@ export default function InterviewExperiences() {
 
                     <div className="mb-2">
                       {expandedId === exp.id ? (
-                        <div className="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="mt-4 p-4 rounded-lg bg-brand-cream-50 dark:bg-[#2A1810]/50 border border-brand-beige-100 dark:border-[#3E2315] text-sm text-brand-brown-700 dark:text-brand-beige-300 whitespace-pre-line leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
                           {exp.fullStory}
                         </div>
                       ) : (
-                        <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">
+                        <p className="text-sm text-brand-brown-600 dark:text-brand-beige-300 line-clamp-2">
                           {exp.summary}
                         </p>
                       )}
                     </div>
 
                     <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-4 text-xs text-slate-500">
+                      <div className="flex items-center gap-4 text-xs text-brand-cream-500">
                         <span className="flex items-center gap-1"><User size={12} /> {exp.author}</span>
                         <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold ${
                           exp.difficulty === "Easy" ? "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400" :
@@ -313,13 +313,13 @@ export default function InterviewExperiences() {
                           onClick={(e) => handleLike(e, exp.id)}
                           className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg transition-all ${
                             isLiked
-                              ? "text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-900/30"
-                              : "text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20"
+                              ? "text-brand-amber-500 bg-brand-amber-500/10 dark:text-brand-amber-500 dark:bg-brand-amber-800/30"
+                              : "text-brand-cream-500 hover:text-brand-amber-500 hover:bg-brand-amber-500/10 dark:hover:text-brand-amber-500 dark:hover:bg-brand-amber-800/20"
                           }`}
                         >
                           <ThumbsUp size={14} className={isLiked ? "fill-current" : ""} /> {exp.likes || 0}
                         </button>
-                        <span className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                        <span className="flex items-center gap-1 text-xs font-bold text-brand-amber-500 dark:text-brand-amber-500">
                           {expandedId === exp.id ? (
                             <>Show Less <ChevronUp size={14} /></>
                           ) : (
@@ -339,20 +339,20 @@ export default function InterviewExperiences() {
       {/* --- CONTRIBUTE MODE --- */}
       {activeTab === "contribute" && (
         <div className="max-w-3xl mx-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Write your Interview Experience</h2>
+          <div className="bg-white dark:bg-[#1A0F08] rounded-xl border border-brand-beige-200 dark:border-[#3E2315] p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-brand-brown-900 dark:text-white mb-6">Write your Interview Experience</h2>
 
             <form onSubmit={handlePublish} className="space-y-6">
 
               <div className="grid md:grid-cols-2 gap-6">
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Company Name</label>
+                  <label className="block text-xs font-semibold uppercase text-brand-cream-500 mb-2">Company Name</label>
                   <input
                     type="text"
                     list="company-list"
                     placeholder="Type company name (e.g. Google, MyStartup)"
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-lg border border-brand-beige-200 bg-brand-cream-50 px-4 py-2.5 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white"
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                     required
@@ -363,11 +363,11 @@ export default function InterviewExperiences() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Role Offered</label>
+                  <label className="block text-xs font-semibold uppercase text-brand-cream-500 mb-2">Role Offered</label>
                   <input
                     type="text"
                     placeholder="e.g. SDE, Data Analyst"
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-lg border border-brand-beige-200 bg-brand-cream-50 px-4 py-2.5 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white"
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     required
@@ -377,7 +377,7 @@ export default function InterviewExperiences() {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Verdict</label>
+                  <label className="block text-xs font-semibold uppercase text-brand-cream-500 mb-2">Verdict</label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -385,7 +385,7 @@ export default function InterviewExperiences() {
                         checked={formData.status === "Selected"}
                         onChange={() => setFormData({ ...formData, status: "Selected" })}
                       />
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Selected</span>
+                      <span className="text-sm font-medium text-brand-brown-700 dark:text-brand-beige-300">Selected</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -393,13 +393,13 @@ export default function InterviewExperiences() {
                         checked={formData.status === "Rejected"}
                         onChange={() => setFormData({ ...formData, status: "Rejected" })}
                       />
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Rejected</span>
+                      <span className="text-sm font-medium text-brand-brown-700 dark:text-brand-beige-300">Rejected</span>
                     </label>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Difficulty</label>
+                  <label className="block text-xs font-semibold uppercase text-brand-cream-500 mb-2">Difficulty</label>
                   <div className="flex gap-2">
                     {["Easy", "Medium", "Hard"].map((diff) => (
                       <button
@@ -407,8 +407,8 @@ export default function InterviewExperiences() {
                         key={diff}
                         onClick={() => setFormData({ ...formData, difficulty: diff })}
                         className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors ${formData.difficulty === diff
-                            ? "bg-indigo-600 text-white border-indigo-600"
-                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                            ? "bg-brand-amber-500 text-white border-brand-amber-500"
+                            : "bg-white text-brand-brown-600 border-brand-beige-200 hover:bg-brand-cream-50 dark:bg-[#2A1810] dark:text-brand-beige-400 dark:border-[#5A3D2B]"
                           }`}
                       >
                         {diff}
@@ -419,16 +419,16 @@ export default function InterviewExperiences() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Experience Details</label>
+                <label className="block text-xs font-semibold uppercase text-brand-cream-500 mb-2">Experience Details</label>
                 <textarea
                   rows={8}
                   placeholder="Describe the rounds, questions asked, and your approach. Use **bold** for headings."
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-lg border border-brand-beige-200 bg-brand-cream-50 p-4 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white"
                   value={formData.experience}
                   onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
                   required
                 ></textarea>
-                <p className="mt-2 text-xs text-slate-400">
+                <p className="mt-2 text-xs text-brand-brown-400">
                   Tip: Be specific about the coding problems.
                 </p>
               </div>
@@ -436,13 +436,13 @@ export default function InterviewExperiences() {
               {/* --- DYNAMIC INTERVIEW QUESTIONS SECTION --- */}
               <div className="pt-2">
                 <div className="flex justify-between items-center mb-2">
-                  <label className="block text-xs font-semibold uppercase text-slate-500">Coding Problems & Links</label>
-                  <span className="text-xs text-slate-400">Optional</span>
+                  <label className="block text-xs font-semibold uppercase text-brand-cream-500">Coding Problems & Links</label>
+                  <span className="text-xs text-brand-brown-400">Optional</span>
                 </div>
 
                 <div className="space-y-4">
                   {problems.map((problem, index) => (
-                    <div key={index} className="p-4 rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800/50">
+                    <div key={index} className="p-4 rounded-lg border border-brand-beige-200 bg-brand-cream-50 dark:border-[#5A3D2B]/60 dark:bg-[#2A1810]/50">
 
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
@@ -451,14 +451,14 @@ export default function InterviewExperiences() {
                             value={problem.link}
                             onChange={(e) => handleProblemChange(index, "link", e.target.value)}
                             placeholder="Link to problem (e.g., LeetCode, Codeforces, CSES)"
-                            className="flex-grow rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                            className="flex-grow rounded-lg border border-brand-beige-200 bg-white px-4 py-2.5 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#7A543A] dark:bg-[#1A0F08] dark:text-white"
                           />
 
                           {problems.length > 1 && (
                             <button
                               type="button"
                               onClick={() => handleRemoveProblem(index)}
-                              className="p-2.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-950/30 transition-colors flex-shrink-0"
+                              className="p-2.5 rounded-lg text-brand-brown-400 hover:text-red-500 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-950/30 transition-colors flex-shrink-0"
                               title="Remove this problem"
                             >
                               <Trash2 size={18} />
@@ -472,7 +472,7 @@ export default function InterviewExperiences() {
                             onChange={(e) => handleProblemChange(index, "description", e.target.value)}
                             rows={2}
                             placeholder="Notes (e.g., Expected time complexity, topics like Segment Trees or Math)"
-                            className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-white resize-none"
+                            className="w-full rounded-lg border border-brand-beige-200 bg-white p-3 text-sm text-brand-brown-900 focus:border-brand-amber-500/100 focus:outline-none dark:border-[#7A543A] dark:bg-[#1A0F08] dark:text-white resize-none"
                           ></textarea>
                         </div>
                       </div>
@@ -483,17 +483,17 @@ export default function InterviewExperiences() {
                 <button
                   type="button"
                   onClick={handleAddProblem}
-                  className="mt-3 flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+                  className="mt-3 flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-brand-amber-500 bg-brand-amber-500/10 hover:bg-brand-amber-500/20 rounded-lg transition-colors dark:bg-brand-amber-800/30 dark:text-brand-amber-500 dark:hover:bg-brand-amber-800/50"
                 >
                   <Plus size={14} /> Add Another Problem
                 </button>
               </div>
 
-              <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex justify-end pt-4 border-t border-brand-beige-100 dark:border-[#3E2315]">
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 bg-brand-amber-500 hover:bg-brand-amber-600 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-brand-amber-500/100/20 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
                     <><Loader2 size={18} className="animate-spin" /> Submitting...</>

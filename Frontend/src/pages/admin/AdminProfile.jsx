@@ -120,14 +120,14 @@ export default function AdminProfile() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-10 text-slate-900 dark:text-slate-100">
+    <div className="mx-auto max-w-5xl space-y-6 pb-10 text-brand-brown-900 dark:text-brand-beige-100">
 
       {/* HEADER SECTION */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="h-32 w-full bg-gradient-to-r from-blue-600 to-indigo-600 opacity-90"></div>
+      <div className="relative overflow-hidden rounded-2xl border border-brand-beige-200 bg-white shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]">
+        <div className="h-32 w-full bg-gradient-to-r from-brand-amber-500 to-brand-amber-500 opacity-90"></div>
         <div className="px-6 pb-6 flex items-center sm:flex-row sm:items-end sm:gap-6 relative">
           <div className="relative -mt-12 group">
-            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-indigo-500 shadow-md overflow-hidden dark:border-slate-900 relative">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-brand-amber-500/100 shadow-md overflow-hidden dark:border-brand-brown-900 relative">
               {formData.avatar ? (
                 <img src={formData.avatar} alt="Profile" className="h-full w-full object-cover" />
               ) : (
@@ -140,7 +140,7 @@ export default function AdminProfile() {
               )}
             </div>
 
-            <button onClick={() => avatarInputRef.current.click()} className="absolute bottom-0 right-0 rounded-full bg-slate-900 p-2 text-white border-2 border-white hover:bg-indigo-600 transition-all cursor-pointer">
+            <button onClick={() => avatarInputRef.current.click()} className="absolute bottom-0 right-0 rounded-full bg-brand-brown-900 p-2 text-white border-2 border-white hover:bg-brand-amber-500 transition-all cursor-pointer">
               <Camera size={14} />
             </button>
             <input type="file" ref={avatarInputRef} className="hidden" accept="image/*" onChange={handleAvatarChange} />
@@ -148,16 +148,16 @@ export default function AdminProfile() {
 
           <div className="mt-4 text-center sm:mb-1 sm:mt-0 sm:text-left">
             <h1 className="text-2xl font-bold">{formData.fullName || "Admin"}</h1>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">System Administrator</p>
+            <p className="text-sm font-medium text-brand-cream-500 dark:text-brand-beige-400">System Administrator</p>
           </div>
         </div>
       </div>
 
       <div className="space-y-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div className="rounded-xl border border-brand-beige-200 bg-white p-6 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]">
+          <div className="mb-6 flex items-center justify-between border-b border-brand-beige-100 dark:border-[#3E2315] pb-4">
             <h3 className="text-lg font-bold">Admin Details</h3>
-            <button onClick={handleSave} disabled={loading} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-70">
+            <button onClick={handleSave} disabled={loading} className="flex items-center gap-2 rounded-lg bg-brand-amber-500 px-6 py-2 text-sm font-semibold text-white hover:bg-brand-amber-600 transition-all active:scale-95 disabled:opacity-70">
               {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               {loading ? "Updating..." : "Save Changes"}
             </button>
@@ -165,11 +165,11 @@ export default function AdminProfile() {
 
           <div className="space-y-8">
             <div>
-              <label className="mb-2 block text-xs font-bold text-slate-500 uppercase">About</label>
+              <label className="mb-2 block text-xs font-bold text-brand-cream-500 uppercase">About</label>
               <textarea
                 name="about" rows={3} value={formData.about} onChange={handleChange}
                 placeholder="Details about your role..."
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 outline-none transition-all placeholder:text-slate-400"
+                className="w-full rounded-xl border border-brand-beige-200 bg-brand-cream-50 p-4 text-sm text-brand-brown-800 focus:border-brand-amber-500/100 focus:ring-1 focus:ring-brand-amber-500/100 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-brand-beige-200 outline-none transition-all placeholder:text-brand-brown-400"
               />
             </div>
 
@@ -189,18 +189,18 @@ export default function AdminProfile() {
 function InputGroup({ label, name, value, onChange, icon: Icon, disabled = false, required = false, error }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase">
+      <label className="mb-1.5 block text-xs font-bold text-brand-cream-500 uppercase">
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
       <div className="relative group">
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 group-focus-within:text-indigo-500">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-brand-brown-400 group-focus-within:text-brand-amber-500/100">
           <Icon size={18} />
         </div>
         <input
           type="text" name={name} value={value || ""} onChange={onChange} disabled={disabled}
           className={`block w-full rounded-xl border py-2.5 pl-10 pr-3 text-sm font-medium transition-all
-            ${disabled ? "bg-slate-100 border-slate-200 text-slate-500 dark:bg-slate-950" : "bg-white border-slate-200 text-slate-900 focus:border-indigo-500 dark:bg-slate-900 dark:border-slate-700 dark:text-white"}
+            ${disabled ? "bg-brand-beige-100 border-brand-beige-200 text-brand-cream-500 dark:bg-[#1A0F08]" : "bg-white border-brand-beige-200 text-brand-brown-900 focus:border-brand-amber-500/100 dark:bg-[#1A0F08] dark:border-[#5A3D2B] dark:text-white"}
             ${error ? "border-red-400 ring-1 ring-red-400" : ""}`}
         />
       </div>

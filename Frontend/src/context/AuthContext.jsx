@@ -102,11 +102,11 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{ user, isLoggedIn, login, signup, logout, refreshUser, token: auth.currentUser?.accessToken }}>
       {loading ? (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950">
-          <div className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 font-bold text-white shadow-xl shadow-indigo-500/20">
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-brand-cream-50 dark:bg-[#1A0F08]">
+          <div className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-amber-500/100 to-violet-600 font-bold text-white shadow-xl shadow-brand-amber-500/100/20">
             <Loader2 className="h-10 w-10 animate-spin" />
           </div>
-          <p className="animate-pulse text-sm font-medium text-slate-400">Loading your profile...</p>
+          <p className="animate-pulse text-sm font-medium text-brand-brown-400">Loading your profile...</p>
         </div>
       ) : children}
     </AuthContext.Provider>

@@ -77,25 +77,25 @@ export default function Sidebar({ isMobile = false, onClose }) {
     <aside
       className={
         isMobile
-          ? "flex h-full w-64 flex-col bg-white dark:bg-slate-900"
-          : `hidden flex-col border-r border-slate-200 bg-white transition-all duration-300 ease-in-out dark:border-slate-800 dark:bg-slate-900 md:flex ${isCollapsed ? "w-16" : "w-56"}`
+          ? "flex h-full w-64 flex-col bg-brand-brown-900 border-r border-brand-brown-700"
+          : `hidden flex-col border-r border-brand-brown-700 bg-brand-brown-900 transition-all duration-300 ease-in-out md:flex ${isCollapsed ? "w-16" : "w-56"}`
       }
     >
       {/* 1. Header & Toggle Button */}
-      <div className={`flex h-14 items-center border-b border-slate-200 px-3 dark:border-slate-800 ${effectiveCollapsed ? "justify-center" : "justify-between"}`}>
+      <div className={`flex h-14 items-center border-b border-brand-brown-700 px-3 ${effectiveCollapsed ? "justify-center" : "justify-between"}`}>
 
         {/* Logo Section */}
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex h-8 w-8 min-w-[2rem] items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/20">
+          <div className="flex h-8 w-8 min-w-[2rem] items-center justify-center rounded-lg bg-gradient-to-br from-brand-amber-500 to-[#E89B60] text-white shadow-md shadow-[#C07840]/20">
             <GraduationCap size={18} />
           </div>
 
           {!effectiveCollapsed && (
             <div className="flex flex-col transition-opacity duration-300">
-              <span className="whitespace-nowrap text-sm font-bold leading-none text-slate-900 dark:text-white">
+              <span className="whitespace-nowrap text-sm font-bold leading-none text-white">
                 NIT KKR
               </span>
-              <span className="mt-0.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              <span className="mt-0.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-brand-beige-400">
                 Placement
               </span>
             </div>
@@ -106,7 +106,7 @@ export default function Sidebar({ isMobile = false, onClose }) {
         {!isMobile && !isCollapsed && (
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+            className="rounded p-0.5 text-brand-beige-400 hover:bg-brand-brown-700 hover:text-white"
           >
             <ChevronLeft size={18} />
           </button>
@@ -115,10 +115,10 @@ export default function Sidebar({ isMobile = false, onClose }) {
 
       {/* Re-open button when collapsed (desktop only) */}
       {!isMobile && isCollapsed && (
-        <div className="flex justify-center py-2 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex justify-center py-2 border-b border-brand-brown-700">
           <button
             onClick={() => setIsCollapsed(false)}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+            className="rounded p-1 text-brand-beige-400 hover:bg-brand-brown-700 hover:text-white"
           >
             <ChevronRight size={16} />
           </button>
@@ -136,8 +136,8 @@ export default function Sidebar({ isMobile = false, onClose }) {
               title={effectiveCollapsed ? label : ""}
               className={`flex items-center gap-3 rounded-md px-2.5 py-2 transition-colors ${
                 isActive(to)
-                  ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                  ? "bg-brand-amber-500 text-white font-medium shadow-sm"
+                  : "text-brand-beige-300 hover:bg-brand-brown-800 hover:text-white"
               } ${effectiveCollapsed ? "justify-center" : ""}`}
             >
               <Icon size={20} className="shrink-0" />
@@ -153,11 +153,11 @@ export default function Sidebar({ isMobile = false, onClose }) {
       </div>
 
       {/* 3. Bottom Actions */}
-      <div className="border-t border-slate-200 p-3 dark:border-slate-800">
+      <div className="border-t border-brand-brown-700 p-3">
         <button
           onClick={() => { logout(); if (isMobile && onClose) onClose(); }}
           title={effectiveCollapsed ? "Sign Out" : ""}
-          className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors ${
+          className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-red-300 hover:bg-red-500/10 hover:text-red-200 transition-colors ${
             effectiveCollapsed ? "justify-center" : ""
           }`}
         >
