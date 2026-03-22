@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api.js";
 
 export function useCodingData() {
   const { user } = useAuth();
@@ -15,7 +16,7 @@ export function useCodingData() {
     setError(null);
 
     try {
-      const response = await axios.get(`http://localhost:5001/api/student/coding-stats/${user.uid}`);
+      const response = await axios.get(`${API_BASE_URL}/api/student/coding-stats/${user.uid}`);
 
       if (response.data.success) {
         setData({
