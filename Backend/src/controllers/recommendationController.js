@@ -1,7 +1,7 @@
 /**
  * recommendationController.js
  *
- * Bridges the Node.js backend with the Python ML service (Flask, port 5005).
+ * Bridges the Node.js backend with the Python ML service (Flask, port 5006).
  *
  * Handlers
  * ─────────────────────────────────────────────────────────────────────────
@@ -18,7 +18,7 @@ import axios from "axios";
 import db from "../config/firebaseAdmin.js";
 
 // Base URL of the Python Flask ML service
-const mlServiceUrl = "http://127.0.0.1:5005";
+const mlServiceUrl = "http://127.0.0.1:5006";
 
 // ── Helper: fetch and reshape pastPlacements from RTDB ───────────────────────
 
@@ -86,7 +86,7 @@ const getRecommendations = async (req, res) => {
 
     if (error.code === "ECONNREFUSED") {
       return res.status(503).json({
-        error: "ML service is unavailable. Make sure mlServer.py is running on port 5005.",
+        error: "ML service is unavailable. Make sure mlServer.py is running on port 5006.",
       });
     }
 
@@ -140,7 +140,7 @@ const getCompanyChances = async (req, res) => {
 
     if (error.code === "ECONNREFUSED") {
       return res.status(503).json({
-        error: "ML service is unavailable. Make sure mlServer.py is running on port 5005.",
+        error: "ML service is unavailable. Make sure mlServer.py is running on port 5006.",
       });
     }
 

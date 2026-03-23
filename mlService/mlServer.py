@@ -384,11 +384,11 @@ def atsScore():
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("🚀  ML Service running on http://localhost:5005")
+    print("🚀  ML Service running on http://localhost:5006")
     print("     POST /recommend      → company recommendations")
     print("     POST /predict-chance → placement probability")
     print("     POST /ats-score     → ATS resume scoring")
-    # app.run(host="0.0.0.0", port=5005, debug=True)
+    # app.run(host="0.0.0.0", port=5006, debug=True)
 
     import os
-app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5005)))
+app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5006)))
