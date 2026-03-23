@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Building2, Edit, Trash2, X, Filter, Users, Upload, CheckSquare, Send, Loader2 } from "lucide-react";
 import { fetchJafs, createJaf, updateJaf, deleteJaf, fetchFilteredStudents } from "../../services/adminApi";
+import { useToast } from "../../context/ToastContext";
+import PageLoader from "../../components/ui/PageLoader";
 
 const BRANCH_OPTIONS = ["CSE", "IT", "ECE", "EE", "ME", "CE"];
 
@@ -16,6 +18,7 @@ const initialForm = {
 };
 
 export default function CompanyAdd() {
+  const { showToast } = useToast();
   const [form, setForm] = useState(initialForm);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +79,7 @@ export default function CompanyAdd() {
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error("Failed to save company:", err);
-      alert("Failed to save company. Please try again.");
+      showToast({ type: "error", title: "Save Failed", message: "Failed to save company. Please try again." });
     } finally {
       setSaving(false);
     }
@@ -110,7 +113,7 @@ export default function CompanyAdd() {
       if (editId === id) cancelEdit();
     } catch (err) {
       console.error("Failed to delete company:", err);
-      alert("Failed to delete company.");
+      showToast({ type: "error", title: "Delete Failed", message: "Failed to delete company." });
     }
   };
 
@@ -160,7 +163,7 @@ export default function CompanyAdd() {
           setShortlistCandidates(students.map(s => ({ ...s, selected: true })));
       } catch (err) {
           console.error("Failed to fetch students", err);
-          alert("Failed to generate shortlist.");
+          showToast({ type: "error", title: "Error", message: "Failed to generate shortlist." });
       } finally {
           setIsLoadingCandidates(false);
       }
@@ -193,16 +196,12 @@ export default function CompanyAdd() {
 
   const saveShortlist = () => {
       const selectedCount = shortlistCandidates.filter(c => c.selected).length;
-      alert(`Successfully saved shortlist of ${selectedCount} candidates for ${shortlistModal.name}! Notifications will be sent shortly.`);
+      showToast({ type: "success", title: "Shortlist Saved!", message: `Successfully saved shortlist of ${selectedCount} candidates for ${shortlistModal.name}!` });
       setShortlistModal(null);
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-amber-500/100" />
-      </div>
-    );
+    return <PageLoader message="Loading companies..." />;
   }
 
   return (

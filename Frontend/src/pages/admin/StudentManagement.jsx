@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { fetchAllStudents, updateStudentStatus, updateStudentResume, updateStudentApplication } from "../../services/adminApi";
+import CardSkeleton from "../../components/ui/CardSkeleton";
+import PageLoader from "../../components/ui/PageLoader";
+import { useToast } from "../../context/ToastContext";
 import { ArrowUpDown, X, FileText, Filter, Loader2, CheckCircle, AlertCircle, Save, CheckSquare, Square, Download, Bell, RefreshCw, Briefcase, ChevronDown, ChevronRight, Clock, Calendar as CalendarIcon } from "lucide-react";
 
 // Custom weights for specific columns
@@ -37,8 +40,10 @@ const getStatusStyles = (status) => {
 
 
 export default function StudentManagement() {
+  const { showToast } = useToast();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [search, setSearch] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
@@ -92,7 +97,7 @@ export default function StudentManagement() {
         setStudents(prev => prev.map(s => s.id === student.id ? { ...s, status: newStatus, companyName: null, offerLetterUrl: null } : s));
     } catch (err) {
         console.error("Failed to update status", err);
-        alert("Failed to update status");
+        showToast({ type: "error", title: "Update Failed", message: "Failed to update student status." });
     }
   };
 
@@ -113,7 +118,7 @@ export default function StudentManagement() {
           setStatusModal(null);
       } catch (err) {
           console.error("Failed to update status", err);
-          alert("Failed to update status");
+          showToast({ type: "error", title: "Update Failed", message: "Could not mark student as placed." });
       }
   };
 
@@ -131,29 +136,34 @@ export default function StudentManagement() {
               adminResumeComment: resumeReview.comment
           } : s));
           setSelectedStudent(prev => ({ ...prev, isResumeVerified: resumeReview.isVerified, adminResumeComment: resumeReview.comment }));
-          alert("Resume review saved successfully.");
+          showToast({ type: "success", title: "Saved!", message: "Resume review saved successfully." });
       } catch (err) {
           console.error("Failed to save resume review", err);
-          alert("Failed to save resume review.");
+          showToast({ type: "error", title: "Error", message: "Failed to save resume review." });
       } finally {
           setIsUpdatingResume(false);
       }
   };
 
-  // Fetch students from API on mount
+  // Fetch students from API
+  const loadStudents = useCallback(async (showSpinner = true) => {
+    if (showSpinner) setLoading(true);
+    setFetchError(false);
+    try {
+      const data = await fetchAllStudents();
+      setStudents(data);
+    } catch (err) {
+      console.error("Failed to fetch students:", err);
+      setFetchError(true);
+      showToast({ type: "error", title: "Fetch Failed", message: "Could not load students. Please refresh and try again." });
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast]);
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await fetchAllStudents();
-        setStudents(data);
-      } catch (err) {
-        console.error("Failed to fetch students:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+    loadStudents();
+  }, [loadStudents]);
 
   // Handle Filtering (Search + Advanced Filters)
   const filtered = useMemo(() => {
@@ -263,7 +273,7 @@ export default function StudentManagement() {
       });
     } catch (err) {
       console.error("Failed to update step", err);
-      alert("Failed to update application step.");
+      showToast({ type: "error", title: "Error", message: "Failed to update application step." });
     } finally {
       setUpdatingStep(null);
     }
@@ -294,7 +304,7 @@ export default function StudentManagement() {
       });
     } catch (err) {
       console.error("Failed to update application", err);
-      alert("Failed to update application.");
+      showToast({ type: "error", title: "Error", message: "Failed to update application status." });
     } finally {
       setUpdatingStep(null);
     }
@@ -335,9 +345,10 @@ export default function StudentManagement() {
       setStudents(prev => prev.map(s => selectedIds.has(s.id) ? { ...s, status: bulkStatus } : s));
       setSelectedIds(new Set());
       setBulkStatus("");
+      showToast({ type: "success", title: "Bulk Update", message: `Updated ${selectedIds.size} students to ${bulkStatus}.` });
     } catch (err) {
       console.error("Bulk update failed", err);
-      alert("Some updates failed. Please try again.");
+      showToast({ type: "error", title: "Bulk Update Failed", message: "Some updates failed. Please try again." });
     } finally {
       setIsBulkUpdating(false);
     }
@@ -360,8 +371,20 @@ export default function StudentManagement() {
   return (
     <div className="space-y-6 relative">
       <div>
-        <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">Student Management</h1>
-        <p className="text-brand-brown-600 dark:text-brand-beige-400">View and manage student accounts, filters, and resumes.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">Student Management</h1>
+            <p className="text-brand-brown-600 dark:text-brand-beige-400">View and manage student accounts, filters, and resumes.</p>
+          </div>
+          <button
+            onClick={() => loadStudents(false)}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-brand-beige-200 dark:border-[#5A3D2B] bg-white dark:bg-[#2A1810] text-brand-brown-700 dark:text-brand-beige-300 hover:bg-brand-cream-50 dark:hover:bg-brand-brown-800 disabled:opacity-50 transition-colors"
+          >
+            <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* --- ADVANCED FILTER CONTROLS --- */}
@@ -451,11 +474,7 @@ export default function StudentManagement() {
       </div>
 
       {/* Loading State */}
-      {loading && (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-amber-500/100" />
-        </div>
-      )}
+      {loading && <PageLoader message="Loading students..." />}
 
       {/* --- TABLE --- */}
       {!loading && (

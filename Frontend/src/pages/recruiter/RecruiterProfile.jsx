@@ -4,11 +4,13 @@ import {
   Loader2
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import axios from "axios";
 import { API_BASE_URL } from "../../config/api";
 
 export default function RecruiterProfile() {
   const { user, token, refreshUser } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -114,7 +116,7 @@ export default function RecruiterProfile() {
 
     } catch (error) {
        console.error("Update failed:", error);
-       alert("Error: " + (error.response?.data?.error || "Check if Backend is running"));
+       showToast({ type: "error", title: "Update Failed", message: "Could not save your changes. Please try again." });
     } finally {
       setLoading(false);
     }

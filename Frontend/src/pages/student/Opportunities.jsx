@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { useOpportunities } from "../../hooks/useOpportunities";
 import { useAuth } from "../../context/AuthContext";
 import { getUserApplications, registerForOpportunity } from "../../services/firebaseDb";
+import { useToast } from "../../context/ToastContext";
 import { buildTimeline, gCalUrl } from "../../utils/calendarHelpers";
 import { offerBadge, deadlineLabel } from "../../utils/statusHelpers";
 import CardSkeleton from "../../components/ui/CardSkeleton";
-import Toast from "../../components/ui/Toast";
 import {
-  Search, MapPin, Calendar, IndianRupee, Briefcase,
+  Search, Filter, MapPin, Calendar, IndianRupee, Briefcase,
   CheckCircle, Loader2, Clock, X,
   ExternalLink, AlertCircle, Users, GraduationCap,
   Building2, FileText, CalendarPlus,
@@ -28,9 +28,9 @@ export default function Opportunities() {
   const { opportunities, loading, error } = useOpportunities();
   const { user } = useAuth();
 
+  const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
-  const [toast, setToast] = useState(null);
   const [registered, setRegistered] = useState({});
   const [registering, setRegistering] = useState(null);
   const [selectedOpp, setSelectedOpp] = useState(null);
@@ -64,10 +64,11 @@ export default function Opportunities() {
     try {
       await registerForOpportunity(user.uid, opp.id, appData);
       setRegistered((p) => ({ ...p, [opp.id]: true }));
-      setToast(`You've registered for ${opp.name}. Check My Applications.`);
-      setTimeout(() => setToast(null), 3500);
-    } catch (err) { console.error("Register error:", err); }
-    finally { setRegistering(null); }
+      showToast({ type: "success", title: "Registered!", message: `You've registered for ${opp.name}. Check My Applications.` });
+    } catch (err) {
+      console.error("Register error:", err);
+      showToast({ type: "error", title: "Registration Failed", message: "Could not register. Please try again." });
+    } finally { setRegistering(null); }
   };
 
   return (
@@ -348,7 +349,7 @@ export default function Opportunities() {
         </div>
       )}
 
-      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+
     </div>
   );
 }

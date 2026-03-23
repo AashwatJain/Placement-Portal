@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { createNotification, fetchNotifications } from "../../services/adminApi";
+import { useToast } from "../../context/ToastContext";
 import { Bell, Send, Loader2, Clock, Users, Filter, X, CheckCircle } from "lucide-react";
 
 const TARGET_TYPES = [
@@ -10,6 +11,7 @@ const TARGET_TYPES = [
 ];
 
 export default function AdminNotifications() {
+    const { showToast } = useToast();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
@@ -47,7 +49,7 @@ export default function AdminNotifications() {
             setTimeout(() => setSent(false), 3000);
         } catch (err) {
             console.error("Failed to send notification", err);
-            alert("Failed to send notification.");
+            showToast({ type: "error", title: "Send Failed", message: "Failed to send notification." });
         } finally {
             setSending(false);
         }

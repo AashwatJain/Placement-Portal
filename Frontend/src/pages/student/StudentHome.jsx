@@ -53,8 +53,6 @@ export default function StudentHome() {
   const [practiceLoading, setPracticeLoading] = useState(true);
   const [toggling, setToggling] = useState(null);
 
-
-
   // Upcoming drives
   const [upcomingDrives, setUpcomingDrives] = useState([]);
   const [drivesLoading, setDrivesLoading] = useState(true);
@@ -64,8 +62,6 @@ export default function StudentHome() {
     const unsub = onUserApplications(user.uid, (apps) => setApplications(apps || []));
     return () => unsub();
   }, [user?.uid]);
-
-
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -173,8 +169,6 @@ export default function StudentHome() {
     const d = new Date(dateStr + "T00:00:00");
     return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
   };
-
-
 
   return (
     <div className="space-y-6">

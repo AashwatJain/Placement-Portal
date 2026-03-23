@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+import CardSkeleton from "../../components/ui/CardSkeleton";
+import PageLoader from "../../components/ui/PageLoader";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import { fetchAllStudents } from "../../services/adminApi";
 import { API_BASE_URL } from "../../config/api";
 import {
@@ -52,6 +55,7 @@ function getPlacementTag(s) {
 /* ═══════════ Main Component ═══════════ */
 export default function RecruiterDashboard() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get("jobId") || "";
 
@@ -192,18 +196,18 @@ export default function RecruiterDashboard() {
       }));
 
     if (candidatesToNotify.length === 0) {
-      alert("None of the selected candidates have email addresses and UID registered.");
+      showToast({ type: "warning", title: "No Valid Candidates", message: "None of the selected candidates have email addresses and UID registered." });
       return;
     }
 
     setSendingEmails(true);
     try {
       await sendCandidateNotifications(candidatesToNotify);
-      alert(`Successfully notified and emailed ${candidatesToNotify.length} candidates!`);
+      showToast({ type: "success", title: "Emails Sent!", message: `Successfully notified and emailed ${candidatesToNotify.length} candidates!` });
       clearSelection();
     } catch (error) {
       console.error(error);
-      alert("Failed to send some or all emails.");
+      showToast({ type: "error", title: "Email Failed", message: "Failed to send some or all emails." });
     } finally {
       setSendingEmails(false);
     }
@@ -342,7 +346,7 @@ export default function RecruiterDashboard() {
       </div>
 
       {/* ── LOADING ── */}
-      {loading && <div className="flex flex-col items-center justify-center py-16 gap-3"><Loader2 className="h-8 w-8 animate-spin text-brand-amber-500/100"/><p className="text-sm text-brand-brown-400 animate-pulse">Loading candidates...</p></div>}
+      {loading && <PageLoader message="Loading candidates..." />}
 
       {/* ── CARDS ── */}
       {!loading && (

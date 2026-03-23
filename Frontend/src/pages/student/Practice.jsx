@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import {
   fetchApprovedQuestions,
   fetchSolvedQuestions,
@@ -177,6 +178,7 @@ function MiniProgress({ solved, total }) {
 // ══════════════════════════════════════════════════════════════
 export default function Practice() {
   const { user, token } = useAuth();
+  const { showToast } = useToast();
 
   const [questions, setQuestions] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -242,7 +244,7 @@ export default function Practice() {
         !newSolved ? next.add(questionId) : next.delete(questionId);
         return next;
       });
-      alert("Failed to update question status. Please try again.");
+      showToast({ type: "error", title: "Error", message: "Failed to update question status. Please try again." });
     } finally {
       setToggling(null);
     }

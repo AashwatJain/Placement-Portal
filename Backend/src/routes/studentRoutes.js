@@ -1,5 +1,8 @@
 import express from "express";
 import studentController from "../controllers/studentController.js";
+import codingStatsController from "../controllers/codingStatsController.js";
+import * as dataController from "../controllers/dataController.js";
+import recommendationController from "../controllers/recommendationController.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
 const router = express.Router();
@@ -35,11 +38,9 @@ router.delete(
 // 4b. Route for setting a vault resume as primary
 router.put("/set-primary-resume", studentController.setPrimaryResume);
 
-import codingStatsController from "../controllers/codingStatsController.js";
 // 5. Route for fetching coding platform stats
 router.get("/coding-stats/:uid", codingStatsController.getCodingStats);
 
-import * as dataController from "../controllers/dataController.js";
 // 6. Routes for fetching centralized data (Companies, Opportunities, Applications)
 router.get("/companies", dataController.getCompanies);
 router.get("/opportunities", dataController.getOpportunities);
@@ -72,8 +73,8 @@ router.post("/solved-questions/:uid", dataController.toggleSolvedQuestion);
 router.post("/sync-leetcode/:uid", dataController.syncLeetCodeSolved);
 
 // 11. ML-powered Placement Recommendations (proxied to Python mlServer on port 5005)
-import recommendationController from "../controllers/recommendationController.js";
 router.post("/recommendations", recommendationController.getRecommendations);
 router.post("/company-chances", recommendationController.getCompanyChances);
 
 export default router;
+

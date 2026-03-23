@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
+import CardSkeleton from "../../components/ui/CardSkeleton";
+import PageLoader from "../../components/ui/PageLoader";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import { fetchExperiences, submitExperience, toggleExperienceLike } from "../../services/studentApi";
 import { useCompanies } from "../../hooks/useCompanies";
 import {
@@ -30,6 +33,7 @@ const DIFFICULTY_ORDER = { Easy: 1, Medium: 2, Hard: 3 };
 
 export default function InterviewExperiences() {
   const { user, token } = useAuth();
+  const { showToast } = useToast();
   const { companies } = useCompanies();
   const [activeTab, setActiveTab] = useState("browse");
   const [searchTerm, setSearchTerm] = useState("");
@@ -101,7 +105,7 @@ export default function InterviewExperiences() {
       await loadExperiences();
     } catch (err) {
       console.error("Failed to submit experience:", err);
-      alert("Something went wrong while submitting. Please try again.");
+      showToast({ type: "error", title: "Submit Failed", message: "Something went wrong while submitting. Please try again." });
     } finally {
       setSubmitting(false);
     }
@@ -244,8 +248,8 @@ export default function InterviewExperiences() {
 
           <div className="grid gap-4">
             {loading && (
-              <div className="col-span-full flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-brand-amber-500/100" />
+              <div className="col-span-full">
+                <PageLoader message="Loading experiences..." />
               </div>
             )}
 

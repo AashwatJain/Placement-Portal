@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { fetchQuestions, addQuestion as apiAddQuestion, approveQuestion as apiApprove, rejectQuestion as apiReject } from "../../services/adminApi";
 import { fetchCompanies } from "../../services/studentApi";
+import { useToast } from "../../context/ToastContext";
+import CardSkeleton from "../../components/ui/CardSkeleton";
+import PageLoader from "../../components/ui/PageLoader";
 import { Check, X, Clock, CheckCircle2, Plus, Send, Loader2, Edit2 } from "lucide-react";
 
 export default function AdminQuestions() {
+  const { showToast } = useToast();
   const [questions, setQuestions] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -107,7 +111,7 @@ export default function AdminQuestions() {
       setActiveTab("approved");
     } catch (err) {
       console.error("Failed to add question:", err);
-      alert("Something went wrong. Please try again.");
+      showToast({ type: "error", title: "Error", message: "Something went wrong. Please try again." });
     }
   };
 
@@ -249,9 +253,7 @@ export default function AdminQuestions() {
 
       {/* --- TABLE --- */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-amber-500/100" />
-        </div>
+        <PageLoader message="Loading questions..." />
       ) : (
         <div className="overflow-hidden rounded-xl border border-brand-beige-200 dark:border-[#5A3D2B] bg-white dark:bg-[#1A0F08] shadow-sm transition-colors">
           <div className="overflow-x-auto">

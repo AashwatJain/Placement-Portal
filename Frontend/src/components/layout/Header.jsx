@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom"; // Link import kiya
+import { Link } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -15,13 +15,12 @@ import {
   User,
   LogOut,
   Trash2,
-  Search
 } from "lucide-react";
 import { fetchNotifications, markNotificationsRead, deleteNotificationApi } from "../../services/studentApi";
 
 export default function Header({ toggleSidebar }) {
   const { isDarkMode, toggleTheme } = useTheme();
-  const { user, logout } = useAuth(); // Logout function yahan se liya
+  const { user, logout } = useAuth();
 
   const defaultName = user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : "User";
   const displayName = user?.fullName || user?.name || defaultName;
@@ -166,17 +165,7 @@ export default function Header({ toggleSidebar }) {
       {/* Right Icons: Search & Controls */}
       <div className="flex items-center gap-3">
 
-        {/* Search Bar */}
-        <div className="hidden sm:flex relative items-center mr-4">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <Search size={16} className="text-brand-brown-600 dark:text-brand-beige-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search"
-            className="block w-64 rounded-full border-0 py-1.5 pl-10 pr-4 text-sm text-brand-brown-900 bg-brand-beige-100 ring-1 ring-inset ring-brand-beige-200 placeholder:text-brand-brown-600 focus:ring-2 focus:ring-inset focus:ring-brand-amber-500 dark:bg-[#2A1810] dark:text-brand-beige-100 dark:ring-[#3E2315] dark:placeholder:text-brand-beige-400"
-          />
-        </div>
+
 
         {/* Theme Toggle */}
         <button

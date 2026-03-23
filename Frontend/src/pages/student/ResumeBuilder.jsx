@@ -15,12 +15,14 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import { API_BASE_URL } from "../../config/api";
 import { setPrimaryResume as setPrimaryResumeApi } from "../../services/studentApi";
 import axios from "axios";
 
 export default function ResumeBuilder() {
   const { user, token, refreshUser } = useAuth();
+  const { showToast } = useToast();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
   const [settingPrimary, setSettingPrimary] = useState(null);
@@ -74,10 +76,10 @@ export default function ResumeBuilder() {
         await refreshUser();
       }
 
-      alert("Resume uploaded to vault successfully!");
+      showToast({ type: "success", title: "Uploaded!", message: "Resume uploaded to vault successfully!" });
     } catch (error) {
       console.error("Vault Upload Error:", error);
-      alert("Upload failed. " + (error.response?.data?.error || "Check backend connection."));
+      showToast({ type: "error", title: "Upload Failed", message: "Could not upload your resume. Please try again." });
     } finally {
       setIsAnalyzing(false);
     }
@@ -95,7 +97,7 @@ export default function ResumeBuilder() {
       }
     } catch (error) {
       console.error("Delete Error:", error);
-      alert("Failed to delete resume. Check backend connection.");
+      showToast({ type: "error", title: "Delete Failed", message: "Could not delete the resume. Please try again." });
     }
   };
 
@@ -104,10 +106,10 @@ export default function ResumeBuilder() {
     try {
       await setPrimaryResumeApi(user.uid, resumeId, token);
       if (refreshUser) await refreshUser();
-      alert("Primary resume set successfully! It will now show on your Profile page.");
+      showToast({ type: "success", title: "Primary Set!", message: "Primary resume set. It will now show on your Profile page." });
     } catch (error) {
       console.error("Set Primary Error:", error);
-      alert("Failed to set primary resume. " + (error.response?.data?.error || ""));
+      showToast({ type: "error", title: "Error", message: "Could not set primary resume. Please try again." });
     } finally {
       setSettingPrimary(null);
     }
@@ -135,7 +137,7 @@ export default function ResumeBuilder() {
     } catch (err) {
       console.error("Metrics error:", err);
       setSelectedAnalysis(resume);
-      alert("Could not calculate ATS score. " + (err.response?.data?.error || "Make sure ML server is running."));
+      showToast({ type: "error", title: "ATS Score Error", message: "Could not calculate ATS score right now. Please try again later." });
     } finally {
       setMetricsLoading(null);
     }
@@ -157,7 +159,7 @@ export default function ResumeBuilder() {
       setAtsScore(response.data.atsScore ?? null);
     } catch (err) {
       console.error("ATS scoring error:", err);
-      setAtsError(err.response?.data?.error || "Failed to calculate ATS score. Ensure ML server is running.");
+      setAtsError("Could not calculate ATS score right now. Please try again later.");
     } finally {
       setIsCalculatingAts(false);
     }

@@ -18,13 +18,20 @@ export default function Footer({ role }) {
     { to: "/calendar", label: "Placement Calendar" },
   ];
 
+  const adminLinks = [
+    { to: "/admin/dashboard", label: "Dashboard" },
+    { to: "/admin/students", label: "Student Management" },
+    { to: "/admin/company-add", label: "Manage Companies" },
+    { to: "/calendar", label: "Calendar" },
+  ];
+
   const recruiterLinks = [
     { to: "/recruiter", label: "Candidate Search" },
     { to: "/recruiter/shortlisted", label: "Shortlisted Candidates" },
     { to: "/calendar", label: "Calendar" },
   ];
 
-  const quickLinks = role === "recruiter" ? recruiterLinks : studentLinks;
+  const quickLinks = role === "recruiter" ? recruiterLinks : role === "admin" ? adminLinks : studentLinks;
 
   return (
     <footer className="border-t border-brand-beige-200 bg-brand-cream-50 pt-12 text-brand-brown-600 dark:border-[#3E2315] dark:bg-[#1A0F08] dark:text-brand-beige-400 transition-colors duration-300">
@@ -82,15 +89,24 @@ export default function Footer({ role }) {
               <li>
                 <a href="https://nitkkr.ac.in/wp-content/uploads/2025/04/Placement-Policy_F.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-brand-amber-500 dark:hover:text-[#E89B60] transition">Placement Policy</a>
               </li>
-              <li>
-                <Link to="/student/resume-builder" className="hover:text-brand-amber-500 dark:hover:text-[#E89B60] transition">Resume Vault</Link>
-              </li>
-              <li>
-                <Link to="/student/company" className="hover:text-brand-amber-500 dark:hover:text-[#E89B60] transition">Companies</Link>
-              </li>
-              <li>
-                <Link to="/student/coding-profiles" className="hover:text-brand-amber-500 dark:hover:text-[#E89B60] transition">Coding Profiles</Link>
-              </li>
+              {role === "admin" && (
+                <>
+                  <li><Link to="/admin/questions" className="hover:text-brand-amber-500 dark:hover:text-[#E89B60] transition">Manage Questions</Link></li>
+                  <li><Link to="/admin/notifications" className="hover:text-brand-amber-500 dark:hover:text-[#E89B60] transition">Notifications</Link></li>
+                </>
+              )}
+              {role === "recruiter" && (
+                <>
+                  <li><Link to="/calendar" className="hover:text-brand-amber-500 dark:hover:text-[#E89B60] transition">Placement Calendar</Link></li>
+                </>
+              )}
+              {role === "student" && (
+                <>
+                  <li><Link to="/student/resume-builder" className="hover:text-brand-amber-500 dark:hover:text-[#E89B60] transition">Resume Vault</Link></li>
+                  <li><Link to="/student/company" className="hover:text-brand-amber-500 dark:hover:text-[#E89B60] transition">Companies</Link></li>
+                  <li><Link to="/student/coding-profiles" className="hover:text-brand-amber-500 dark:hover:text-[#E89B60] transition">Coding Profiles</Link></li>
+                </>
+              )}
             </ul>
           </div>
 

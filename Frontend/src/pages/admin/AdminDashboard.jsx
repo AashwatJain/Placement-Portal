@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { Users, Building2, Briefcase, GraduationCap, TrendingUp, Presentation, Loader2 } from "lucide-react";
+import {
+  Users, Building2, CheckCircle, Clock,
+  Target, TrendingUp, GraduationCap, Briefcase, Presentation
+} from "lucide-react";
+import PageLoader from "../../components/ui/PageLoader";
 import { fetchPlacementOverview, fetchDashboardBranch } from "../../services/adminApi";
 
 export default function AdminDashboard() {
@@ -36,11 +40,7 @@ export default function AdminDashboard() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-amber-500/100" />
-      </div>
-    );
+    return <PageLoader message="Loading dashboard..." />;
   }
 
   const statCards = [

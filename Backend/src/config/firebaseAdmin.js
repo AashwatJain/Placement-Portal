@@ -1,17 +1,16 @@
 import admin from "firebase-admin";
-import 'dotenv/config';
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const serviceAccount = require("./serviceAccountKey.json");
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    }),
+    credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://placement-portal-c0bdf-default-rtdb.firebaseio.com",
-    storageBucket: "placement-portal-c0bdf.appspot.com"
+    storageBucket: "placement-portal-c0bdf.firebasestorage.app"
   });
 }
 
 const db = admin.database();
-export default db;
+export default db;

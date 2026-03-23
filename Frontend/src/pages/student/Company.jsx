@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useCompanies } from "../../hooks/useCompanies";
+import { useToast } from "../../context/ToastContext";
 import CardSkeleton from "../../components/ui/CardSkeleton";
-import Toast from "../../components/ui/Toast";
 import {
   Search, MapPin, Calendar, IndianRupee,
   Users, ExternalLink, X, Code, Briefcase,
@@ -11,11 +11,11 @@ import {
 // ── Main Component ────────────────────────────────────────────
 export default function Company() {
   const { companies, loading, error } = useCompanies();
+  const { showToast } = useToast();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [toast, setToast] = useState(null);
   const [registered, setRegistered] = useState({}); // track which companies registered
 
   const filteredCompanies = companies.filter((company) => {
@@ -26,8 +26,7 @@ export default function Company() {
 
   const handleRegisterInterest = (companyName) => {
     setRegistered(prev => ({ ...prev, [companyName]: true }));
-    setToast(companyName);
-    setTimeout(() => setToast(null), 3500);
+    showToast({ type: "success", title: "Interest Registered!", message: `You've registered interest in ${companyName}.` });
   };
 
   const getContactIcon = (link) => link.includes("@") || link.startsWith("mailto:") ? <Mail size={16} /> : <Linkedin size={16} />;
@@ -305,8 +304,7 @@ export default function Company() {
         </div>
       )}
 
-      {/* ✅ Toast Notification */}
-      {toast && <Toast company={toast} onClose={() => setToast(null)} />}
+
 
     </div>
   );

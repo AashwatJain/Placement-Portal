@@ -16,13 +16,19 @@ export const getAllStudents = async (req, res) => {
 
         const data = snapshot.val();
         const students = Object.entries(data)
-            .map(([uid, userData]) => ({
-                id: uid,
-                uid,
-                ...userData,
-                name: userData.name || userData.fullName || "Unknown",
-            }))
-            .filter(u => u.role === "student"); // Only return students
+            .map(([uid, userData]) => {
+                // Normalize the name field consistently
+                const fullName = userData.fullName || userData.name || userData.email?.split("@")[0] || "Unknown";
+                return {
+                    id: uid,
+                    uid,
+                    ...userData,
+                    fullName,
+                    name: fullName,
+                    status: userData.status || "Unplaced",
+                };
+            })
+            .filter(u => u.role === "student");
 
         res.status(200).json(students);
     } catch (error) {

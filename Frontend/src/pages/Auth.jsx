@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import ThemeToggle from "../components/ui/ThemeToggle";
+import { Eye, EyeOff } from "lucide-react";
 
 const ROLES = [
   { value: "student", label: "Student" },
@@ -14,6 +16,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("student");
 
   const [formData, setFormData] = useState({
@@ -32,6 +35,7 @@ export default function Auth() {
   });
 
   const { login, signup, isLoggedIn, user } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,7 +63,7 @@ export default function Auth() {
       if (!isLogin && role === "student") {
         const domain = email.split("@")[1];
         if (domain !== "nitkkr.ac.in") {
-          alert("Only @nitkkr.ac.in email addresses are allowed for student registration.");
+          showToast({ type: "warning", title: "Invalid Email", message: "Only @nitkkr.ac.in email addresses are allowed for student registration." });
           setLoading(false);
           return;
         }
@@ -71,13 +75,13 @@ export default function Auth() {
         navigate(path);
       } else {
         await signup({ email, password, role, ...formData });
-        alert("Account created successfully!");
+        showToast({ type: "success", title: "Registered!", message: "Account created successfully." });
         const path = role === "student" ? "/student" : role === "admin" ? "/admin/students" : "/recruiter";
         navigate(path);
       }
     } catch (error) {
       console.error(error);
-      alert(error.message || "Something went wrong!");
+      showToast({ type: "error", title: "Authentication Failed", message: error.message || "Something went wrong. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -112,11 +116,22 @@ export default function Auth() {
               </div>
               <div className={isLogin ? "sm:col-span-2" : ""}>
                 <label className="mb-1 block text-sm font-medium text-brand-brown-700 dark:text-brand-beige-300">Password</label>
-                <input type="password" required value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full rounded-lg border border-brand-beige-200 px-3 py-2 text-brand-brown-900 focus:border-brand-amber-500 focus:ring-1 focus:ring-brand-amber-500 dark:border-[#5A3D2B] dark:bg-[#1A0F08] dark:text-brand-beige-100"
-                />
+                <div className="relative">
+                  <input type={showPassword ? "text" : "password"} required value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full rounded-lg border border-brand-beige-200 px-3 py-2 pr-10 text-brand-brown-900 focus:border-brand-amber-500 focus:ring-1 focus:ring-brand-amber-500 dark:border-[#5A3D2B] dark:bg-[#1A0F08] dark:text-brand-beige-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-brown-400 hover:text-brand-brown-700 dark:text-brand-beige-400 dark:hover:text-white transition-colors"
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
             </div>
 
