@@ -6,7 +6,7 @@
         "install:all": "npm install --prefix backend && npm install --prefix frontend",
         "dev:frontend": "npm run dev --prefix frontend",
         "dev:backend": "npm run dev --prefix backend",
-        "dev:ml": "source .venv/bin/activate && python3 mlService/mlServer.py",
+        "dev:ml": "kill -9 $(lsof -ti:5006) 2>/dev/null; source .venv/bin/activate && python3 mlService/mlServer.py",
         "dev": "concurrently -n backend,frontend,ml -c blue,green,yellow \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:ml\""
     },
     "devDependencies": {
