@@ -4,6 +4,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider } from "./context/ToastContext";
 import Layout from "./components/layout/Layout";
 import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/ForgotPassword";
 
 // Student Pages
 import StudentHome from "./pages/student/StudentHome";
@@ -51,6 +52,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Auth />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       {/* Protected Layout Routes */}
       <Route

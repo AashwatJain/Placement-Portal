@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import ThemeToggle from "../components/ui/ThemeToggle";
@@ -134,6 +134,14 @@ export default function Auth() {
                 </div>
               </div>
             </div>
+
+            {isLogin && (
+              <div className="text-right -mt-1">
+                <Link to="/forgot-password" className="text-xs font-medium text-brand-amber-500 hover:underline hover:text-[#E89B60] transition-colors">
+                  Forgot Password?
+                </Link>
+              </div>
+            )}
 
             {isLogin && (
               <div>

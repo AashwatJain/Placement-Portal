@@ -57,6 +57,25 @@ export function AuthProvider({ children }) {
       console.error("Signup Error:", error.message);
       const code = error?.code;
       if (code === "auth/email-already-in-use") {
+        // User exists in Auth but maybe not in RTDB — try to sign in and create profile
+        try {
+          const cred = await signInWithEmailAndPassword(auth, email, password);
+          const snapshot = await get(ref(db, `users/${cred.user.uid}`));
+          if (!snapshot.exists()) {
+            const profileData = {
+              email,
+              role,
+              ...(role === "student" || role === "recruiter" ? extraDetails : {}),
+              createdAt: new Date().toISOString(),
+            };
+            await set(ref(db, `users/${cred.user.uid}`), profileData);
+            setUser({ uid: cred.user.uid, ...profileData });
+            setIsLoggedIn(true);
+            return { success: true, recovered: true };
+          }
+        } catch {
+          // Sign-in failed (wrong password) — show the original message
+        }
         throw new Error("This email is already registered. Please sign in instead.");
       } else if (code === "auth/weak-password") {
         throw new Error("Password is too weak. Please use at least 6 characters.");
