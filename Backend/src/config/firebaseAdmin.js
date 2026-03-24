@@ -2,7 +2,16 @@ import admin from "firebase-admin";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
-const serviceAccount = require("./serviceAccountKey.json");
+
+let serviceAccount;
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  // Use the environment variable from Render
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  // Use the local file for development
+  serviceAccount = require("./serviceAccountKey.json");
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -13,4 +22,4 @@ if (!admin.apps.length) {
 }
 
 const db = admin.database();
-export default db;
+export default db;
