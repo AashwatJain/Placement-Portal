@@ -77,6 +77,7 @@ export default function RecruiterDashboard() {
   const [notes, setNotes]                 = useState({});
   const [previewUrl, setPreviewUrl]       = useState(null);
   const [sendingEmails, setSendingEmails] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   const statusTimer = useRef(null);
   const notesTimer  = useRef(null);
@@ -167,7 +168,8 @@ export default function RecruiterDashboard() {
     : "—";
   const branchCounts = {}; filteredAndSorted.forEach(s => { if (s.branch) { const b = s.branch.toUpperCase(); branchCounts[b] = (branchCounts[b]||0)+1; } });
   const topBranch = Object.entries(branchCounts).sort((a,b)=>b[1]-a[1])[0]?.[0] || "—";
-  const eligible  = filteredAndSorted.filter(s => parseFloat(s.cgpa) >= 7).length;
+  const valid10ths = filteredAndSorted.map(s => parseFloat(s.marks10th)).filter(v => !isNaN(v));
+  const avg10th = valid10ths.length > 0 ? (valid10ths.reduce((s, x) => s + x, 0) / valid10ths.length).toFixed(1) + "%" : "—";
 
   const exportCSV = () => {
     const h = ["Name","Branch","Year","CGPA","10th%","12th%","Backlogs","Gender","Email","Phone","GitHub","LinkedIn","LeetCode","Codeforces","CodeChef","Status","Note"];
@@ -182,10 +184,12 @@ export default function RecruiterDashboard() {
     const a = document.createElement("a"); a.href = url; a.download = `candidates_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
   };
 
-  const handleBulkEmail = async () => {
+  const handleBulkEmail = () => {
     if (selectedIds.size === 0) return;
-    
-    // Prepare candidate data array
+    setShowEmailModal(true);
+  };
+
+  const handleSendEmail = async (subject, body) => {
     const candidatesToNotify = filteredAndSorted
       .filter(s => selectedIds.has(s.id) && s.email && s.uid)
       .map(s => ({
@@ -202,9 +206,10 @@ export default function RecruiterDashboard() {
 
     setSendingEmails(true);
     try {
-      await sendCandidateNotifications(candidatesToNotify);
-      showToast({ type: "success", title: "Emails Sent!", message: `Successfully notified and emailed ${candidatesToNotify.length} candidates!` });
+      await sendCandidateNotifications(candidatesToNotify, subject, body);
+      showToast({ type: "success", title: "Emails Sent!", message: `Successfully emailed ${candidatesToNotify.length} candidates!` });
       clearSelection();
+      setShowEmailModal(false);
     } catch (error) {
       console.error(error);
       showToast({ type: "error", title: "Email Failed", message: "Failed to send some or all emails." });
@@ -263,11 +268,9 @@ export default function RecruiterDashboard() {
           {selectedIds.size > 0 && (
             <button 
               onClick={handleBulkEmail} 
-              disabled={sendingEmails}
-              className="flex items-center gap-1.5 rounded-lg bg-brand-amber-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-brand-amber-600 transition-all disabled:opacity-70"
+              className="flex items-center gap-1.5 rounded-lg bg-brand-amber-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-brand-amber-600 transition-all"
             >
-              {sendingEmails ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14}/>} 
-              {sendingEmails ? "Sending..." : `Notify & Email ${selectedIds.size} Selected`}
+              <Mail size={14}/> Compose Email ({selectedIds.size})
             </button>
           )}
         </div>
@@ -279,7 +282,7 @@ export default function RecruiterDashboard() {
           { l: "Total Candidates", v: total,    ic: <Users size={18}/>, g: "from-brand-amber-500/100 to-violet-600" },
           { l: "Avg CGPA",         v: avgCgpa,  ic: <TrendingUp size={18}/>, g: "from-emerald-500 to-teal-600" },
           { l: "Top Branch",       v: topBranch, ic: <GraduationCap size={18}/>, g: "from-amber-500 to-orange-600" },
-          { l: "Eligible (≥7.0)",  v: eligible,  ic: <Award size={18}/>, g: "from-rose-500 to-pink-600" },
+          { l: "Avg 10th %",       v: avg10th,   ic: <Award size={18}/>, g: "from-rose-500 to-pink-600" },
         ].map(stat => (
           <div key={stat.l} className="group relative overflow-hidden rounded-xl border border-brand-beige-200/80 bg-white p-4 shadow-sm hover:shadow-md dark:border-[#3E2315] dark:bg-[#1A0F08]/80 transition-all">
             <div className={`absolute -top-6 -right-6 h-20 w-20 rounded-full bg-gradient-to-br ${stat.g} opacity-[0.07] group-hover:opacity-[0.12] transition-opacity`}/>
@@ -365,6 +368,16 @@ export default function RecruiterDashboard() {
             />
           ))}
         </div>
+      )}
+
+      {/* ── EMAIL COMPOSE MODAL ── */}
+      {showEmailModal && (
+        <EmailComposeModal
+          recipientCount={selectedIds.size}
+          sending={sendingEmails}
+          onSend={handleSendEmail}
+          onClose={() => setShowEmailModal(false)}
+        />
       )}
     </div>
   );
@@ -614,3 +627,161 @@ function FilterSelect({ label, value, onChange, options }) {
 function FilterInput({ label, value, onChange, placeholder }) {
   return <div><label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">{label}</label><input type="number" step="any" value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-brand-beige-200 bg-white px-3 py-2 text-sm text-brand-brown-700 focus:border-brand-amber-500 focus:outline-none dark:border-[#7A543A] dark:bg-[#2A1810] dark:text-brand-beige-300"/></div>;
 }
+
+/* ═══════════ Email Compose Modal ═══════════ */
+const EMAIL_DRAFTS = [
+  {
+    label: "Accepted / Selected",
+    subject: "Congratulations! You have been selected",
+    body: `Dear Candidate,
+
+We are delighted to inform you that you have been selected for the role at our organization! Your performance throughout the selection process was outstanding.
+
+We will be reaching out shortly with further details regarding the offer letter and onboarding process.
+
+Congratulations once again!
+
+Best regards,
+The Recruitment Team`
+  },
+  {
+    label: "Shortlisted",
+    subject: "You've been shortlisted for the next round!",
+    body: `Dear Candidate,
+
+We are pleased to inform you that you have been shortlisted for the next round of our selection process.
+
+Please keep an eye on your email for further instructions regarding the schedule and format of the upcoming round.
+
+We wish you the best of luck!
+
+Best regards,
+The Recruitment Team`
+  },
+  {
+    label: "Rejected",
+    subject: "Application Status Update",
+    body: `Dear Candidate,
+
+Thank you for taking the time to participate in our selection process. We appreciate the effort you put in.
+
+After careful consideration, we regret to inform you that we will not be moving forward with your application at this time. We encourage you to continue developing your skills and apply again in the future.
+
+We wish you all the best in your career journey.
+
+Best regards,
+The Recruitment Team`
+  },
+  {
+    label: "Interview Scheduled",
+    subject: "Interview Invitation — Next Round Details",
+    body: `Dear Candidate,
+
+We are happy to inform you that you have been advanced to the interview round!
+
+Please find the details below:
+• Date: [DATE]
+• Time: [TIME]
+• Mode: [Online / Offline]
+• Platform/Venue: [DETAILS]
+
+Please ensure you are available at the scheduled time. If you have any concerns, do not hesitate to reach out.
+
+Best regards,
+The Recruitment Team`
+  },
+  {
+    label: "Custom (Blank)",
+    subject: "",
+    body: ""
+  },
+];
+
+function EmailComposeModal({ recipientCount, sending, onSend, onClose }) {
+  const [selectedDraft, setSelectedDraft] = useState(0);
+  const [subject, setSubject] = useState(EMAIL_DRAFTS[0].subject);
+  const [body, setBody] = useState(EMAIL_DRAFTS[0].body);
+
+  const handleDraftChange = (idx) => {
+    setSelectedDraft(idx);
+    setSubject(EMAIL_DRAFTS[idx].subject);
+    setBody(EMAIL_DRAFTS[idx].body);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="relative w-[95vw] max-w-2xl max-h-[90vh] bg-white dark:bg-[#1A0F08] rounded-2xl shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-brand-beige-200 dark:border-[#5A3D2B] bg-gradient-to-r from-brand-amber-500 to-[#E89B60]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
+              <Mail size={18} className="text-white"/>
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">Compose Email</h3>
+              <p className="text-[11px] text-white/80">{recipientCount} recipient{recipientCount !== 1 ? "s" : ""} selected</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-2 text-white/80 hover:text-white hover:bg-white/10 transition">
+            <X size={18}/>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          {/* Draft Selector */}
+          <div>
+            <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">Template</label>
+            <div className="flex flex-wrap gap-2">
+              {EMAIL_DRAFTS.map((d, i) => (
+                <button key={i} onClick={() => handleDraftChange(i)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${selectedDraft === i
+                    ? "bg-brand-amber-500 text-white shadow-sm"
+                    : "border border-brand-beige-200 text-brand-brown-600 hover:bg-brand-cream-50 dark:border-[#5A3D2B] dark:text-brand-beige-400 dark:hover:bg-brand-brown-700"
+                  }`}
+                >{d.label}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Subject */}
+          <div>
+            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">Subject</label>
+            <input type="text" value={subject} onChange={e => setSubject(e.target.value)}
+              placeholder="Enter email subject..."
+              className="w-full rounded-lg border border-brand-beige-200 bg-brand-cream-50 px-4 py-2.5 text-sm font-medium text-brand-brown-800 placeholder:text-brand-brown-400 focus:border-brand-amber-500 focus:outline-none focus:ring-2 focus:ring-brand-amber-500/20 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white dark:focus:ring-brand-amber-800/40"
+            />
+          </div>
+
+          {/* Body */}
+          <div>
+            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">Message Body</label>
+            <textarea value={body} onChange={e => setBody(e.target.value)}
+              placeholder="Write your email content here..."
+              rows={12}
+              className="w-full rounded-lg border border-brand-beige-200 bg-brand-cream-50 px-4 py-3 text-sm text-brand-brown-800 placeholder:text-brand-brown-400 focus:border-brand-amber-500 focus:outline-none focus:ring-2 focus:ring-brand-amber-500/20 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white dark:focus:ring-brand-amber-800/40 resize-none leading-relaxed"
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-brand-beige-200 dark:border-[#5A3D2B] bg-brand-cream-50/50 dark:bg-[#2A1810]/50">
+          <p className="text-xs text-brand-brown-400">
+            <Mail size={12} className="inline mr-1 -mt-0.5"/>Sending to <strong className="text-brand-brown-700 dark:text-brand-beige-300">{recipientCount}</strong> candidate{recipientCount !== 1 ? "s" : ""}
+          </p>
+          <div className="flex items-center gap-2">
+            <button onClick={onClose} className="rounded-lg border border-brand-beige-200 px-4 py-2 text-xs font-bold text-brand-brown-600 hover:bg-brand-beige-100 dark:border-[#5A3D2B] dark:text-brand-beige-400 dark:hover:bg-brand-brown-700 transition-all">
+              Cancel
+            </button>
+            <button onClick={() => onSend(subject, body)} disabled={sending || !subject.trim() || !body.trim()}
+              className="flex items-center gap-1.5 rounded-lg bg-brand-amber-500 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-brand-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {sending ? <Loader2 size={14} className="animate-spin"/> : <Mail size={14}/>}
+              {sending ? "Sending..." : "Send Email"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

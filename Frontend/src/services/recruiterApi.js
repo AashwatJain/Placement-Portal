@@ -25,7 +25,7 @@ export async function saveCandidateNotes(uid, data) {
 
 // ── Notifications ─────────────────────────────────────────────
 
-export async function sendCandidateNotifications(candidates) {
-    const response = await axios.post(`${API_BASE_URL}/api/recruiter/notify-candidates`, { candidates });
+export async function sendCandidateNotifications(candidates, customSubject, customBody) {
+    const response = await axios.post(`${API_BASE_URL}/api/recruiter/notify-candidates`, { candidates, customSubject, customBody });
     return response.data;
 }

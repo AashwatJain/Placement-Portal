@@ -93,7 +93,7 @@ const STATUS_TO_APP_STATUS = {
 
 export const notifyCandidates = async (req, res) => {
     try {
-        const { candidates } = req.body; // Array of { uid, email, name, status }
+        const { candidates, customSubject, customBody } = req.body; // Array of { uid, email, name, status } + optional custom email fields
 
         if (!Array.isArray(candidates) || candidates.length === 0) {
             return res.status(400).json({ error: "No candidates provided" });
@@ -107,13 +107,21 @@ export const notifyCandidates = async (req, res) => {
 
         for (const candidate of candidates) {
             const { uid, email, name, status } = candidate;
-            const message = STATUS_MESSAGES[status || ""] || STATUS_MESSAGES[""];
-            const subject = `Application Status Update: ${status ? status.toUpperCase() : 'Updated'}`;
+
+            // Use custom content from compose modal if provided, otherwise fall back to auto-generated
+            const useCustom = customSubject && customBody;
+            const message = useCustom ? customBody : (STATUS_MESSAGES[status || ""] || STATUS_MESSAGES[""]);
+            const subject = useCustom ? customSubject : `Application Status Update: ${status ? status.toUpperCase() : 'Updated'}`;
+
+            // Personalise the body by replacing "Dear Candidate" with the student's name
+            const personalizedBody = useCustom
+                ? message.replace(/Dear Candidate/gi, `Dear ${name || 'Candidate'}`)
+                : `Hello ${name || 'Candidate'}, ${message}`;
 
             // 1. Create In-App Notification targeting this specific UID
             if (uid) {
                 await firestore.collection("notifications").add({
-                    text: `Hello ${name || 'Candidate'}, ${message}`,
+                    text: personalizedBody.substring(0, 300),
                     type: "shortlist",
                     target: uid,
                     read: false,
@@ -122,22 +130,25 @@ export const notifyCandidates = async (req, res) => {
                 notificationsCreated++;
             }
 
-            // 2. Send Automated Email
+            // 2. Send Email
             if (email) {
+                // Convert plain text body to HTML paragraphs
+                const htmlBody = personalizedBody.split('\n').map(line => line.trim() === '' ? '<br/>' : `<p style="font-size: 15px; color: #555; line-height: 1.6; margin: 4px 0;">${line}</p>`).join('');
+
                 await sendEmail({
                     to: email,
                     subject: subject,
-                    text: `Hello ${name || 'Candidate'},\n\n${message}\n\nBest regards,\nThe Recruitment Team`,
+                    text: personalizedBody,
                     html: `
-                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-                            <div style="background-color: #4f46e5; padding: 20px; text-align: center;">
-                                <h2 style="color: white; margin: 0;">Status Update</h2>
+                        <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                            <div style="background: linear-gradient(135deg, #d97706, #E89B60); padding: 24px; text-align: center;">
+                                <h2 style="color: white; margin: 0; font-size: 20px;">${subject}</h2>
                             </div>
                             <div style="padding: 30px;">
-                                <p style="font-size: 16px; color: #333;">Hello <strong>${name || 'Candidate'}</strong>,</p>
-                                <p style="font-size: 16px; color: #555; line-height: 1.5;">${message}</p>
-                                <br/>
-                                <p style="font-size: 14px; color: #777;">Best regards,<br/>The Recruitment Team</p>
+                                ${htmlBody}
+                            </div>
+                            <div style="padding: 16px 30px; background: #faf5f0; border-top: 1px solid #e2e8f0; text-align: center;">
+                                <p style="font-size: 12px; color: #999; margin: 0;">Placement Portal — NIT Kurukshetra</p>
                             </div>
                         </div>
                     `

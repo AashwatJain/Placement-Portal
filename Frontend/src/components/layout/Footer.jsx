@@ -27,8 +27,7 @@ export default function Footer({ role }) {
 
   const recruiterLinks = [
     { to: "/recruiter", label: "Candidate Search" },
-    { to: "/recruiter/shortlisted", label: "Shortlisted Candidates" },
-    { to: "/calendar", label: "Calendar" },
+    { to: "/recruiter/profile", label: "My Profile" },
   ];
 
   const quickLinks = role === "recruiter" ? recruiterLinks : role === "admin" ? adminLinks : studentLinks;
@@ -44,7 +43,7 @@ export default function Footer({ role }) {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-amber-500 to-[#E89B60] text-white">
-                <span className="font-bold">N</span>
+                <span className="font-bold">P</span>
               </div>
               <span className="text-lg font-bold text-brand-brown-900 dark:text-white">
                 Placement Portal
