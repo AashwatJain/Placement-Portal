@@ -13,7 +13,6 @@ import {
   Building2, FileText, CalendarPlus,
 } from "lucide-react";
 
-// ── Selection process steps (labels for the timeline) ─────────
 const PROCESS_STEPS = [
   { key: "shortlistDate", label: "Shortlisted" },
   { key: "oaDate", label: "Online Assessment (OA)" },
@@ -23,7 +22,6 @@ const PROCESS_STEPS = [
   { key: "finalResultDate", label: "Final Decision" },
 ];
 
-// ══════════════════════════════════════════════════════════════
 export default function Opportunities() {
   const { opportunities, loading, error } = useOpportunities();
   const { user } = useAuth();
@@ -73,7 +71,6 @@ export default function Opportunities() {
 
   return (
     <div className="space-y-6 relative">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">Opportunities</h1>
@@ -100,7 +97,6 @@ export default function Opportunities() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">⚠️ {error}</div>
       )}
 
-      {/* ── CARDS GRID ── */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {loading && Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
 
@@ -131,7 +127,6 @@ export default function Opportunities() {
                   {opp.cgpaCutoff && <span className="flex items-center gap-1 bg-brand-cream-50 rounded px-2 py-1 dark:bg-[#2A1810]"><GraduationCap size={11} /> ≥ {opp.cgpaCutoff}</span>}
                 </div>
 
-                {/* Deadline */}
                 {opp.lastDate && (
                   <div className={`mb-3 flex items-center gap-2 rounded-lg border px-3 py-2 ${dl?.urgent ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20" : "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20"}`}>
                     <Clock size={14} className={dl?.urgent ? "text-red-500" : "text-amber-600 dark:text-amber-400"} />
@@ -159,13 +154,11 @@ export default function Opportunities() {
         )}
       </div>
 
-      {/* ══════════ DETAIL MODAL ══════════ */}
       {selectedOpp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setSelectedOpp(null)}>
           <div className="flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#1A0F08] border border-brand-beige-200 dark:border-[#3E2315]"
             onClick={(e) => e.stopPropagation()}>
 
-            {/* Header */}
             <div className="flex items-center justify-between border-b border-brand-beige-100 bg-brand-cream-50 px-6 py-5 dark:border-[#3E2315] dark:bg-[#2A1810]/50">
               <div className="flex items-center gap-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-brand-amber-500/100 to-violet-600 text-2xl font-bold text-white shadow-lg">
@@ -183,14 +176,11 @@ export default function Opportunities() {
               <button onClick={() => setSelectedOpp(null)} className="rounded-full p-2 hover:bg-brand-beige-200 dark:hover:bg-brand-brown-700"><X size={22} className="text-brand-cream-500" /></button>
             </div>
 
-            {/* Body */}
             <div className="flex-1 overflow-y-auto p-6">
               <div className="grid gap-6 lg:grid-cols-5">
 
-                {/* LEFT COL: Timeline + Details (3/5) */}
                 <div className="lg:col-span-3 space-y-6">
 
-                  {/* Deadline banner + Add to Calendar */}
                   {selectedOpp.lastDate && (() => {
                     const dl = deadlineLabel(selectedOpp.lastDate);
                     return (
@@ -213,7 +203,6 @@ export default function Opportunities() {
                     );
                   })()}
 
-                  {/* Selection Process (READ-ONLY PREVIEW) */}
                   <section>
                     <h3 className="mb-4 text-base font-bold text-brand-brown-900 dark:text-white flex items-center gap-2">
                       <Calendar className="text-brand-amber-500/100" size={18} /> Selection Process
@@ -246,7 +235,6 @@ export default function Opportunities() {
                     </div>
                   </section>
 
-                  {/* Eligibility */}
                   <section>
                     <h3 className="mb-3 text-base font-bold text-brand-brown-900 dark:text-white flex items-center gap-2">
                       <GraduationCap className="text-emerald-500" size={18} /> Eligibility
@@ -276,9 +264,7 @@ export default function Opportunities() {
                   </section>
                 </div>
 
-                {/* RIGHT COL: CTC + Location + Extra (2/5) */}
                 <div className="lg:col-span-2 space-y-5">
-                  {/* CTC Card */}
                   {selectedOpp.ctc && (
                     <div className="rounded-xl bg-gradient-to-br from-brand-amber-500 to-violet-700 p-5 text-white shadow-xl">
                       <div className="flex items-center gap-2 mb-2 opacity-90"><IndianRupee size={18} /> <h4 className="font-bold">Compensation</h4></div>
@@ -293,7 +279,6 @@ export default function Opportunities() {
                     </div>
                   )}
 
-                  {/* Location */}
                   {selectedOpp.location && (
                     <div className="rounded-xl border border-brand-beige-200 bg-brand-cream-50 p-4 dark:border-[#5A3D2B] dark:bg-[#2A1810]/50">
                       <p className="text-xs font-bold uppercase tracking-wider text-brand-cream-500 mb-2">Office Locations</p>
@@ -307,7 +292,6 @@ export default function Opportunities() {
                     </div>
                   )}
 
-                  {/* Offer Type */}
                   <div className="rounded-xl border border-brand-beige-200 bg-brand-cream-50 p-4 dark:border-[#5A3D2B] dark:bg-[#2A1810]/50">
                     <p className="text-xs font-bold uppercase tracking-wider text-brand-cream-500 mb-2">Offer Details</p>
                     <div className="space-y-2 text-sm">
@@ -317,7 +301,6 @@ export default function Opportunities() {
                     </div>
                   </div>
 
-                  {/* Description */}
                   {selectedOpp.description && (
                     <div className="rounded-xl border border-brand-beige-200 bg-brand-cream-50 p-4 dark:border-[#5A3D2B] dark:bg-[#2A1810]/50">
                       <p className="text-xs font-bold uppercase tracking-wider text-brand-cream-500 mb-2">About the Drive</p>
@@ -328,7 +311,6 @@ export default function Opportunities() {
               </div>
             </div>
 
-            {/* Footer */}
             <div className="border-t border-brand-beige-200 px-6 py-4 bg-white dark:border-[#3E2315] dark:bg-[#1A0F08] flex justify-end gap-3">
               <button onClick={() => setSelectedOpp(null)} className="px-5 py-2.5 rounded-lg text-sm font-medium text-brand-brown-600 hover:bg-brand-beige-100 dark:text-brand-beige-300 dark:hover:bg-brand-brown-800">Close</button>
               <button
@@ -348,7 +330,6 @@ export default function Opportunities() {
           </div>
         </div>
       )}
-
 
     </div>
   );

@@ -24,7 +24,6 @@ import {
   Filter,
 } from "lucide-react";
 
-// ── Difficulty helpers ───────────────────────────────────────
 const DIFF_CONFIG = {
   Easy:   { color: "#10b981", bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800" },
   Medium: { color: "#f59e0b", bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400", border: "border-amber-200 dark:border-amber-800" },
@@ -32,7 +31,6 @@ const DIFF_CONFIG = {
 };
 const getDiff = (d) => DIFF_CONFIG[d] || DIFF_CONFIG.Medium;
 
-// ── Donut Chart Component ────────────────────────────────────
 function DonutChart({ solved, total, size = 140, strokeWidth = 14 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -76,7 +74,6 @@ function DonutChart({ solved, total, size = 140, strokeWidth = 14 }) {
   );
 }
 
-// ── Pie Chart (Difficulty Distribution) ──────────────────────
 function PieChart({ easy, medium, hard, size = 120 }) {
   const total = easy + medium + hard;
   if (total === 0) return null;
@@ -130,7 +127,6 @@ function PieChart({ easy, medium, hard, size = 120 }) {
   );
 }
 
-// ── Horizontal Bar Chart (Company Progress) ─────────────────
 function CompanyBarChart({ companies, maxBars = 6 }) {
   const top = companies.slice(0, maxBars);
   if (top.length === 0) return null;
@@ -159,7 +155,6 @@ function CompanyBarChart({ companies, maxBars = 6 }) {
   );
 }
 
-// ── Mini Bar Chart (for company cards) ───────────────────────
 function MiniProgress({ solved, total }) {
   const pct = total > 0 ? (solved / total) * 100 : 0;
   return (
@@ -175,7 +170,6 @@ function MiniProgress({ solved, total }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════
 export default function Practice() {
   const { user, token } = useAuth();
   const { showToast } = useToast();
@@ -190,7 +184,6 @@ export default function Practice() {
   const [searchTerm, setSearchTerm] = useState("");
   const [diffFilter, setDiffFilter] = useState("All");
 
-  // Fetch data on mount
   useEffect(() => {
     if (!user?.uid) return;
 
@@ -205,7 +198,6 @@ export default function Practice() {
         setQuestions(qData);
         setCompanies(cData);
         setSolvedSet(new Set(sData));
-        // Extract unique company names from applications
         const appliedNames = [...new Set(appData.map(a => a.company).filter(Boolean))];
         setAppliedCompanies(appliedNames);
       } catch (err) {
@@ -217,14 +209,12 @@ export default function Practice() {
     load();
   }, [user?.uid]);
 
-  // Toggle solved — optimistic update + backend confirmation re-fetch
   const handleToggle = async (questionId) => {
     if (!user?.uid) return;
     setToggling(questionId);
     const currently = solvedSet.has(questionId);
     const newSolved = !currently;
 
-    // Optimistic update
     setSolvedSet((prev) => {
       const next = new Set(prev);
       newSolved ? next.add(questionId) : next.delete(questionId);
@@ -233,12 +223,10 @@ export default function Practice() {
 
     try {
       await toggleSolvedQuestion(user.uid, questionId, newSolved, token);
-      // Re-fetch from backend to confirm sync
       const freshSolved = await fetchSolvedQuestions(user.uid);
       setSolvedSet(new Set(freshSolved));
     } catch (err) {
       console.error("Toggle error:", err);
-      // Revert optimistic update
       setSolvedSet((prev) => {
         const next = new Set(prev);
         !newSolved ? next.add(questionId) : next.delete(questionId);
@@ -250,7 +238,6 @@ export default function Practice() {
     }
   };
 
-  // Compute stats
   const companiesWithQuestions = companies
     .map((c) => {
       const companyQs = questions.filter(
@@ -265,12 +252,10 @@ export default function Practice() {
   const totalQuestions = questions.length;
   const totalSolved = questions.filter((q) => solvedSet.has(q.id)).length;
 
-  // Difficulty counts
   const easyCount = questions.filter(q => (q.difficulty || "Medium") === "Easy").length;
   const mediumCount = questions.filter(q => (q.difficulty || "Medium") === "Medium").length;
   const hardCount = questions.filter(q => (q.difficulty || "Medium") === "Hard").length;
 
-  // Recommended companies — those the student applied to
   const recommendedCompanies = companiesWithQuestions.filter(c =>
     appliedCompanies.some(name => c.name?.toLowerCase() === name?.toLowerCase())
   );
@@ -283,7 +268,6 @@ export default function Practice() {
     ? companiesWithQuestions.find((c) => String(c.id) === String(selectedCompany))
     : null;
 
-  // Filter questions by difficulty when inside a company
   const filteredQuestions = selectedCompanyData
     ? (selectedCompanyData.questions || []).filter(q =>
         diffFilter === "All" ? true : (q.difficulty || "Medium") === diffFilter
@@ -306,7 +290,6 @@ export default function Practice() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 pb-10">
-      {/* HEADER */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-2xl font-extrabold text-brand-brown-900 dark:text-white tracking-tight flex items-center gap-2">
@@ -332,9 +315,7 @@ export default function Practice() {
         )}
       </div>
 
-      {/* ── OVERALL STATS with Charts ── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-3 lg:col-span-1">
           <StatCard title="Total" value={totalQuestions} icon={<BookOpen size={18} />} gradient="from-brand-amber-500/100 to-violet-600" />
           <StatCard title="Solved" value={totalSolved} icon={<CheckCircle2 size={18} />} gradient="from-emerald-500 to-teal-600" />
@@ -342,7 +323,6 @@ export default function Practice() {
           <StatCard title="Accuracy" value={totalQuestions > 0 ? `${Math.round((totalSolved / totalQuestions) * 100)}%` : "—"} icon={<Target size={18} />} gradient="from-rose-500 to-pink-600" />
         </div>
 
-        {/* Pie Chart — Difficulty Distribution */}
         <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-5 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80 flex flex-col items-center justify-center">
           <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand-cream-500 flex items-center gap-1.5">
             <BarChart3 size={14} className="text-brand-amber-500/100" /> Difficulty Distribution
@@ -350,7 +330,6 @@ export default function Practice() {
           <PieChart easy={easyCount} medium={mediumCount} hard={hardCount} />
         </div>
 
-        {/* Bar Chart — Top Companies Progress */}
         <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-5 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
           <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand-cream-500 flex items-center gap-1.5">
             <Trophy size={14} className="text-amber-500" /> Company Progress
@@ -359,7 +338,6 @@ export default function Practice() {
         </div>
       </div>
 
-      {/* ── RECOMMENDED FOR YOU ── */}
       {!selectedCompany && recommendedCompanies.length > 0 && (
         <div className="rounded-2xl border-2 border-dashed border-brand-amber-500/40 dark:border-brand-amber-600 bg-brand-amber-500/10/50 dark:bg-brand-amber-900/20 p-5">
           <h3 className="mb-3 text-sm font-bold text-brand-amber-800 dark:text-brand-amber-500/40 flex items-center gap-2">
@@ -388,9 +366,7 @@ export default function Practice() {
         </div>
       )}
 
-      {/* ── COMPANY VIEW or QUESTION VIEW ── */}
       {!selectedCompany ? (
-        /* ── COMPANY GRID ── */
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCompanies.map((company) => (
@@ -399,7 +375,6 @@ export default function Practice() {
                 onClick={() => setSelectedCompany(company.id)}
                 className="group relative flex flex-col justify-between rounded-2xl border border-brand-beige-200/80 bg-white p-5 text-left shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 hover:border-brand-amber-500 dark:border-[#3E2315] dark:bg-[#1A0F08]/80 dark:hover:border-brand-amber-500"
               >
-                {/* Top gradient accent */}
                 <div className="absolute top-0 left-4 right-4 h-0.5 rounded-full bg-gradient-to-r from-brand-amber-500/100 to-violet-500 opacity-40 group-hover:opacity-80 transition-opacity" />
 
                 <div className="flex items-center gap-3 mb-4">
@@ -433,10 +408,8 @@ export default function Practice() {
           )}
         </>
       ) : (
-        /* ── QUESTION DETAIL VIEW ── */
         <div className="grid gap-8 lg:grid-cols-3">
 
-          {/* LEFT: questions list */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <button
@@ -446,7 +419,6 @@ export default function Practice() {
                 <ArrowLeft size={16} /> Back to Companies
               </button>
 
-              {/* Difficulty filter */}
               <div className="flex items-center gap-1 bg-brand-beige-100 dark:bg-[#2A1810] rounded-lg p-0.5">
                 <Filter size={12} className="ml-2 text-brand-brown-400" />
                 {["All", "Easy", "Medium", "Hard"].map(d => (
@@ -493,7 +465,6 @@ export default function Practice() {
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      {/* Checkbox */}
                       <button
                         onClick={() => handleToggle(q.id)}
                         disabled={toggling === q.id}
@@ -512,14 +483,11 @@ export default function Practice() {
                         )}
                       </button>
 
-                      {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          {/* Difficulty badge */}
                           <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold border ${diff.bg} ${diff.text} ${diff.border}`}>
                             {q.difficulty || "Medium"}
                           </span>
-                          {/* Topic tags */}
                           {(q.tags || []).map(tag => (
                             <span key={tag} className="inline-flex items-center rounded-md bg-brand-beige-100 dark:bg-[#2A1810] px-1.5 py-0.5 text-[10px] font-medium text-brand-brown-600 dark:text-brand-beige-400">
                               {tag}
@@ -573,9 +541,7 @@ export default function Practice() {
             </div>
           </div>
 
-          {/* RIGHT: Donut chart & stats sidebar */}
           <div className="space-y-6">
-            {/* Donut */}
             <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-6 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
               <h3 className="mb-5 font-bold text-brand-brown-900 dark:text-white text-center flex items-center justify-center gap-2">
                 <BarChart3 size={16} className="text-brand-amber-500/100" /> Progress
@@ -606,7 +572,6 @@ export default function Practice() {
               </div>
             </div>
 
-            {/* Difficulty breakdown for this company */}
             <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-6 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
               <h3 className="mb-4 font-bold text-brand-brown-900 dark:text-white text-center text-sm">Difficulty Breakdown</h3>
               <PieChart
@@ -617,7 +582,6 @@ export default function Practice() {
               />
             </div>
 
-            {/* Overall Summary Donut */}
             <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-6 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
               <h3 className="mb-5 font-bold text-brand-brown-900 dark:text-white text-center flex items-center justify-center gap-2">
                 <Trophy size={16} className="text-amber-500" /> Overall
@@ -635,8 +599,6 @@ export default function Practice() {
     </div>
   );
 }
-
-/* ─── SUB-COMPONENTS ─── */
 
 function StatCard({ title, value, icon, gradient }) {
   return (

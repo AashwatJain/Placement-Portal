@@ -8,14 +8,12 @@ import {
   Clock, ExternalLink, Loader2, Briefcase, LayoutGrid, Rows3,
 } from "lucide-react";
 
-// ── Constants ────────────────────────────────────────────────
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
 
-// ── Color config by step type ────────────────────────────────
 const STEP_COLORS = {
   OA:        { chip: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800", bar: "bg-amber-500", dot: "bg-amber-500" },
   Interview: { chip: "bg-brand-amber-500/20 text-brand-amber-600 border-brand-amber-500/30 dark:bg-blue-900/30 dark:text-brand-amber-500/40 dark:border-brand-amber-700", bar: "bg-brand-amber-500/100", dot: "bg-brand-amber-500/100" },
@@ -35,7 +33,6 @@ function getStepType(step) {
 }
 function getColors(step) { return STEP_COLORS[getStepType(step)] || STEP_COLORS.Default; }
 
-// ── Google Calendar URL ──────────────────────────────────────
 function buildGCalUrl(company, stepName, date) {
   const d = (date || "").replace(/-/g, "");
   if (!d) return "#";
@@ -45,10 +42,9 @@ function buildGCalUrl(company, stepName, date) {
   })}`;
 }
 
-// ── Extract events from applications ─────────────────────────
 function extractEvents(applications, isAdmin = false) {
   const events = [];
-  const seen = new Set(); // de-duplicate by company+step+date
+  const seen = new Set();
   for (const app of applications) {
     if (app.status === "Rejected") continue;
     const tl = app.timeline || [];
@@ -56,12 +52,10 @@ function extractEvents(applications, isAdmin = false) {
       const step = tl[i];
       if (!step.date) continue;
 
-      // De-duplicate: for admin, many students may have the same company+step+date
       const dedupeKey = `${app.company}|${step.step}|${step.date}`;
       if (isAdmin && seen.has(dedupeKey)) continue;
       if (isAdmin) seen.add(dedupeKey);
 
-      // For students, hide very old events (>14 days ago) unless done
       if (!isAdmin) {
         const eventDate = new Date(step.date + "T00:00:00");
         const today = new Date();
@@ -80,21 +74,19 @@ function extractEvents(applications, isAdmin = false) {
   return events;
 }
 
-// ── Days until helper ────────────────────────────────────────
 function daysUntil(dateStr) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const target = new Date(dateStr + "T00:00:00"); target.setHours(0, 0, 0, 0);
   return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
 }
 
-// ══════════════════════════════════════════════════════════════
 export default function Calendar() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("month"); // "month" | "week"
+  const [viewMode, setViewMode] = useState("month");
   const [selectedDay, setSelectedDay] = useState(null);
 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -106,7 +98,6 @@ export default function Calendar() {
 
     if (role === "admin") {
       setIsAdmin(true);
-      // Admin: fetch all opportunities and build calendar events from their schedules
       (async () => {
         try {
           const opps = await fetchOpportunities();
@@ -115,7 +106,6 @@ export default function Calendar() {
             const timeline = [];
             const companyName = opp.name || opp.company || opp.title || "Unknown";
 
-            // 1. Add any top-level date fields as events
             const dateFields = [
               { key: "deadline",            step: "Application Deadline" },
               { key: "oaDate",              step: "OA" },
@@ -130,7 +120,6 @@ export default function Calendar() {
               }
             }
 
-            // 2. Add all round schedule dates
             const rounds = opp.rounds || [];
             for (const r of rounds) {
               const date = r.date || r.expectedDate || null;
@@ -162,7 +151,6 @@ export default function Calendar() {
       return;
     }
 
-    // Student: personal applications
     const unsub = onUserApplications(user.uid, (apps) => {
       setApplications(apps || []);
       setLoading(false);
@@ -191,7 +179,6 @@ export default function Calendar() {
 
   const eventsForDay = (day) => events.filter((e) => e.date === fmtKey(year, month, day));
 
-  // Month event counts for stats bar
   const monthEvents = events.filter((e) => {
     const ed = new Date(e.date + "T00:00:00");
     return ed.getMonth() === month && ed.getFullYear() === year;
@@ -202,14 +189,12 @@ export default function Calendar() {
     monthStats[t] = (monthStats[t] || 0) + 1;
   });
 
-  // Sidebar: upcoming events
   const todayStr = new Date().toISOString().slice(0, 10);
   const upcoming = [...events]
     .filter((e) => e.date >= todayStr && !e.done)
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 8);
 
-  // Week view: derive 7-day window for the selected week
   const getWeekDays = () => {
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
@@ -223,22 +208,17 @@ export default function Calendar() {
   const prevWeek = () => setCurrentDate(new Date(currentDate.getTime() - 7 * 86400000));
   const nextWeek = () => setCurrentDate(new Date(currentDate.getTime() + 7 * 86400000));
 
-  // Selected day events
   const selectedDayEvents = selectedDay
     ? events.filter((e) => e.date === selectedDay)
     : [];
 
-  // Batch GCal export URL
   const buildBatchGCalUrl = () => {
     if (upcoming.length === 0) return "#";
-    // Google Calendar only supports single event links, so open first one
     return buildGCalUrl(upcoming[0].company, upcoming[0].step, upcoming[0].date);
   };
 
-  // ── Render ─────────────────────────────────────────────────
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">Placement Calendar</h1>
@@ -248,7 +228,6 @@ export default function Calendar() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* View toggle */}
           <div className="flex items-center gap-0.5 rounded-lg border border-brand-beige-200 bg-white p-0.5 dark:border-[#5A3D2B] dark:bg-[#2A1810]">
             <button
               onClick={() => setViewMode("month")}
@@ -266,7 +245,6 @@ export default function Calendar() {
             </button>
           </div>
 
-          {/* Month/Week navigation */}
           <div className="flex items-center gap-1 rounded-xl border border-brand-beige-200 bg-white p-1 shadow-sm dark:border-[#5A3D2B] dark:bg-[#2A1810]">
             <button onClick={viewMode === "month" ? prevMonth : prevWeek} className="rounded-lg p-2 hover:bg-brand-beige-100 dark:text-brand-beige-300 dark:hover:bg-brand-brown-700">
               <ChevronLeft size={18} />
@@ -287,7 +265,6 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Month stats bar */}
       {Object.keys(monthStats).length > 0 && viewMode === "month" && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-brand-beige-200 bg-white px-4 py-2.5 text-xs font-medium text-brand-brown-600 shadow-sm dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-brand-beige-300">
           <CalendarIcon size={14} className="text-brand-brown-400" />
@@ -311,11 +288,9 @@ export default function Calendar() {
 
       {!loading && (
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* ── Calendar Grid ── */}
           <div className="lg:col-span-2 space-y-4">
             <div className="rounded-xl border border-brand-beige-200 bg-white shadow-sm dark:border-[#5A3D2B] dark:bg-[#2A1810] overflow-hidden">
               {viewMode === "month" ? (
-                /* ── MONTH VIEW ── */
                 <>
                   <div className="grid grid-cols-7 border-b border-brand-beige-200 dark:border-[#5A3D2B]">
                     {DAYS.map((d) => (
@@ -360,7 +335,6 @@ export default function Calendar() {
                                   className={`relative truncate rounded px-1 py-0.5 text-[9px] font-medium border transition-transform hover:scale-[1.02] ${colors.chip}`}
                                   title={`${ev.company} — ${ev.step}`}
                                 >
-                                  {/* Urgency dot */}
                                   {!ev.done && days >= 0 && days <= 3 && (
                                     <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
                                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -384,7 +358,6 @@ export default function Calendar() {
                   </div>
                 </>
               ) : (
-                /* ── WEEK VIEW ── */
                 <div>
                   <div className="grid grid-cols-7 border-b border-brand-beige-200 dark:border-[#5A3D2B]">
                     {weekDays.map((wd) => {
@@ -445,7 +418,6 @@ export default function Calendar() {
               )}
             </div>
 
-            {/* ── Color Legend ── */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-lg border border-brand-beige-200 bg-white px-4 py-2.5 text-[11px] dark:border-[#5A3D2B] dark:bg-[#2A1810]">
               {[
                 { label: "OA", type: "OA" },
@@ -469,7 +441,6 @@ export default function Calendar() {
               </span>
             </div>
 
-            {/* Empty state */}
             {events.length === 0 && (
               <div className="rounded-xl border border-dashed border-brand-beige-300 bg-brand-cream-50/50 dark:border-[#5A3D2B] dark:bg-[#2A1810]/50 p-8 text-center">
                 <Briefcase size={36} className="mx-auto mb-3 text-brand-beige-300 dark:text-brand-brown-600" />
@@ -489,9 +460,7 @@ export default function Calendar() {
             )}
           </div>
 
-          {/* ── Sidebar ── */}
           <div className="space-y-4">
-            {/* Selected day detail */}
             {selectedDay && selectedDayEvents.length > 0 && (
               <div className="rounded-xl border border-brand-amber-500/30 bg-brand-amber-500/10/50 p-4 shadow-sm dark:border-brand-amber-800/50 dark:bg-brand-amber-900/20">
                 <h3 className="mb-3 text-sm font-bold text-brand-amber-800 dark:text-brand-amber-500/40 flex items-center gap-2">
@@ -530,7 +499,6 @@ export default function Calendar() {
               </div>
             )}
 
-            {/* Upcoming steps */}
             <div className="rounded-xl border border-brand-beige-200 bg-white p-4 shadow-sm dark:border-[#5A3D2B] dark:bg-[#2A1810] h-fit">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="flex items-center gap-2 text-base font-semibold text-brand-brown-800 dark:text-white">

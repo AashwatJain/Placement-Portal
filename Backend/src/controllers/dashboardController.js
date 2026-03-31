@@ -1,18 +1,6 @@
-// controllers/dashboardController.js
-// ─────────────────────────────────────────────────────────────
-// Dashboard & Analytics endpoints.
-// All data is aggregated from Firebase Realtime DB (`users`) and
-// Firestore (`drives`, `offers`, `audit_log`).
-// ─────────────────────────────────────────────────────────────
 
 import admin from "firebase-admin";
 
-// ── Helpers ─────────────────────────────────────────────────
-
-/**
- * Fetches all student records from Realtime Database.
- * Optionally filters by academic year.
- */
 const fetchStudents = async (year) => {
     const snapshot = await admin.database().ref("users").once("value");
     if (!snapshot.exists()) return [];
@@ -28,9 +16,6 @@ const fetchStudents = async (year) => {
     return students;
 };
 
-/**
- * Fetches Firestore documents from a collection with optional filters.
- */
 const fetchCollection = async (collectionName, filters = {}) => {
     const firestore = admin.firestore();
     let query = firestore.collection(collectionName);
@@ -42,8 +27,6 @@ const fetchCollection = async (collectionName, filters = {}) => {
     const snapshot = await query.get();
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
-
-// ── 1. Headline KPI Stats ───────────────────────────────────
 
 export const getStats = async (req, res) => {
     try {
@@ -73,17 +56,13 @@ export const getStats = async (req, res) => {
             (s) => parseFloat(s.placed_package_lpa) === highestPackage
         );
 
-        // Drives (from Firestore)
         const drives = await fetchCollection("drives");
         const activeDrives = drives.filter((d) => d.status === "active").length;
 
-        // Offers (from Firestore)
         const offers = await fetchCollection("offers");
 
-        // Unique companies from drives
         const uniqueCompanyIds = new Set(drives.map((d) => d.company_id).filter(Boolean));
 
-        // Pending reviews = unverified resumes + pending questions
         const pendingResumes = students.filter(
             (s) => s.resume_status === "pending" || (!s.resume_status && s.resumeUrl)
         ).length;
@@ -113,8 +92,6 @@ export const getStats = async (req, res) => {
     }
 };
 
-// ── 2. Placement Funnel ─────────────────────────────────────
-
 export const getFunnel = async (req, res) => {
     try {
         const { year } = req.query;
@@ -131,7 +108,6 @@ export const getFunnel = async (req, res) => {
             (s) => s.status === "Interviewing" || s.status === "Placed"
         ).length;
 
-        // Offers from Firestore
         const offers = await fetchCollection("offers");
         const offered = offers.length;
         const accepted = offers.filter((o) => o.status === "accepted").length;
@@ -151,8 +127,6 @@ export const getFunnel = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch funnel data" });
     }
 };
-
-// ── 3. Branch Breakdown ─────────────────────────────────────
 
 export const getBranchBreakdown = async (req, res) => {
     try {
@@ -189,7 +163,6 @@ export const getBranchBreakdown = async (req, res) => {
             highestPackage: b.packages.length > 0 ? Math.max(...b.packages) : 0,
         }));
 
-        // Sort by placement rate descending
         breakdown.sort((a, b) => Number(b.rate) - Number(a.rate));
 
         res.status(200).json(breakdown);
@@ -199,13 +172,10 @@ export const getBranchBreakdown = async (req, res) => {
     }
 };
 
-// ── 4. Monthly Offer Trend ──────────────────────────────────
-
 export const getMonthlyTrend = async (req, res) => {
     try {
         const offers = await fetchCollection("offers");
 
-        // Month labels Aug(8) through May(5) of next year
         const monthLabels = ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May"];
         const monthNumbers = [8, 9, 10, 11, 12, 1, 2, 3, 4, 5];
 
@@ -226,8 +196,6 @@ export const getMonthlyTrend = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch monthly trend" });
     }
 };
-
-// ── 5. Package Distribution ─────────────────────────────────
 
 export const getPackageDistribution = async (req, res) => {
     try {
@@ -265,14 +233,11 @@ export const getPackageDistribution = async (req, res) => {
     }
 };
 
-// ── 6. Top Companies ────────────────────────────────────────
-
 export const getTopCompanies = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 5;
         const offers = await fetchCollection("offers");
 
-        // Group offers by company
         const companyMap = {};
         for (const offer of offers) {
             const companyId = offer.company_id || offer.companyId || "unknown";
@@ -312,8 +277,6 @@ export const getTopCompanies = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch top companies" });
     }
 };
-
-// ── 7. Activity Feed ────────────────────────────────────────
 
 export const getActivityFeed = async (req, res) => {
     try {

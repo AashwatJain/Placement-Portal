@@ -76,7 +76,6 @@ export default function AdminNotifications() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                {/* Compose Form */}
                 <form
                     onSubmit={handleSend}
                     className="lg:col-span-2 bg-white dark:bg-[#1A0F08] rounded-2xl border border-brand-beige-200 dark:border-[#5A3D2B] shadow-sm p-6 space-y-5 h-fit"
@@ -147,7 +146,6 @@ export default function AdminNotifications() {
                     </button>
                 </form>
 
-                {/* Sent History */}
                 <div className="lg:col-span-3 space-y-4">
                     <h2 className="font-bold text-brand-brown-900 dark:text-white flex items-center gap-2">
                         <Clock size={16} className="text-brand-brown-400" /> Sent History

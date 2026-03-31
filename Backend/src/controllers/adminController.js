@@ -1,10 +1,5 @@
 import admin from "firebase-admin";
 
-// ── Admin Controller ─────────────────────────────────────────
-// Handles: Student listing, Question management
-
-// 1. GET all students (from Realtime Database `users` node)
-// Both Admin StudentManagement and Recruiter Dashboard use this
 export const getAllStudents = async (req, res) => {
     try {
         const db = admin.database();
@@ -17,7 +12,6 @@ export const getAllStudents = async (req, res) => {
         const data = snapshot.val();
         const students = Object.entries(data)
             .map(([uid, userData]) => {
-                // Normalize the name field consistently
                 const fullName = userData.fullName || userData.name || userData.email?.split("@")[0] || "Unknown";
                 return {
                     id: uid,
@@ -37,7 +31,6 @@ export const getAllStudents = async (req, res) => {
     }
 };
 
-// 1.c GET students by filter (for shortlisting)
 export const getStudentsByFilter = async (req, res) => {
     try {
         const { branch, minCgpa } = req.query;
@@ -68,7 +61,6 @@ export const getStudentsByFilter = async (req, res) => {
     }
 };
 
-// 1.a UPDATE student placement status
 export const updateStudentStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -85,7 +77,6 @@ export const updateStudentStatus = async (req, res) => {
     }
 };
 
-// 1.b UPDATE student resume status
 export const updateStudentResume = async (req, res) => {
     try {
         const { id } = req.params;
@@ -102,7 +93,6 @@ export const updateStudentResume = async (req, res) => {
     }
 };
 
-// 2. GET all questions from Firestore `questions` collection
 export const getQuestions = async (req, res) => {
     try {
         const firestore = admin.firestore();
@@ -120,7 +110,6 @@ export const getQuestions = async (req, res) => {
     }
 };
 
-// 3. POST a new question (Admin adds a PYQ)
 export const addQuestion = async (req, res) => {
     try {
         const { companyId, companyName, text, link, author, difficulty, tags } = req.body;
@@ -150,7 +139,6 @@ export const addQuestion = async (req, res) => {
     }
 };
 
-// 4. PUT — Approve a question (set status = "approved")
 export const approveQuestion = async (req, res) => {
     try {
         const { id } = req.params;
@@ -167,7 +155,6 @@ export const approveQuestion = async (req, res) => {
     }
 };
 
-// 5. POST — Reject a question
 export const rejectQuestion = async (req, res) => {
     try {
         const { id } = req.params;
@@ -185,9 +172,6 @@ export const rejectQuestion = async (req, res) => {
     }
 };
 
-// ── Recruiter JAF (Job Announcement Form) Management ─────────
-
-// 6. GET JAFs via Company Name or globally
 export const getJafs = async (req, res) => {
     try {
         const { companyName } = req.query;
@@ -205,7 +189,6 @@ export const getJafs = async (req, res) => {
             ...doc.data()
         }));
 
-        // Sort in memory to avoid Firebase Composite Index requirement
         jafs.sort((a, b) => {
             const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
             const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
@@ -219,7 +202,6 @@ export const getJafs = async (req, res) => {
     }
 };
 
-// 7. POST a new JAF (Opportunity)
 export const createJaf = async (req, res) => {
     try {
         const jafData = req.body;
@@ -244,7 +226,6 @@ export const createJaf = async (req, res) => {
     }
 };
 
-// 8. PUT (Update) an existing JAF
 export const updateJaf = async (req, res) => {
     try {
         const { id } = req.params;
@@ -253,7 +234,6 @@ export const updateJaf = async (req, res) => {
         const firestore = admin.firestore();
         const docRef = firestore.collection("opportunities").doc(id);
         
-        // Strip createdAt to preserve original
         if (jafData.createdAt) delete jafData.createdAt;
 
         await docRef.update({
@@ -268,7 +248,6 @@ export const updateJaf = async (req, res) => {
     }
 };
 
-// 8b. DELETE a JAF/Company
 export const deleteJaf = async (req, res) => {
     try {
         const { id } = req.params;
@@ -281,19 +260,15 @@ export const deleteJaf = async (req, res) => {
     }
 };
 
-// ── Admin Dashboard & Analytics ─────────
-
-// 9. GET Placement Overview Stats
 export const getPlacementOverview = async (req, res) => {
     try {
         const db = admin.database();
         const firestore = admin.firestore();
 
-        // 1. Fetch Students
         const usersSnapshot = await db.ref("users").once("value");
         let totalStudents = 0;
         let placedStudents = 0;
-        let avgPackage = 0; // Simplified for now, would need actual CTC data normally
+        let avgPackage = 0;
 
         if (usersSnapshot.exists()) {
             const users = Object.values(usersSnapshot.val());
@@ -302,12 +277,8 @@ export const getPlacementOverview = async (req, res) => {
             placedStudents = students.filter(s => s.status === 'Placed').length;
         }
 
-        // 2. Fetch Active Drives
         const jafsSnapshot = await firestore.collection("opportunities").get();
         const totalDrives = jafsSnapshot.docs.length;
-
-        // Note: For a real production app, average package would sum a designated `ctc` field 
-        // across placed students or jafs, but here we just return a placeholder formatted stat.
 
         res.status(200).json({
             stats: {
@@ -323,9 +294,6 @@ export const getPlacementOverview = async (req, res) => {
     }
 };
 
-// ── Admin Notifications ─────────
-
-// 10. POST — Create an admin notification
 export const createNotification = async (req, res) => {
     try {
         const { title, message, targetType, targetValue } = req.body;
@@ -337,7 +305,7 @@ export const createNotification = async (req, res) => {
         const notification = {
             title,
             message,
-            targetType: targetType || "all", // "all", "branch", "status", "company"
+            targetType: targetType || "all",
             targetValue: targetValue || "",
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
         };
@@ -350,7 +318,6 @@ export const createNotification = async (req, res) => {
     }
 };
 
-// 11. GET — List admin notifications
 export const getNotifications = async (req, res) => {
     try {
         const firestore = admin.firestore();
@@ -372,8 +339,6 @@ export const getNotifications = async (req, res) => {
     }
 };
 
-// ── 12. Update a student's application timeline step ─────────
-// PUT /admin/students/:id/applications/:oppId/timeline
 export const updateStudentApplication = async (req, res) => {
     try {
         const { id, oppId } = req.params;
@@ -390,35 +355,27 @@ export const updateStudentApplication = async (req, res) => {
         const appData = appSnap.val();
         const timeline = appData.timeline || [];
 
-        // Update timeline step if stepIndex provided
-        // Cascade: marking a step done → all previous steps also done
-        //          unmarking a step → all later steps also unmarked
         if (stepIndex !== undefined && stepIndex >= 0 && stepIndex < timeline.length) {
             if (done) {
-                // Mark this step + all previous steps as done
                 const today = date || new Date().toISOString().slice(0, 10);
                 for (let i = 0; i <= stepIndex; i++) {
                     timeline[i].done = true;
                     if (!timeline[i].date) timeline[i].date = today;
                 }
             } else {
-                // Unmark this step + all later steps
                 for (let i = stepIndex; i < timeline.length; i++) {
                     timeline[i].done = false;
                 }
             }
         }
 
-        // Determine application status
         const status = newStatus || appData.status;
 
         await appRef.update({ timeline, status });
 
-        // Create a notification for the student
         const stepName = stepIndex !== undefined ? timeline[stepIndex]?.step : status;
         const company = appData.company || "a company";
 
-        // Professional, student-friendly notification messages
         const stepMessages = {
             "Applied":           `Your application for ${company} has been received and confirmed by the placement cell.`,
             "Shortlisted":       `Great news! You've been shortlisted for ${company}. Keep an eye out for next steps.`,

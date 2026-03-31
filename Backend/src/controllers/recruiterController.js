@@ -1,11 +1,6 @@
 import admin from "firebase-admin";
 import { sendEmail } from "../utils/sendEmail.js";
 
-// ── Recruiter Controller ─────────────────────────────────────────
-
-// ── Recruiter Data Persistence (Statuses & Notes) ────────────────
-
-// Helper: get/set a recruiter sub-document
 const getRecruiterDoc = async (uid, subcollection) => {
     const firestore = admin.firestore();
     const docRef = firestore.collection("recruiter_data").doc(uid);
@@ -19,7 +14,6 @@ const setRecruiterDoc = async (uid, subcollection, data) => {
     await docRef.set({ [subcollection]: data }, { merge: true });
 };
 
-// GET pipeline statuses for a recruiter
 export const getCandidateStatuses = async (req, res) => {
     try {
         const { uid } = req.params;
@@ -31,7 +25,6 @@ export const getCandidateStatuses = async (req, res) => {
     }
 };
 
-// PUT pipeline statuses for a recruiter
 export const saveCandidateStatuses = async (req, res) => {
     try {
         const { uid } = req.params;
@@ -44,7 +37,6 @@ export const saveCandidateStatuses = async (req, res) => {
     }
 };
 
-// GET private notes for a recruiter
 export const getCandidateNotes = async (req, res) => {
     try {
         const { uid } = req.params;
@@ -56,7 +48,6 @@ export const getCandidateNotes = async (req, res) => {
     }
 };
 
-// PUT private notes for a recruiter
 export const saveCandidateNotes = async (req, res) => {
     try {
         const { uid } = req.params;
@@ -69,8 +60,6 @@ export const saveCandidateNotes = async (req, res) => {
     }
 };
 
-// ── Notify Selected Candidates ────────────────────────────────
-
 const STATUS_MESSAGES = {
     screening: "You are currently in the Screening phase.",
     tech1: "You have advanced to Tech Round 1! We will contact you soon with schedule details.",
@@ -81,7 +70,6 @@ const STATUS_MESSAGES = {
     "": "Your application status has been updated by the Recruiter."
 };
 
-// Map recruiter pipeline status → student-facing application status
 const STATUS_TO_APP_STATUS = {
     screening: "Applied",
     tech1: "Shortlisted",
@@ -93,7 +81,7 @@ const STATUS_TO_APP_STATUS = {
 
 export const notifyCandidates = async (req, res) => {
     try {
-        const { candidates, customSubject, customBody } = req.body; // Array of { uid, email, name, status } + optional custom email fields
+        const { candidates, customSubject, customBody } = req.body;
 
         if (!Array.isArray(candidates) || candidates.length === 0) {
             return res.status(400).json({ error: "No candidates provided" });
@@ -108,17 +96,14 @@ export const notifyCandidates = async (req, res) => {
         for (const candidate of candidates) {
             const { uid, email, name, status } = candidate;
 
-            // Use custom content from compose modal if provided, otherwise fall back to auto-generated
             const useCustom = customSubject && customBody;
             const message = useCustom ? customBody : (STATUS_MESSAGES[status || ""] || STATUS_MESSAGES[""]);
             const subject = useCustom ? customSubject : `Application Status Update: ${status ? status.toUpperCase() : 'Updated'}`;
 
-            // Personalise the body by replacing "Dear Candidate" with the student's name
             const personalizedBody = useCustom
                 ? message.replace(/Dear Candidate/gi, `Dear ${name || 'Candidate'}`)
                 : `Hello ${name || 'Candidate'}, ${message}`;
 
-            // 1. Create In-App Notification targeting this specific UID
             if (uid) {
                 await firestore.collection("notifications").add({
                     text: personalizedBody.substring(0, 300),
@@ -130,9 +115,7 @@ export const notifyCandidates = async (req, res) => {
                 notificationsCreated++;
             }
 
-            // 2. Send Email
             if (email) {
-                // Convert plain text body to HTML paragraphs
                 const htmlBody = personalizedBody.split('\n').map(line => line.trim() === '' ? '<br/>' : `<p style="font-size: 15px; color: #555; line-height: 1.6; margin: 4px 0;">${line}</p>`).join('');
 
                 await sendEmail({
@@ -156,7 +139,6 @@ export const notifyCandidates = async (req, res) => {
                 emailsTriggered++;
             }
 
-            // 3. Sync the pipeline status to the student's actual application records in RTDB
             const appStatus = STATUS_TO_APP_STATUS[status || ""];
             if (uid && appStatus) {
                 try {

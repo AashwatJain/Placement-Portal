@@ -15,13 +15,12 @@ const uploadOnCloudinary = async (localFilePath) => {
     };
 
     const response = await cloudinary.uploader.upload(localFilePath, uploadOptions);
-    // console.log("File is uploaded", response.url);
-    fs.unlinkSync(localFilePath); // hata de local file ko
+    fs.unlinkSync(localFilePath);
     return response;
   } catch (error) {
     console.error("Cloudinary upload failed:", error);
     if (fs.existsSync(localFilePath)) {
-      fs.unlinkSync(localFilePath); // hata de local file ko if it exists
+      fs.unlinkSync(localFilePath);
     }
     return null;
   }

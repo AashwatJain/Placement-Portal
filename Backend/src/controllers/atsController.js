@@ -1,40 +1,17 @@
-/**
- * atsController.js
- *
- * Proxies ATS resume scoring requests from the React frontend
- * to the Python ML server (Flask, port 5006).
- *
- * Handler
- * ──────────────────────────────────────────────────────────────
- * calculateAtsScore – POST /api/ats/calculate
- *   Accepts a PDF file (resumeFile) and text (jobDescription)
- *   via multipart form-data, forwards to Python /ats-score,
- *   and returns { atsScore: number } back to the client.
- */
 
 import axios from "axios";
 import FormData from "form-data";
 
 const mlServiceUrl = "http://127.0.0.1:5006";
 
-/**
- * POST /api/ats/calculate
- *
- * req.file         – PDF uploaded via multer (memory storage)
- * req.body.jobDescription – plain text job description
- *
- * Returns: { atsScore: 78.5 }
- */
 const calculateAtsScore = async (req, res) => {
   try {
-    // ── Validate inputs ──────────────────────────────────────────────────────
     if (!req.file) {
       return res.status(400).json({
         error: "resumeFile is required (PDF upload).",
       });
     }
 
-    // ── Forward to Python ML server as multipart/form-data ───────────────────
     const form = new FormData();
     form.append("resumeFile", req.file.buffer, {
       filename: req.file.originalname,
@@ -60,7 +37,6 @@ const calculateAtsScore = async (req, res) => {
       });
     }
 
-    // Forward error from ML server if available
     if (error.response?.data?.error) {
       return res.status(error.response.status || 500).json({
         error: error.response.data.error,

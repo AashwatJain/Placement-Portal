@@ -6,7 +6,6 @@ import {
 import { useCodingData } from "../../hooks/useCodingData";
 import { ActivityCalendar } from "react-activity-calendar";
 
-// Platform config with distinct gradient colors
 const platformConfig = {
   leetcode: {
     icon: <Code size={22} />,
@@ -81,7 +80,6 @@ export default function CodingProfiles() {
   return (
     <div className="mx-auto max-w-6xl space-y-8 pb-10">
 
-      {/* HEADER */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-2xl font-extrabold text-brand-brown-900 dark:text-white tracking-tight">
@@ -99,7 +97,6 @@ export default function CodingProfiles() {
         </button>
       </div>
 
-      {/* STAT CARDS */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <GlassStatCard
           title="Total Solved"
@@ -121,7 +118,6 @@ export default function CodingProfiles() {
         />
       </div>
 
-      {/* HEATMAP */}
       <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-6 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80 overflow-x-auto">
         <div className="flex items-center gap-2 mb-5">
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -148,10 +144,8 @@ export default function CodingProfiles() {
         </div>
       </div>
 
-      {/* PLATFORMS + SIDEBAR */}
       <div className="grid gap-6 lg:grid-cols-3">
 
-        {/* CONNECTED PLATFORMS */}
         <div className="lg:col-span-2">
           <h3 className="mb-4 font-bold text-brand-brown-900 dark:text-white flex items-center gap-2">
             <Star size={16} className="text-brand-amber-500/100" /> Connected Platforms
@@ -169,7 +163,6 @@ export default function CodingProfiles() {
                     rel="noopener noreferrer"
                     className={`group relative rounded-2xl border border-brand-beige-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-[#3E2315] dark:bg-[#1A0F08]/80 ring-1 ${config.ring} block cursor-pointer`}
                   >
-                    {/* Top gradient line */}
                     <div className={`absolute top-0 left-4 right-4 h-0.5 rounded-full bg-gradient-to-r ${config.gradient} opacity-60`} />
 
                     <div className="flex items-center gap-3 mb-4">
@@ -224,16 +217,12 @@ export default function CodingProfiles() {
           )}
         </div>
 
-        {/* SIDEBAR: Total + Ratings */}
         <div className="space-y-6">
 
-          {/* DONUT CARD */}
           <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-6 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
             <h3 className="mb-5 font-bold text-brand-brown-900 dark:text-white text-center">Total Solved</h3>
             <div className="relative mx-auto mb-2 h-36 w-36">
-              {/* Subtle outer ring */}
               <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-brand-amber-500/100/10 to-violet-500/10 blur-sm" />
-              {/* Background circle */}
               <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120">
                 <circle cx="60" cy="60" r="50" fill="none" strokeWidth="12" className="stroke-brand-beige-100 dark:stroke-brand-brown-800" />
                 <circle cx="60" cy="60" r="50" fill="none" strokeWidth="12"
@@ -252,7 +241,6 @@ export default function CodingProfiles() {
             </div>
           </div>
 
-          {/* LIVE RATINGS */}
           <div className="rounded-2xl border border-brand-beige-200/80 bg-white p-6 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
             <h3 className="mb-5 font-bold text-brand-brown-900 dark:text-white">Ratings</h3>
             <div className="space-y-3">
@@ -285,12 +273,9 @@ export default function CodingProfiles() {
   );
 }
 
-/* ─── SUB-COMPONENTS ─── */
-
 function GlassStatCard({ title, value, icon, gradient }) {
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-brand-beige-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-[#3E2315] dark:bg-[#1A0F08]/80">
-      {/* Gradient accent */}
       <div className={`absolute top-0 right-0 h-16 w-16 rounded-full bg-gradient-to-br ${gradient} opacity-[0.05] -translate-y-10 translate-x-10 group-hover:opacity-[0.08] transition-opacity`} />
 
       <div className="relative">

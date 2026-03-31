@@ -22,7 +22,6 @@ export default function AdminProfile() {
     fullName: "", email: "", phone: "", location: "", about: "", avatar: null
   });
 
-  // Re-fetch user data from DB when component mounts
   useEffect(() => {
     if (refreshUser) refreshUser();
   }, []);
@@ -82,13 +81,11 @@ export default function AdminProfile() {
 
     setLoading(true);
     try {
-      // Step 1: Push text data via standard JSON PUT request
       const textPayload = { ...formData, uid: user.uid };
-      await axios.put(`${API_BASE_URL}/api/student/update-profile`, textPayload, { // Reusing generic update endpoint
+      await axios.put(`${API_BASE_URL}/api/student/update-profile`, textPayload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Step 2: Push binary data via multipart/form-data POST request
       if (avatarFile) {
         setAvatarUploading(true);
         const filePayload = new FormData();
@@ -102,14 +99,12 @@ export default function AdminProfile() {
           }
         });
 
-        // Use the Cloudinary URL from the response immediately
         if (uploadRes.data?.avatarUrl) {
           setFormData(prev => ({ ...prev, avatar: uploadRes.data.avatarUrl }));
         }
         setAvatarUploading(false);
       }
 
-      // Step 3: Refresh user data
       if (refreshUser) await refreshUser();
       setAvatarFile(null);
 
@@ -124,7 +119,6 @@ export default function AdminProfile() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-10 text-brand-brown-900 dark:text-brand-beige-100">
 
-      {/* HEADER SECTION */}
       <div className="relative overflow-hidden rounded-2xl border border-brand-beige-200 bg-white shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]">
         <div className="h-32 w-full bg-gradient-to-r from-brand-amber-500 to-brand-amber-500 opacity-90"></div>
         <div className="px-6 pb-6 flex items-center sm:flex-row sm:items-end sm:gap-6 relative">

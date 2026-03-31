@@ -1,9 +1,3 @@
-// src/hooks/useCompanies.js
-// ─────────────────────────────────────────────────────────────
-// Custom hook — fetches companies from Firestore in real-time.
-// Drop-in replacement for MOCK_COMPANIES.
-// Returns: { companies, loading, error }
-// ─────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
 import { fetchCompanies } from "../services/studentApi";

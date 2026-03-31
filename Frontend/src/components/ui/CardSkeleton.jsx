@@ -1,7 +1,3 @@
-/**
- * Reusable card skeleton for loading states.
- * Extracted from Opportunities.jsx and Company.jsx.
- */
 export default function CardSkeleton() {
   return (
     <div className="rounded-xl border border-brand-beige-200 bg-white p-5 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08] animate-pulse">

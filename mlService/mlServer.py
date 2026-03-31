@@ -37,12 +37,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 import PyPDF2
 import io
 
-# ── App setup ──────────────────────────────────────────────────────────────────
-
 app = Flask(__name__)
-CORS(app)          # Allow all origins so Node.js backend can call freely
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
+CORS(app)
 
 def buildFeatureMatrix(pastPlacements):
     """
@@ -66,7 +62,6 @@ def buildFeatureMatrix(pastPlacements):
 
     return np.array(featureRows), companies
 
-
 def fitNearestNeighbors(featureMatrix, numNeighbors):
     """
     Fits a NearestNeighbors model on the feature matrix.
@@ -76,7 +71,6 @@ def fitNearestNeighbors(featureMatrix, numNeighbors):
     model = NearestNeighbors(n_neighbors=k, metric="euclidean")
     model.fit(featureMatrix)
     return model, k
-
 
 def calcConfidenceScore(distance):
     """
@@ -92,9 +86,6 @@ def calcConfidenceScore(distance):
     """
     return round(100.0 / (1.0 + distance * 0.05), 1)
 
-
-# ── Endpoint 1: /recommend ────────────────────────────────────────────────────
-
 @app.route("/recommend", methods=["POST"])
 def recommend():
     """
@@ -106,14 +97,12 @@ def recommend():
     studentProfile = body.get("studentProfile")
     pastPlacements = body.get("pastPlacements")
 
-    # ── Input validation ──────────────────────────────────────────────────────
     if not studentProfile or len(studentProfile) != 3:
         return jsonify({"error": "studentProfile must be an array of 3 numbers [dsaScore, devScore, cpScore]"}), 400
 
     if not pastPlacements or len(pastPlacements) == 0:
         return jsonify({"error": "pastPlacements must be a non-empty array"}), 400
 
-    # ── Build model ───────────────────────────────────────────────────────────
     featureMatrix, companies = buildFeatureMatrix(pastPlacements)
     model, k = fitNearestNeighbors(featureMatrix, numNeighbors=12)
 
@@ -123,8 +112,7 @@ def recommend():
     distances = distances[0]
     indices   = indices[0]
 
-    # ── Aggregate: best confidence per unique company ─────────────────────────
-    companyBestScore = {}   # placedCompany → best confidenceScore so far
+    companyBestScore = {}
 
     for dist, idx in zip(distances, indices):
         company    = companies[idx]
@@ -133,7 +121,6 @@ def recommend():
         if company not in companyBestScore or confidence > companyBestScore[company]:
             companyBestScore[company] = confidence
 
-    # Sort by confidence descending
     recommendations = [
         {"placedCompany": company, "confidenceScore": score}
         for company, score in sorted(
@@ -142,9 +129,6 @@ def recommend():
     ]
 
     return jsonify({"recommendations": recommendations}), 200
-
-
-# ── Endpoint 2: /predict-chance ───────────────────────────────────────────────
 
 @app.route("/predict-chance", methods=["POST"])
 def predictChance():
@@ -168,7 +152,6 @@ def predictChance():
     pastPlacements = body.get("pastPlacements")
     targetCompany  = body.get("targetCompany", "").strip()
 
-    # ── Input validation ──────────────────────────────────────────────────────
     if not studentProfile or len(studentProfile) != 3:
         return jsonify({"error": "studentProfile must be an array of 3 numbers [dsaScore, devScore, cpScore]"}), 400
 
@@ -178,7 +161,6 @@ def predictChance():
     if not targetCompany:
         return jsonify({"error": "targetCompany must be a non-empty string"}), 400
 
-    # ── Filter entries for target company (case-insensitive) ──────────────────
     targetLower = targetCompany.lower()
     queryVector = np.array(studentProfile, dtype=float)
 
@@ -195,10 +177,8 @@ def predictChance():
             companyDistances.append(dist)
 
     if len(companyDistances) == 0:
-        # No entries for this company in the dataset
         return jsonify({"selectionChance": 0}), 200
 
-    # ── Take the 5 closest and average their confidence ──────────────────────
     companyDistances.sort()
     topN = companyDistances[:5]
     avgConfidence = sum(calcConfidenceScore(d) for d in topN) / len(topN)
@@ -207,10 +187,6 @@ def predictChance():
 
     return jsonify({"selectionChance": selectionChance}), 200
 
-# ── Endpoint 3: /ats-score ────────────────────────────────────────────────────
-
-# Weighted keyword categories — each category has a weight and a list of keywords.
-# Score = weighted average of per-category hit rates.
 ATS_CATEGORIES = [
     {
         "name": "DSA & Problem Solving",
@@ -303,7 +279,6 @@ ATS_CATEGORIES = [
     },
 ]
 
-
 def extractTextFromPdf(pdfFile):
     """
     Extracts and returns all text from a PDF file object using PyPDF2.
@@ -320,7 +295,6 @@ def extractTextFromPdf(pdfFile):
     except Exception:
         return ""
 
-
 def calcAtsKeywordScore(resumeText):
     """
     Scores a resume against weighted keyword categories.
@@ -334,14 +308,12 @@ def calcAtsKeywordScore(resumeText):
 
     for cat in ATS_CATEGORIES:
         matched = sum(1 for kw in cat["keywords"] if kw in textLower)
-        # Threshold: hitting 30% of keywords = full marks for that category
         threshold = max(2, len(cat["keywords"]) * 0.30)
         hitRate = min(1.0, matched / threshold)
         weightedSum += hitRate * cat["weight"]
 
     rawScore = (weightedSum / totalWeight) * 100
     return round(rawScore, 1)
-
 
 @app.route("/ats-score", methods=["POST"])
 def atsScore():
@@ -355,7 +327,6 @@ def atsScore():
     Returns:
         { atsScore: 78.5 }  (0–100 percentage)
     """
-    # ── Input validation ──────────────────────────────────────────────────────
     if "resumeFile" not in request.files:
         return jsonify({"error": "resumeFile is required (PDF upload)"}), 400
 
@@ -364,7 +335,6 @@ def atsScore():
     if not resumeFile.filename.lower().endswith(".pdf"):
         return jsonify({"error": "resumeFile must be a PDF"}), 400
 
-    # ── Extract text from PDF ─────────────────────────────────────────────────
     try:
         resumeText = extractTextFromPdf(resumeFile)
     except Exception as e:
@@ -373,16 +343,12 @@ def atsScore():
     if not resumeText:
         return jsonify({"error": "Could not extract any text from the PDF. Ensure it is not image-based."}), 400
 
-    # ── Keyword-category scoring ──────────────────────────────────────────────
     try:
         score = calcAtsKeywordScore(resumeText)
     except Exception as e:
         return jsonify({"error": f"Scoring failed: {str(e)}"}), 500
 
     return jsonify({"atsScore": score}), 200
-
-
-# ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import os

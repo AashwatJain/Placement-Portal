@@ -14,14 +14,12 @@ import {
   CalendarDays, MapPin, Building2, ArrowUpRight,
 } from "lucide-react";
 
-// ── Difficulty badge color
 const DIFF_COLORS = {
   Easy: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
   Medium: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
   Hard: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
-// ── Mini Donut
 function MiniDonut({ solved, total, size = 56, strokeWidth = 5 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -47,13 +45,11 @@ export default function StudentHome() {
   const { user, token } = useAuth();
   const [applications, setApplications] = useState([]);
 
-  // Practice
   const [questions, setQuestions] = useState([]);
   const [solvedSet, setSolvedSet] = useState(new Set());
   const [practiceLoading, setPracticeLoading] = useState(true);
   const [toggling, setToggling] = useState(null);
 
-  // Upcoming drives
   const [upcomingDrives, setUpcomingDrives] = useState([]);
   const [drivesLoading, setDrivesLoading] = useState(true);
 
@@ -73,11 +69,10 @@ export default function StudentHome() {
         ]);
         setQuestions(qData);
         setSolvedSet(new Set(sData));
-      } catch { /* ignore */ } finally { setPracticeLoading(false); }
+      } catch {  } finally { setPracticeLoading(false); }
     })();
   }, [user?.uid]);
 
-  // Fetch upcoming drives
   useEffect(() => {
     (async () => {
       try {
@@ -95,7 +90,6 @@ export default function StudentHome() {
 
         const drives = opps
           .map(opp => {
-            // Collect all upcoming events from top-level fields + rounds
             const upcoming = [];
             for (const { key, label } of dateFields) {
               if (opp[key] && opp[key] >= today) {
@@ -122,7 +116,7 @@ export default function StudentHome() {
           .sort((a, b) => a.nextRound.date.localeCompare(b.nextRound.date))
           .slice(0, 4);
         setUpcomingDrives(drives);
-      } catch { /* ignore */ } finally { setDrivesLoading(false); }
+      } catch {  } finally { setDrivesLoading(false); }
     })();
   }, []);
 
@@ -172,7 +166,6 @@ export default function StudentHome() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">
@@ -192,7 +185,6 @@ export default function StudentHome() {
         </div>
       </div>
 
-      {/* Stats Row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
           { label: "Total Applied", value: totalApplied, icon: Briefcase, iconBg: "bg-brand-beige-100 dark:bg-[#3E2315]", iconColor: "text-brand-brown-800 dark:text-brand-beige-200" },
@@ -200,7 +192,6 @@ export default function StudentHome() {
           { label: "In Progress", value: pending, icon: Clock, iconBg: "bg-brand-amber-500/10 dark:bg-[#C07840]/20", iconColor: "text-brand-amber-500" },
         ].map(({ label, value, icon: Icon, iconBg, iconColor }) => (
           <div key={label} className="group relative overflow-hidden rounded-xl border border-brand-beige-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-[#5A3D2B] dark:bg-[#1A0F08]">
-            {/* Dashed inner border effect from mockup */}
             <div className="absolute inset-1 rounded-lg border border-dashed border-brand-beige-300/50 dark:border-[#5A3D2B]/50 pointer-events-none"></div>
             <div className="flex items-center justify-between relative z-10">
               <div>
@@ -215,11 +206,8 @@ export default function StudentHome() {
         ))}
       </div>
 
-      {/* Main Grid — 3 + 2 */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
-        {/* ── Left Column ── */}
         <div className="lg:col-span-3 space-y-5">
-          {/* Application Status */}
           <section className="rounded-xl border border-brand-beige-200 bg-white shadow-sm overflow-hidden dark:border-[#5A3D2B] dark:bg-[#1A0F08]">
             <div className="border-b border-brand-beige-100 px-5 py-4 flex items-center justify-between dark:border-[#3E2315]">
               <h2 className="font-semibold text-brand-brown-900 flex items-center gap-2 dark:text-brand-beige-100">
@@ -268,7 +256,6 @@ export default function StudentHome() {
             </div>
           </section>
 
-          {/* Upcoming Drives */}
           <section className="rounded-xl border border-brand-beige-200 bg-white shadow-sm dark:border-[#5A3D2B] dark:bg-[#1A0F08]">
             <div className="border-b border-brand-beige-100 px-5 py-4 flex items-center justify-between dark:border-[#3E2315]">
               <h2 className="font-semibold text-brand-brown-900 flex items-center gap-2 dark:text-brand-beige-100">
@@ -324,9 +311,7 @@ export default function StudentHome() {
           </section>
         </div>
 
-        {/* ── Right Sidebar ── */}
         <div className="lg:col-span-2 space-y-5">
-          {/* Practice */}
           <div className="rounded-xl border border-brand-beige-200 bg-white p-5 shadow-sm dark:border-[#5A3D2B] dark:bg-[#1A0F08]">
             <div className="flex items-center justify-between mb-3">
               <h3 className="flex items-center gap-2 text-sm font-bold text-brand-brown-900 dark:text-brand-beige-100">
@@ -379,7 +364,6 @@ export default function StudentHome() {
             </Link>
           </div>
 
-          {/* Quick Links */}
           <div className="rounded-xl border border-brand-amber-500/20 bg-brand-amber-500/5 p-4 shadow-sm dark:border-[#C07840]/20 dark:bg-[#C07840]/10">
             <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-brand-amber-500">Quick Links</h3>
             <div className="grid grid-cols-2 gap-2">

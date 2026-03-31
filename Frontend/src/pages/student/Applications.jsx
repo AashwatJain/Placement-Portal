@@ -9,7 +9,6 @@ import {
   Briefcase, ExternalLink, MapPin, IndianRupee,
 } from "lucide-react";
 
-// ── Timeline helpers ────────────────────────────────────────
 const STEP_ICONS = {
   Applied: CheckCircle,
   Shortlisted: CheckCircle,
@@ -20,7 +19,6 @@ const STEP_ICONS = {
   "Final Decision": AlertCircle,
 };
 
-// ══════════════════════════════════════════════════════════════
 export default function Applications() {
   const { user } = useAuth();
   const [applications, setApplications] = useState([]);
@@ -50,7 +48,6 @@ export default function Applications() {
       (app.role || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // For a nice progress indicator
   const getProgress = (timeline) => {
     if (!timeline) return 0;
     const doneCount = timeline.filter((s) => s.done).length;
@@ -59,7 +56,6 @@ export default function Applications() {
 
   return (
     <div className="space-y-6 relative">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">My Applications</h1>
@@ -73,7 +69,6 @@ export default function Applications() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="overflow-hidden rounded-xl border border-brand-beige-200 bg-white shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -138,13 +133,11 @@ export default function Applications() {
         )}
       </div>
 
-      {/* ══ DETAIL MODAL — READ-ONLY TIMELINE ══ */}
       {selectedApp && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setSelectedApp(null)}>
           <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl dark:bg-[#1A0F08] border border-brand-beige-200 dark:border-[#3E2315] overflow-hidden"
             onClick={(e) => e.stopPropagation()}>
 
-            {/* Header */}
             <div className="flex items-center justify-between border-b border-brand-beige-100 bg-brand-cream-50/50 px-6 py-4 dark:border-[#3E2315] dark:bg-[#2A1810]/50">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-amber-500/100 to-violet-600 text-xl font-bold text-white shadow">
@@ -158,10 +151,8 @@ export default function Applications() {
               <button onClick={() => setSelectedApp(null)} className="rounded-full p-2 text-brand-brown-400 hover:bg-brand-beige-200 dark:hover:bg-brand-brown-700"><X size={20} /></button>
             </div>
 
-            {/* Body */}
             <div className="p-6 max-h-[65vh] overflow-y-auto">
 
-              {/* Info cards row */}
               <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="rounded-lg border border-brand-beige-100 bg-brand-cream-50 p-3 dark:border-[#3E2315] dark:bg-[#2A1810]/30">
                   <p className="text-[10px] font-bold text-brand-brown-400 uppercase mb-0.5">Status</p>
@@ -185,7 +176,6 @@ export default function Applications() {
                 )}
               </div>
 
-              {/* Progress bar */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold text-brand-cream-500 uppercase">Overall Progress</span>
@@ -197,7 +187,6 @@ export default function Applications() {
                 </div>
               </div>
 
-              {/* TIMELINE — read-only, dates from backend */}
               <h3 className="text-sm font-bold uppercase tracking-wider text-brand-cream-500 mb-4">Selection Timeline</h3>
               <div className="relative ml-3 space-y-1">
                 {(selectedApp.timeline || [])

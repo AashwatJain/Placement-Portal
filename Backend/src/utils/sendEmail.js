@@ -3,24 +3,14 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Create transporter only if credentials exist, otherwise dummy.
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // or specific host/port if needed
+    service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER || '',
         pass: process.env.EMAIL_PASS || ''
     }
 });
 
-/**
- * Sends an email using nodemailer. If no credentials exist, simply logs the email payload.
- *
- * @param {Object} options
- * @param {string} options.to - Recipient email
- * @param {string} options.subject - Email subject
- * @param {string} options.text - Raw text fallback
- * @param {string} options.html - HTML body
- */
 export const sendEmail = async ({ to, subject, text, html }) => {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
         console.log("\n[DUMMY EMAIL SERVICE] Missing EMAIL_USER / EMAIL_PASS in .env.");

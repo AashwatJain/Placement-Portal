@@ -21,7 +21,6 @@ const getCodingStats = async (req, res) => {
 
         const userData = userSnapshot.val();
 
-        // Always fetch all 4 platforms — pass handle (or null if not set)
         const promises = [
             getLeetCodeStats(userData.leetcode || null),
             getCodeforcesStats(userData.codeforces || null),
@@ -29,7 +28,6 @@ const getCodingStats = async (req, res) => {
             getGithubStats(userData.github || null)
         ];
 
-        // Fallback cards for platforms where handle is missing or API fails
         const fallbackCards = [
             { id: "leetcode", name: "LeetCode", handle: userData.leetcode || "Not Set", rating: "N/A", solved: "N/A", easy: 0, medium: 0, hard: 0, color: "text-amber-500", bg: "bg-amber-100" },
             { id: "codeforces", name: "Codeforces", handle: userData.codeforces || "Not Set", rating: "N/A", solved: "N/A", color: "text-blue-500", bg: "bg-blue-100" },
@@ -50,13 +48,10 @@ const getCodingStats = async (req, res) => {
 
         const dailyCounts = {};
 
-        // Aggregate Data
         results.forEach((result, index) => {
-            // Use API result if successful, otherwise use fallback card
             const pd = (result.status === "fulfilled" && result.value) ? result.value : fallbackCards[index];
             platformsInfo.push(pd);
 
-            // Add to total solved (exclude Github as it's not a CP platform)
             if (pd.id !== "github" && typeof pd.solved === "number") {
                 dashboardStats.totalSolved += pd.solved || 0;
             }
@@ -98,7 +93,6 @@ const getCodingStats = async (req, res) => {
             }
         });
 
-        // Generate 365-day Heatmap Array
         const heatmapData = [];
         const today = new Date();
         const oneYearAgo = new Date();

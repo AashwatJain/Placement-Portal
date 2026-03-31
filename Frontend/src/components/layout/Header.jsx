@@ -26,14 +26,12 @@ export default function Header({ toggleSidebar }) {
   const displayName = user?.fullName || user?.name || defaultName;
   const displayInitial = displayName.charAt(0).toUpperCase();
 
-  // States for Dropdowns
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifFilter, setNotifFilter] = useState("All");
   const notifRef = useRef(null);
   const profileRef = useRef(null);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
@@ -47,16 +45,13 @@ export default function Header({ toggleSidebar }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- Notification Data ---
   const [notifications, setNotifications] = useState([]);
   const [notifLoading, setNotifLoading] = useState(false);
 
-  // Fetch notifications from API when bell is opened
   const loadNotifications = async () => {
     setNotifLoading(true);
     try {
       const data = await fetchNotifications(user?.uid);
-      // Map backend fields to the UI format
       setNotifications(data.map(n => ({
         id: n.id,
         title: n.text || "Notification",
@@ -78,7 +73,6 @@ export default function Header({ toggleSidebar }) {
     }
   };
 
-  // Simple relative time helper
   const getRelativeTime = (timestamp) => {
     const diff = Date.now() - timestamp;
     const mins = Math.floor(diff / 60000);
@@ -140,7 +134,6 @@ export default function Header({ toggleSidebar }) {
     }
   };
 
-  // Filter notifications by tab
   const NOTIF_TABS = [
     { key: "All", label: "All" },
     { key: "deadline", label: "Deadlines" },
@@ -155,19 +148,14 @@ export default function Header({ toggleSidebar }) {
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-brand-beige-200 bg-brand-cream-50/90 px-4 backdrop-blur dark:border-[#3E2315] dark:bg-[#1A0F08]/90 sm:px-6">
 
-      {/* Mobile Menu */}
       <div className="flex items-center gap-4">
         <button onClick={toggleSidebar} className="text-brand-brown-600 hover:text-brand-brown-900 dark:text-brand-beige-400 md:hidden">
           <Menu size={24} />
         </button>
       </div>
 
-      {/* Right Icons: Search & Controls */}
       <div className="flex items-center gap-3">
 
-
-
-        {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
           className="rounded-full p-2 text-brand-brown-600 hover:bg-brand-beige-100 dark:text-brand-beige-400 dark:hover:bg-[#2A1810] transition-colors"
@@ -175,7 +163,6 @@ export default function Header({ toggleSidebar }) {
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        {/* --- NOTIFICATION BELL --- */}
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => { const willOpen = !isNotifOpen; setIsNotifOpen(willOpen); setIsProfileOpen(false); if (willOpen) loadNotifications(); }}
@@ -192,7 +179,6 @@ export default function Header({ toggleSidebar }) {
 
           {isNotifOpen && (
             <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 animate-in fade-in zoom-in-95 duration-100 origin-top-right rounded-xl border border-brand-beige-200 bg-white shadow-xl dark:border-[#3E2315] dark:bg-[#1A0F08]">
-              {/* Notif Header */}
               <div className="flex items-center justify-between border-b border-brand-beige-100 px-4 py-3 dark:border-[#3E2315]">
                 <h3 className="font-semibold text-brand-brown-900 dark:text-white flex items-center gap-2">
                   Recent Alerts
@@ -224,7 +210,6 @@ export default function Header({ toggleSidebar }) {
                 </div>
               </div>
 
-              {/* Category Tabs */}
               <div className="flex border-b border-brand-beige-100 dark:border-[#3E2315] px-2 py-1.5 gap-1">
                 {NOTIF_TABS.map(tab => (
                   <button
@@ -241,7 +226,6 @@ export default function Header({ toggleSidebar }) {
                 ))}
               </div>
 
-              {/* Notif List */}
               <div className="max-h-[350px] overflow-y-auto py-1">
                 {notifLoading ? (
                   <div className="flex flex-col items-center justify-center py-8 text-brand-cream-500">
@@ -290,7 +274,6 @@ export default function Header({ toggleSidebar }) {
           )}
         </div>
 
-        {/* --- USER PROFILE DROPDOWN --- */}
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => { setIsProfileOpen(!isProfileOpen); setIsNotifOpen(false); }}
@@ -309,13 +292,11 @@ export default function Header({ toggleSidebar }) {
           {isProfileOpen && (
             <div className="absolute right-0 top-12 z-50 w-56 animate-in fade-in zoom-in-95 duration-100 origin-top-right rounded-xl border border-brand-beige-200 bg-white shadow-xl dark:border-[#3E2315] dark:bg-[#1A0F08] p-1.5">
 
-              {/* User Info */}
               <div className="px-3 py-2 border-b border-brand-beige-100 dark:border-[#3E2315] mb-1">
                 <p className="text-sm font-bold text-brand-brown-900 dark:text-white truncate">{displayName}</p>
                 <p className="text-xs text-brand-brown-600 dark:text-brand-beige-400 truncate">{user?.email}</p>
               </div>
 
-              {/* Menu Items */}
               <div className="space-y-0.5">
                 <Link
                   to={user?.role === "admin" ? "/admin/profile" : user?.role === "recruiter" ? "/recruiter/profile" : "/student/profile"}
@@ -325,10 +306,8 @@ export default function Header({ toggleSidebar }) {
                   <User size={16} /> My Profile
                 </Link>
 
-
               </div>
 
-              {/* Logout */}
               <div className="mt-1 border-t border-brand-beige-100 dark:border-[#3E2315] pt-1">
                 <button
                   onClick={logout}

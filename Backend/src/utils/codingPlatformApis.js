@@ -1,7 +1,5 @@
 import axios from "axios";
 
-// ── RANK TITLE HELPERS ──
-
 const getLeetCodeTitle = (rating) => {
     if (typeof rating !== "number") return "";
     if (rating >= 2400) return "Guardian";
@@ -31,8 +29,6 @@ const getCodeChefTitle = (rating) => {
     return "1★";
 };
 
-
-// 1. LEETCODE (Official GraphQL API)
 export const getLeetCodeStats = async (handle) => {
     if (!handle) return null;
     try {
@@ -74,7 +70,6 @@ export const getLeetCodeStats = async (handle) => {
         const user = response.data?.data?.matchedUser;
         if (!user) return null;
 
-        // Parse problem counts by difficulty
         const acStats = user.submitStatsGlobal?.acSubmissionNum || [];
         let easy = 0, medium = 0, hard = 0, totalSolved = 0;
         acStats.forEach(s => {
@@ -84,26 +79,21 @@ export const getLeetCodeStats = async (handle) => {
             else if (s.difficulty === "All") totalSolved = s.count;
         });
 
-        // Parse submission calendar (JSON string of unix_timestamp: count)
         let calendar = {};
-        let calendarFormatted = {}; // YYYY-MM-DD format for heatmap
+        let calendarFormatted = {};
         if (user.userCalendar?.submissionCalendar) {
             calendar = typeof user.userCalendar.submissionCalendar === 'string'
                 ? JSON.parse(user.userCalendar.submissionCalendar)
                 : user.userCalendar.submissionCalendar;
-            // Convert unix timestamps to YYYY-MM-DD
             Object.entries(calendar).forEach(([ts, count]) => {
                 const date = new Date(parseInt(ts) * 1000).toISOString().split('T')[0];
                 calendarFormatted[date] = (calendarFormatted[date] || 0) + count;
             });
         }
 
-        // Use contest rating if available, otherwise show "Unrated"
         const contestRating = response.data?.data?.userContestRanking?.rating;
         const numericRating = contestRating ? Math.round(contestRating) : null;
         const displayRating = numericRating || "Unrated";
-
-
 
         return {
             id: "leetcode",
@@ -130,7 +120,6 @@ export const getLeetCodeStats = async (handle) => {
     }
 };
 
-// ── LEETCODE: Fetch accepted problem slugs for auto-sync ────
 export const getLeetCodeSolvedSlugs = async (handle) => {
     if (!handle) return [];
     try {
@@ -155,7 +144,6 @@ export const getLeetCodeSolvedSlugs = async (handle) => {
         });
 
         const submissions = response.data?.data?.recentAcSubmissionList || [];
-        // Return unique slugs
         return [...new Set(submissions.map(s => s.titleSlug))];
     } catch (error) {
         console.error(`LeetCode Slugs Error for ${handle}:`, error.message);
@@ -163,7 +151,6 @@ export const getLeetCodeSolvedSlugs = async (handle) => {
     }
 };
 
-// 2. CODEFORCES
 export const getCodeforcesStats = async (handle) => {
     if (!handle) return null;
     try {
@@ -180,13 +167,11 @@ export const getCodeforcesStats = async (handle) => {
         if (statusRes?.data?.status === "OK") {
             const solvedSet = new Set();
             statusRes.data.result.forEach(sub => {
-                // Track ALL submissions for heatmap/streak (not just accepted)
                 if (sub.creationTimeSeconds) {
                     const date = new Date(sub.creationTimeSeconds * 1000).toISOString().split('T')[0];
                     calendar[date] = (calendar[date] || 0) + 1;
                 }
 
-                // Track unique solved problems separately
                 if (sub.verdict === "OK" && sub.problem) {
                     solvedSet.add(`${sub.problem.contestId}${sub.problem.index}`);
                 }
@@ -194,7 +179,6 @@ export const getCodeforcesStats = async (handle) => {
             solvedCount = solvedSet.size;
         }
 
-        // user.rating returns only actual rated contests participated in
         const contestsAttended = ratingRes?.data?.result?.length || 0;
         const numericRating = userInfo.rating || null;
 
@@ -220,7 +204,6 @@ export const getCodeforcesStats = async (handle) => {
     }
 };
 
-// 3. CODECHEF
 export const getCodeChefStats = async (handle) => {
     if (!handle) return null;
     try {
@@ -230,12 +213,10 @@ export const getCodeChefStats = async (handle) => {
         });
         const html = response.data;
 
-        // Extract latest rating from the JSON ratings data embedded in HTML
         let rating = "Unrated";
         let numericRating = null;
         let contestsAttended = 0;
 
-        // Find all embedded JSON arrays in var declarations
         const jsonArrays = html.match(/var\s+\w+\s*=\s*(\[.*?\]);/gs) || [];
         for (const block of jsonArrays) {
             try {
@@ -244,17 +225,15 @@ export const getCodeChefStats = async (handle) => {
                 const arr = JSON.parse(jsonStr);
                 if (!Array.isArray(arr) || arr.length === 0) continue;
 
-                // Contest history array (has 'rating', 'rank', 'code' fields)
                 if (arr[0].rating && arr[0].code && arr[0].rank) {
                     contestsAttended = arr.length;
                     const lastContest = arr[arr.length - 1];
                     numericRating = parseInt(lastContest.rating);
                     rating = numericRating;
                 }
-            } catch (e) { /* skip non-JSON blocks */ }
+            } catch (e) {  }
         }
 
-        // Extract submission activity calendar [{date: "YYYY-M-D", value: N}, ...]
         const calendar = {};
         for (const block of jsonArrays) {
             try {
@@ -265,16 +244,14 @@ export const getCodeChefStats = async (handle) => {
 
                 if (arr[0].date && arr[0].value !== undefined) {
                     arr.forEach(entry => {
-                        // Normalize date to YYYY-MM-DD
                         const parts = entry.date.split('-');
                         const normalized = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
                         calendar[normalized] = (calendar[normalized] || 0) + entry.value;
                     });
                 }
-            } catch (e) { /* skip */ }
+            } catch (e) {  }
         }
 
-        // Extract problems solved count
         let solved = 0;
         const solvedMatch = html.match(/Problems Solved.*?(\d+)/s);
         if (solvedMatch) solved = parseInt(solvedMatch[1]);
@@ -301,11 +278,9 @@ export const getCodeChefStats = async (handle) => {
     }
 };
 
-// 4. GITHUB
 export const getGithubStats = async (handle) => {
     if (!handle) return null;
     try {
-        // Strip URL if user put full GitHub URL
         let username = handle.trim();
         username = username.replace(/https?:\/\/(www\.)?github\.com\/?/i, "").replace(/^(www\.)?github\.com\/?/i, "").replace(/\/+$/, "");
         if (!username) return null;

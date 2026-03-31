@@ -56,7 +56,6 @@ export default function InterviewExperiences() {
     { link: "", description: "" }
   ]);
 
-  // Fetch experiences from backend on mount
   useEffect(() => {
     loadExperiences();
   }, []);
@@ -139,7 +138,6 @@ export default function InterviewExperiences() {
     }
   };
 
-  // Filter and sort
   const filteredExperiences = experiences
     .filter((exp) => {
       const matchesSearch =
@@ -159,14 +157,13 @@ export default function InterviewExperiences() {
           return (DIFFICULTY_ORDER[b.difficulty] || 2) - (DIFFICULTY_ORDER[a.difficulty] || 2);
         case "newest":
         default:
-          return 0; // Already sorted by newest from backend
+          return 0;
       }
     });
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
 
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">Interview Experiences</h1>
@@ -195,11 +192,9 @@ export default function InterviewExperiences() {
         </div>
       </div>
 
-      {/* --- BROWSE MODE --- */}
       {activeTab === "browse" && (
         <div className="space-y-6">
 
-          {/* Search + Filters */}
           <div className="space-y-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-brown-400" />
@@ -213,7 +208,6 @@ export default function InterviewExperiences() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              {/* Difficulty Filter Pills */}
               <div className="flex gap-1.5">
                 {DIFFICULTY_OPTIONS.map((diff) => (
                   <button
@@ -230,7 +224,6 @@ export default function InterviewExperiences() {
                 ))}
               </div>
 
-              {/* Sort Dropdown */}
               <div className="flex items-center gap-1.5 ml-auto">
                 <ArrowUpDown size={14} className="text-brand-brown-400" />
                 <select
@@ -340,7 +333,6 @@ export default function InterviewExperiences() {
         </div>
       )}
 
-      {/* --- CONTRIBUTE MODE --- */}
       {activeTab === "contribute" && (
         <div className="max-w-3xl mx-auto">
           <div className="bg-white dark:bg-[#1A0F08] rounded-xl border border-brand-beige-200 dark:border-[#3E2315] p-6 shadow-sm">
@@ -437,7 +429,6 @@ export default function InterviewExperiences() {
                 </p>
               </div>
 
-              {/* --- DYNAMIC INTERVIEW QUESTIONS SECTION --- */}
               <div className="pt-2">
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-xs font-semibold uppercase text-brand-cream-500">Coding Problems & Links</label>

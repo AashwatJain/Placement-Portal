@@ -1,14 +1,6 @@
-// src/services/studentApi.js
-// ─────────────────────────────────────────────────────────────
-// Centralized API service for all backend (Express) calls.
-// Every axios call that used to be in page components now
-// lives here with a single API_BASE_URL import.
-// ─────────────────────────────────────────────────────────────
 
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
-
-// ── Centralized Data (Replaced Direct-Firebase calls) ───────
 
 export async function fetchCompanies() {
   const response = await axios.get(`${API_BASE_URL}/api/student/companies`);
@@ -33,8 +25,6 @@ export async function registerForOpportunity(uid, oppId, appData) {
   return response.data;
 }
 
-// ── Interview Experiences ───────────────────────────────────
-
 export async function fetchExperiences() {
   const response = await axios.get(`${API_BASE_URL}/api/student/experiences`);
   return response.data;
@@ -56,8 +46,6 @@ export async function toggleExperienceLike(experienceId, userId, token) {
   return response.data;
 }
 
-// ── Resume Vault ── Primary Resume ──────────────────────────
-
 export async function setPrimaryResume(uid, resumeId, token) {
   const response = await axios.put(
     `${API_BASE_URL}/api/student/set-primary-resume`,
@@ -66,8 +54,6 @@ export async function setPrimaryResume(uid, resumeId, token) {
   );
   return response.data;
 }
-
-// ── Notifications ───────────────────────────────────────────
 
 export async function fetchNotifications(uid) {
   const params = uid ? `?uid=${uid}` : '';
@@ -84,8 +70,6 @@ export async function deleteNotificationApi(id) {
   const response = await axios.delete(`${API_BASE_URL}/api/student/notifications/${id}`);
   return response.data;
 }
-
-// ── Practice Page ───────────────────────────────────────────
 
 export async function fetchApprovedQuestions() {
   const response = await axios.get(`${API_BASE_URL}/api/student/questions`);

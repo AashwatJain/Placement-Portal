@@ -1,7 +1,3 @@
-/**
- * Reusable table skeleton for loading states.
- * Extracted from Applications.jsx.
- */
 export default function TableSkeleton() {
   return Array.from({ length: 4 }).map((_, i) => (
     <tr key={i} className="animate-pulse">

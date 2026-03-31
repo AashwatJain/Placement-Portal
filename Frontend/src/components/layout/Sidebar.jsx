@@ -66,7 +66,6 @@ export default function Sidebar({ isMobile = false, onClose }) {
     return false;
   };
 
-  // In mobile mode, render a full-width sidebar without collapse controls
   const effectiveCollapsed = isMobile ? false : isCollapsed;
 
   const handleLinkClick = () => {
@@ -81,10 +80,8 @@ export default function Sidebar({ isMobile = false, onClose }) {
           : `hidden flex-col border-r border-brand-brown-700 bg-brand-brown-900 transition-all duration-300 ease-in-out md:flex ${isCollapsed ? "w-16" : "w-56"}`
       }
     >
-      {/* 1. Header & Toggle Button */}
       <div className={`flex h-14 items-center border-b border-brand-brown-700 px-3 ${effectiveCollapsed ? "justify-center" : "justify-between"}`}>
 
-        {/* Logo Section */}
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="flex h-8 w-8 min-w-[2rem] items-center justify-center rounded-lg bg-gradient-to-br from-brand-amber-500 to-[#E89B60] text-white shadow-md shadow-[#C07840]/20">
             <GraduationCap size={18} />
@@ -102,7 +99,6 @@ export default function Sidebar({ isMobile = false, onClose }) {
           )}
         </div>
 
-        {/* Collapse Button (desktop only) */}
         {!isMobile && !isCollapsed && (
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -113,7 +109,6 @@ export default function Sidebar({ isMobile = false, onClose }) {
         )}
       </div>
 
-      {/* Re-open button when collapsed (desktop only) */}
       {!isMobile && isCollapsed && (
         <div className="flex justify-center py-2 border-b border-brand-brown-700">
           <button
@@ -125,7 +120,6 @@ export default function Sidebar({ isMobile = false, onClose }) {
         </div>
       )}
 
-      {/* 2. Navigation Links */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden py-3">
         <nav className="space-y-1 px-2">
           {navLinks.map(({ to, label, icon: Icon }) => (
@@ -152,7 +146,6 @@ export default function Sidebar({ isMobile = false, onClose }) {
         </nav>
       </div>
 
-      {/* 3. Bottom Actions */}
       <div className="border-t border-brand-brown-700 p-3">
         <button
           onClick={() => { logout(); if (isMobile && onClose) onClose(); }}

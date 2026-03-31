@@ -59,7 +59,6 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      // Domain restriction for student sign-up
       if (!isLogin && role === "student") {
         const domain = email.split("@")[1];
         if (domain !== "nitkkr.ac.in") {
@@ -163,7 +162,6 @@ export default function Auth() {
               </div>
             )}
 
-            {/* Student Sign-Up Fields */}
             {!isLogin && role === "student" && (
               <div className="mt-6 space-y-4 border-t border-brand-beige-100 pt-6 dark:border-[#3E2315]">
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-brand-brown-600 dark:text-brand-beige-400">Academic & Personal</h3>
@@ -187,7 +185,6 @@ export default function Auth() {
               </div>
             )}
 
-            {/* Recruiter Sign-Up Fields */}
             {!isLogin && role === "recruiter" && (
               <div className="mt-6 space-y-4 border-t border-brand-beige-100 pt-6 dark:border-[#3E2315]">
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-brand-brown-600 dark:text-brand-beige-400">Professional Details</h3>

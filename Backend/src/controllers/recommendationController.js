@@ -1,42 +1,15 @@
-/**
- * recommendationController.js
- *
- * Bridges the Node.js backend with the Python ML service (Flask, port 5006).
- *
- * Handlers
- * ─────────────────────────────────────────────────────────────────────────
- * getRecommendations  – POST /api/student/recommendations
- *   Reads pastPlacements from RTDB, posts to /recommend on the ML service,
- *   and returns company recommendations with confidence scores.
- *
- * getCompanyChances   – POST /api/student/company-chances
- *   Same RTDB fetch, but posts to /predict-chance with a targetCompany
- *   from req.body and returns a selectionChance percentage.
- */
 
 import axios from "axios";
 import db from "../config/firebaseAdmin.js";
 
-// Base URL of the Python Flask ML service
-const mlServiceUrl = "http://127.0.0.1:5006";
+const mlServiceUrl = process.env.ML_SERVICE_URL || "http://127.0.0.1:5006";
 
-// ── Helper: fetch and reshape pastPlacements from RTDB ───────────────────────
-
-/**
- * Reads all records from the `pastPlacements` RTDB node and converts
- * the Firebase object (keyed by push-ID) into a plain array.
- *
- * Each element retains only the fields the ML service needs:
- *   { dsaScore, devScore, cpScore, placedCompany }
- *
- * @returns {Promise<Array<{dsaScore: number, devScore: number, cpScore: number, placedCompany: string}>>}
- */
 const fetchPastPlacements = async () => {
   const snapshot = await db.ref("pastPlacements").once("value");
 
   if (!snapshot.exists()) return [];
 
-  const rawData = snapshot.val(); // Object { pushKey: { ...fields } }
+  const rawData = snapshot.val();
 
   const pastPlacements = Object.values(rawData).map((record) => ({
     dsaScore:      Number(record.dsaScore)  || 0,
@@ -48,23 +21,11 @@ const fetchPastPlacements = async () => {
   return pastPlacements;
 };
 
-// ── Handler 1: getRecommendations ─────────────────────────────────────────────
-
-/**
- * POST /api/student/recommendations
- *
- * Accepts an optional `studentProfile` array in req.body.
- * Falls back to a mock profile if not provided.
- *
- * Returns:
- *   { recommendations: [{ placedCompany, confidenceScore }] }
- */
 const getRecommendations = async (req, res) => {
   try {
-    // Use the caller's profile if provided, else fall back to a mock profile
     const studentProfile = Array.isArray(req.body?.studentProfile)
       ? req.body.studentProfile
-      : [80, 40, 60]; // mock: [dsaScore, devScore, cpScore]
+      : [80, 40, 60];
 
     const pastPlacements = await fetchPastPlacements();
 
@@ -94,17 +55,6 @@ const getRecommendations = async (req, res) => {
   }
 };
 
-// ── Handler 2: getCompanyChances ──────────────────────────────────────────────
-
-/**
- * POST /api/student/company-chances
- *
- * Body: { studentProfile?: number[], targetCompany: string }
- *
- * Returns:
- *   { selectionChance: number }  (0–100 %)
- */
-
 const getCompanyChances = async (req, res) => {
   try {
     const targetCompany = req.body?.targetCompany?.trim();
@@ -115,10 +65,9 @@ const getCompanyChances = async (req, res) => {
       });
     }
 
-    // Use the caller's profile if provided, else fall back to a mock profile
     const studentProfile = Array.isArray(req.body?.studentProfile)
       ? req.body.studentProfile
-      : [80, 40, 60]; // mock: [dsaScore, devScore, cpScore]
+      : [80, 40, 60];
 
     const pastPlacements = await fetchPastPlacements();
 
@@ -147,7 +96,5 @@ const getCompanyChances = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
-
-// ── Exports ───────────────────────────────────────────────────────────────────
 
 export default { getRecommendations, getCompanyChances };

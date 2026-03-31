@@ -6,10 +6,8 @@ const require = createRequire(import.meta.url);
 let serviceAccount;
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-  // Use the environment variable from Render
   serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 } else {
-  // Use the local file for development
   serviceAccount = require("./serviceAccountKey.json");
 }
 

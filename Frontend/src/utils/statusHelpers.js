@@ -1,13 +1,4 @@
-// src/utils/statusHelpers.js
-// ─────────────────────────────────────────────────────────────
-// Badge / status styling helpers, deadline label, etc.
-// Consolidated from Opportunities, Applications, StudentHome.
-// ─────────────────────────────────────────────────────────────
 
-/**
- * Offer-type badge classes (Placement / Internship / Intern+PPO).
- * Used in Opportunities cards.
- */
 export function offerBadge(type) {
   if (type === "Placement")
     return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800";
@@ -16,10 +7,6 @@ export function offerBadge(type) {
   return "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800";
 }
 
-/**
- * Deadline urgency indicator.
- * Returns { text, color, urgent } or null if no lastDate.
- */
 export function deadlineLabel(lastDate) {
   if (!lastDate) return null;
   const today = new Date();
@@ -35,9 +22,6 @@ export function deadlineLabel(lastDate) {
   return { text: `${diff} days left`, color: "text-brand-brown-600 dark:text-brand-beige-400", urgent: false };
 }
 
-/**
- * Application status badge style (used in Applications table + StudentHome).
- */
 export function getStatusStyle(status) {
   switch (status) {
     case "Offered":
@@ -61,9 +45,6 @@ export function getStatusStyle(status) {
   }
 }
 
-/**
- * Timeline step dot colour (used in Applications modal).
- */
 export function stepDotColor(step, idx, timeline) {
   if (step.done && step.result === "Rejected")
     return "bg-red-500 border-red-500 text-white";

@@ -36,10 +36,8 @@ export default function Footer({ role }) {
     <footer className="border-t border-brand-beige-200 bg-brand-cream-50 pt-12 text-brand-brown-600 dark:border-[#3E2315] dark:bg-[#1A0F08] dark:text-brand-beige-400 transition-colors duration-300">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
-        {/* Top Section: 4 Columns Grid */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 pb-12">
 
-          {/* Column 1: Branding & Intro */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-amber-500 to-[#E89B60] text-white">
@@ -65,7 +63,6 @@ export default function Footer({ role }) {
             </div>
           </div>
 
-          {/* Column 2: Quick Links */}
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-brown-900 dark:text-white">
               Quick Links
@@ -79,7 +76,6 @@ export default function Footer({ role }) {
             </ul>
           </div>
 
-          {/* Column 3: Resources */}
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-brown-900 dark:text-white">
               Resources
@@ -109,7 +105,6 @@ export default function Footer({ role }) {
             </ul>
           </div>
 
-          {/* Column 4: Contact Info */}
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-brown-900 dark:text-white">
               Contact Us
@@ -135,7 +130,6 @@ export default function Footer({ role }) {
           </div>
         </div>
 
-        {/* Bottom Bar: Copyright & Credit */}
         <div className="border-t border-brand-beige-200 py-6 text-center text-sm dark:border-[#3E2315] text-brand-brown-600 dark:text-brand-beige-400">
           <p>
             &copy; {currentYear} NIT Kurukshetra. All rights reserved.

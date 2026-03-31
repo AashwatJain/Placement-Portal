@@ -8,7 +8,6 @@ import {
   Linkedin, Mail, Terminal, CheckCircle
 } from "lucide-react";
 
-// ── Main Component ────────────────────────────────────────────
 export default function Company() {
   const { companies, loading, error } = useCompanies();
   const { showToast } = useToast();
@@ -16,7 +15,7 @@ export default function Company() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [registered, setRegistered] = useState({}); // track which companies registered
+  const [registered, setRegistered] = useState({});
 
   const filteredCompanies = companies.filter((company) => {
     const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -32,7 +31,6 @@ export default function Company() {
   const getContactIcon = (link) => link.includes("@") || link.startsWith("mailto:") ? <Mail size={16} /> : <Linkedin size={16} />;
   const getContactLabel = (link) => link.includes("@") || link.startsWith("mailto:") ? "Email Senior" : "Connect on LinkedIn";
 
-  // Platform → button style
   const platformStyle = (platform) => {
     if (platform === "LeetCode") return "bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/40";
     if (platform === "GFG") return "bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40";
@@ -43,7 +41,6 @@ export default function Company() {
   return (
     <div className="space-y-6 relative">
 
-      {/* Header & Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">Placement Drives</h1>
@@ -75,14 +72,12 @@ export default function Company() {
         </div>
       </div>
 
-      {/* Error Banner */}
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
           ⚠️ Could not load companies: {error}
         </div>
       )}
 
-      {/* Company Grid */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {loading && Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
 
@@ -142,12 +137,10 @@ export default function Company() {
         )}
       </div>
 
-      {/* ── COMPANY DETAIL MODAL ── */}
       {selectedCompany && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#1A0F08] border border-brand-beige-200 dark:border-[#3E2315]">
 
-            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-brand-beige-100 bg-brand-cream-50 p-6 dark:border-[#3E2315] dark:bg-[#2A1810]/50">
               <div className="flex items-center gap-5">
                 <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white text-3xl font-bold shadow-sm dark:bg-[#2A1810] dark:text-white border border-brand-beige-200 dark:border-[#5A3D2B]">
@@ -170,11 +163,9 @@ export default function Company() {
               </button>
             </div>
 
-            {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-6">
               <div className="grid gap-8 lg:grid-cols-3">
 
-                {/* LEFT: Questions */}
                 <div className="lg:col-span-2 space-y-8">
                   <section>
                     <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-brand-brown-900 dark:text-white">
@@ -192,7 +183,6 @@ export default function Company() {
                                 }`}>{q.difficulty}</span>
                             </div>
                             <p className="font-medium text-brand-brown-900 dark:text-white mb-3 text-lg">{q.question}</p>
-                            {/* ✅ Working link button */}
                             <a
                               href={q.link || "#"}
                               target="_blank"
@@ -213,7 +203,6 @@ export default function Company() {
                   </section>
                 </div>
 
-                {/* RIGHT: Seniors & Stats */}
                 <div className="space-y-6">
                   <section>
                     <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-brand-brown-900 dark:text-white">
@@ -231,7 +220,6 @@ export default function Company() {
                                 <p className="text-sm font-bold text-brand-brown-900 dark:text-white truncate">{senior.name}</p>
                                 <p className="text-xs text-brand-cream-500 truncate">{senior.role} • Batch '{senior.batch.slice(2)}</p>
                               </div>
-                              {/* ✅ Working LinkedIn button */}
                               <a
                                 href={senior.linkedin}
                                 target="_blank"
@@ -251,7 +239,6 @@ export default function Company() {
                     </div>
                   </section>
 
-                  {/* CTC Card */}
                   <div className="rounded-xl bg-gradient-to-br from-brand-amber-500 to-violet-700 p-5 text-white shadow-xl">
                     <div className="flex items-center gap-2 mb-4 opacity-90">
                       <IndianRupee size={20} />
@@ -275,7 +262,6 @@ export default function Company() {
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className="border-t border-brand-beige-200 p-4 bg-white dark:border-[#3E2315] dark:bg-[#1A0F08] flex justify-end gap-3">
               <button
                 onClick={() => setSelectedCompany(null)}
@@ -283,7 +269,6 @@ export default function Company() {
               >
                 Close
               </button>
-              {/* ✅ Working Register Interest button */}
               <button
                 onClick={() => handleRegisterInterest(selectedCompany.name)}
                 disabled={registered[selectedCompany.name]}
@@ -303,8 +288,6 @@ export default function Company() {
           </div>
         </div>
       )}
-
-
 
     </div>
   );

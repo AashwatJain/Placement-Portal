@@ -35,7 +35,6 @@ export function useCodingData() {
     }
   }, [user]);
 
-
   useEffect(() => {
     fetchLiveStats();
   }, [fetchLiveStats]);

@@ -1,15 +1,14 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import CardSkeleton from "../../components/ui/CardSkeleton";
+
 import PageLoader from "../../components/ui/PageLoader";
 import { useAuth } from "../../context/AuthContext";
-import { useToast } from "../../context/ToastContext";
+
 import { fetchAllStudents } from "../../services/adminApi";
 import { API_BASE_URL } from "../../config/api";
 import {
-  fetchCandidateStatuses, saveCandidateStatuses,
-  fetchCandidateNotes, saveCandidateNotes,
-  sendCandidateNotifications
+  fetchCandidateStatuses,
+  fetchCandidateNotes,
 } from "../../services/recruiterApi";
 import {
   Search, X, FileText, ExternalLink, Code2, Award,
@@ -19,11 +18,10 @@ import {
   Github, SlidersHorizontal, MapPin, Phone,
   BookOpen, Calendar, Linkedin, Eye,
   Hash, AlertTriangle, UserCircle,
-  CheckSquare, Square, StickyNote,
+  StickyNote,
 } from "lucide-react";
 
-/* ═══════════ Debounce delay (ms) ═══════════ */
-const SAVE_DELAY = 800;
+
 
 const PIPELINE_STAGES = [
   { value: "",            label: "— None —",        color: "bg-brand-beige-100 text-brand-brown-600 dark:bg-[#2A1810] dark:text-brand-beige-400" },
@@ -52,10 +50,8 @@ function getPlacementTag(s) {
   return PLACEMENT_TAG.unplaced;
 }
 
-/* ═══════════ Main Component ═══════════ */
 export default function RecruiterDashboard() {
   const { user } = useAuth();
-  const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get("jobId") || "";
 
@@ -72,17 +68,10 @@ export default function RecruiterDashboard() {
   const [sortConfig, setSortConfig]       = useState({ key: "cgpa", direction: "desc" });
   const [expandedId, setExpandedId]       = useState(null);
   const [showFilters, setShowFilters]     = useState(false);
-  const [selectedIds, setSelectedIds]     = useState(new Set());
   const [statuses, setStatuses]           = useState({});
   const [notes, setNotes]                 = useState({});
   const [previewUrl, setPreviewUrl]       = useState(null);
-  const [sendingEmails, setSendingEmails] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
 
-  const statusTimer = useRef(null);
-  const notesTimer  = useRef(null);
-
-  // Load students + recruiter-persisted data in parallel
   useEffect(() => {
     const uid = user?.uid;
     (async () => {
@@ -107,32 +96,7 @@ export default function RecruiterDashboard() {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === "desc" ? "asc" : "desc" }));
   };
 
-  // Debounced save to backend
-  const updateStatus = useCallback((id, value) => {
-    setStatuses(prev => {
-      const next = { ...prev, [id]: value };
-      clearTimeout(statusTimer.current);
-      statusTimer.current = setTimeout(() => {
-        if (user?.uid) saveCandidateStatuses(user.uid, next).catch(console.error);
-      }, SAVE_DELAY);
-      return next;
-    });
-  }, [user?.uid]);
 
-  const updateNote = useCallback((id, text) => {
-    setNotes(prev => {
-      const next = { ...prev, [id]: text };
-      clearTimeout(notesTimer.current);
-      notesTimer.current = setTimeout(() => {
-        if (user?.uid) saveCandidateNotes(user.uid, next).catch(console.error);
-      }, SAVE_DELAY);
-      return next;
-    });
-  }, [user?.uid]);
-
-  const toggleSelect = (id) => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const selectAll = (ids) => setSelectedIds(new Set(ids));
-  const clearSelection = () => setSelectedIds(new Set());
 
   const allBranches = useMemo(() => [...new Set(students.map(s => s.branch ? s.branch.toUpperCase() : null).filter(Boolean))].sort(), [students]);
   const allYears    = useMemo(() => [...new Set(students.map(s => String(s.year)).filter(y => y && y !== "undefined"))].sort(), [students]);
@@ -172,50 +136,15 @@ export default function RecruiterDashboard() {
   const avg10th = valid10ths.length > 0 ? (valid10ths.reduce((s, x) => s + x, 0) / valid10ths.length).toFixed(1) + "%" : "—";
 
   const exportCSV = () => {
-    const h = ["Name","Branch","Year","CGPA","10th%","12th%","Backlogs","Gender","Email","Phone","GitHub","LinkedIn","LeetCode","Codeforces","CodeChef","Status","Note"];
+    const h = ["Name","Branch","Year","CGPA","10th%","12th%","Backlogs","Gender","Email","Phone","GitHub","LinkedIn","LeetCode","Codeforces","CodeChef"];
     const rows = filteredAndSorted.map(s => [
       formatName(s.fullName), s.branch ? s.branch.toUpperCase() : "", s.year||"", s.cgpa||"", s.marks10th||"", s.marks12th||"",
       s.activeBacklogs||"0", s.gender||"", s.email||"", s.phone||"", s.github||"", s.linkedin||"",
-      s.leetcode||"", s.codeforces||"", s.codechef||"",
-      PIPELINE_STAGES.find(p=>p.value===(statuses[s.id]||""))?.label || "", notes[s.id]||""
+      s.leetcode||"", s.codeforces||"", s.codechef||""
     ]);
     const csv = [h.join(","), ...rows.map(r => r.map(v=>`"${v}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" }); const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = `candidates_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
-  };
-
-  const handleBulkEmail = () => {
-    if (selectedIds.size === 0) return;
-    setShowEmailModal(true);
-  };
-
-  const handleSendEmail = async (subject, body) => {
-    const candidatesToNotify = filteredAndSorted
-      .filter(s => selectedIds.has(s.id) && s.email && s.uid)
-      .map(s => ({
-         uid: s.uid,
-         email: s.email,
-         name: formatName(s.fullName),
-         status: statuses[s.id] || "" 
-      }));
-
-    if (candidatesToNotify.length === 0) {
-      showToast({ type: "warning", title: "No Valid Candidates", message: "None of the selected candidates have email addresses and UID registered." });
-      return;
-    }
-
-    setSendingEmails(true);
-    try {
-      await sendCandidateNotifications(candidatesToNotify, subject, body);
-      showToast({ type: "success", title: "Emails Sent!", message: `Successfully emailed ${candidatesToNotify.length} candidates!` });
-      clearSelection();
-      setShowEmailModal(false);
-    } catch (error) {
-      console.error(error);
-      showToast({ type: "error", title: "Email Failed", message: "Failed to send some or all emails." });
-    } finally {
-      setSendingEmails(false);
-    }
   };
 
   const SortBtn = ({ label, columnKey }) => (
@@ -225,12 +154,10 @@ export default function RecruiterDashboard() {
     </button>
   );
 
-  const allIds = filteredAndSorted.map(s => s.id);
-  const allSelected = selectedIds.size > 0 && allIds.every(id => selectedIds.has(id));
+
 
   return (
     <div className="space-y-6 pb-10">
-      {/* Resume Preview Modal */}
       {previewUrl && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setPreviewUrl(null)}>
           <div className="relative w-[90vw] max-w-4xl h-[85vh] bg-white dark:bg-[#1A0F08] rounded-2xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -246,7 +173,6 @@ export default function RecruiterDashboard() {
         </div>
       )}
 
-      {/* ── HEADER ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">Candidate Search</h1>
@@ -259,24 +185,12 @@ export default function RecruiterDashboard() {
           )}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {selectedIds.size > 0 && (
-            <span className="text-xs font-bold text-brand-amber-500 dark:text-brand-amber-500 bg-brand-amber-500/10 dark:bg-brand-amber-800/30 px-2.5 py-1.5 rounded-lg">{selectedIds.size} selected</span>
-          )}
           <button onClick={exportCSV} className="flex items-center gap-1.5 rounded-lg border border-brand-beige-200 bg-white px-3.5 py-2 text-xs font-bold text-brand-brown-700 shadow-sm hover:bg-brand-cream-50 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-brand-beige-300 dark:hover:bg-brand-brown-700 transition-all">
             <Download size={14}/> Export CSV
           </button>
-          {selectedIds.size > 0 && (
-            <button 
-              onClick={handleBulkEmail} 
-              className="flex items-center gap-1.5 rounded-lg bg-brand-amber-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-brand-amber-600 transition-all"
-            >
-              <Mail size={14}/> Compose Email ({selectedIds.size})
-            </button>
-          )}
         </div>
       </div>
 
-      {/* ── STATS ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { l: "Total Candidates", v: total,    ic: <Users size={18}/>, g: "from-brand-amber-500/100 to-violet-600" },
@@ -291,7 +205,6 @@ export default function RecruiterDashboard() {
         ))}
       </div>
 
-      {/* ── BRANCH CHART ── */}
       {Object.keys(branchCounts).length > 1 && (
         <div className="rounded-xl border border-brand-beige-200 bg-white p-5 shadow-sm dark:border-[#5A3D2B] dark:bg-[#2A1810]/50">
           <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-brand-brown-400 flex items-center gap-1.5"><BarChart3 size={14} className="text-brand-amber-500/100"/> Branch Distribution</h3>
@@ -307,7 +220,6 @@ export default function RecruiterDashboard() {
         </div>
       )}
 
-      {/* ── SEARCH + FILTERS ── */}
       <div className="rounded-xl border border-brand-beige-200 bg-white shadow-sm dark:border-[#5A3D2B] dark:bg-[#2A1810]/50 overflow-hidden">
         <div className="flex items-center gap-3 p-4 border-b border-brand-beige-100 dark:border-[#5A3D2B]/60">
           <div className="relative flex-1">
@@ -337,21 +249,15 @@ export default function RecruiterDashboard() {
         )}
       </div>
 
-      {/* ── SORT BAR + SELECT ALL ── */}
       <div className="flex items-center gap-2 flex-wrap">
-        <button onClick={() => allSelected ? clearSelection() : selectAll(allIds)} className="rounded-lg p-1.5 text-brand-brown-400 hover:text-brand-amber-500 hover:bg-brand-amber-500/10 dark:hover:bg-brand-amber-800/30 transition-all" title={allSelected ? "Deselect all" : "Select all"}>
-          {allSelected ? <CheckSquare size={18} className="text-brand-amber-500 dark:text-brand-amber-500"/> : <Square size={18}/>}
-        </button>
         <span className="text-[11px] text-brand-brown-400 font-medium mr-1">Sort:</span>
         <SortBtn label="Name" columnKey="name"/>
         <SortBtn label="CGPA" columnKey="cgpa"/>
         <div className="ml-auto text-xs font-medium text-brand-brown-400">{total} candidate{total !== 1 ? "s" : ""}</div>
       </div>
 
-      {/* ── LOADING ── */}
       {loading && <PageLoader message="Loading candidates..." />}
 
-      {/* ── CARDS ── */}
       {!loading && (
         <div className="space-y-2.5">
           {filteredAndSorted.length === 0 ? (
@@ -361,35 +267,24 @@ export default function RecruiterDashboard() {
           ) : filteredAndSorted.map(s => (
             <CandidateCard key={s.id} s={s}
               isExpanded={expandedId===s.id} setExpandedId={setExpandedId}
-              isSelected={selectedIds.has(s.id)} toggleSelect={toggleSelect}
-              status={statuses[s.id]||""} updateStatus={updateStatus}
-              note={notes[s.id]||""} updateNote={updateNote}
+              status={statuses[s.id]||""}
+              note={notes[s.id]||""}
               setPreviewUrl={setPreviewUrl}
             />
           ))}
         </div>
       )}
 
-      {/* ── EMAIL COMPOSE MODAL ── */}
-      {showEmailModal && (
-        <EmailComposeModal
-          recipientCount={selectedIds.size}
-          sending={sendingEmails}
-          onSend={handleSendEmail}
-          onClose={() => setShowEmailModal(false)}
-        />
-      )}
+
     </div>
   );
 }
 
-/* ═══════════ CandidateCard ═══════════ */
-function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect, status, updateStatus, note, updateNote, setPreviewUrl }) {
+function CandidateCard({ s, isExpanded, setExpandedId, status, note, setPreviewUrl }) {
   const [liveStats, setLiveStats] = useState({ cf: null, lc: null, gh: null });
 
   useEffect(() => {
     if (isExpanded) {
-      // Codeforces
       if (s.codeforces) {
         const handle = s.codeforces.replace(/^https?:\/\/(www\.)?[^/]+\/(u\/|profile\/|users\/)?/, "");
         fetch(`https://codeforces.com/api/user.info?handles=${handle}`)
@@ -397,7 +292,6 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
           .then(data => { if (data.status === "OK") setLiveStats(p => ({ ...p, cf: `${data.result[0].rank || "Unrated"} (${data.result[0].rating || 0})` })); })
           .catch(() => {});
       }
-      // LeetCode — use backend proxy to avoid CORS
       if (s.leetcode) {
         const handle = s.leetcode.replace(/^https?:\/\/(www\.)?[^/]+\/(u\/|profile\/|users\/)?/, "");
         fetch(`${API_BASE_URL}/api/student/coding-stats/${s.id}`)
@@ -429,15 +323,9 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
       : "text-brand-brown-600 bg-brand-cream-50 border-brand-beige-200 dark:text-brand-beige-400 dark:bg-[#2A1810] dark:border-[#5A3D2B]";
 
   return (
-    <div className={`rounded-xl border bg-white shadow-sm dark:bg-[#2A1810]/80 transition-all overflow-hidden ${isSelected ? "border-brand-amber-500 ring-1 ring-brand-amber-500/30 dark:ring-brand-amber-700 dark:border-brand-amber-500" : status === "selected" ? "border-emerald-300 dark:border-emerald-700" : "border-brand-beige-200 dark:border-[#5A3D2B]"}`}>
-      {/* ── Collapsed ── */}
+    <div className={`rounded-xl border bg-white shadow-sm dark:bg-[#2A1810]/80 transition-all overflow-hidden ${status === "selected" ? "border-emerald-300 dark:border-emerald-700" : "border-brand-beige-200 dark:border-[#5A3D2B]"}`}>
       <div className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-brand-cream-50/50 dark:hover:bg-brand-brown-800/50 transition-colors" onClick={() => setExpandedId(isExpanded ? null : s.id)}>
-        {/* Checkbox */}
-        <button onClick={e => { e.stopPropagation(); toggleSelect(s.id); }} className="shrink-0 text-brand-brown-400 hover:text-brand-amber-500 transition-colors">
-          {isSelected ? <CheckSquare size={18} className="text-brand-amber-500 dark:text-brand-amber-500"/> : <Square size={18}/>}
-        </button>
 
-        {/* Avatar */}
         <div className="relative shrink-0">
           {s.avatarUrl
             ? <img src={s.avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover shadow ring-2 ring-white dark:ring-brand-brown-800"/>
@@ -445,13 +333,10 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
           }
         </div>
 
-        {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-bold text-brand-brown-900 dark:text-white truncate">{displayName}</h3>
-            {/* Placement tag */}
             <span className={`hidden sm:inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${tag.color}`}>{tag.label}</span>
-            {/* Pipeline stage badge */}
             {status && <span className={`hidden md:inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold ${stageObj.color}`}>{stageObj.label}</span>}
           </div>
           <div className="flex items-center gap-1.5 mt-0.5 text-xs text-brand-cream-500 dark:text-brand-beige-400">
@@ -462,7 +347,6 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
           </div>
         </div>
 
-        {/* Chips */}
         <div className="hidden sm:flex items-center gap-1.5">
           {(!s.cgpa || isNaN(cgpaNum)) ? (
              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border border-brand-beige-200 bg-brand-cream-50 text-brand-cream-500 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-brand-beige-400">CGPA: N/A</span>
@@ -473,16 +357,13 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
           {s.marks12th && <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-brand-cream-50 text-brand-brown-600 border border-brand-beige-200 dark:bg-[#2A1810] dark:text-brand-beige-400 dark:border-[#5A3D2B]">12th: {s.marks12th}%</span>}
         </div>
 
-        {/* Expand */}
         <button onClick={e => { e.stopPropagation(); setExpandedId(isExpanded ? null : s.id); }} className="shrink-0 rounded-lg p-1.5 text-brand-brown-400 hover:bg-brand-beige-100 dark:hover:bg-brand-brown-700 transition-all">
           {isExpanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
         </button>
       </div>
 
-      {/* ── Expanded ── */}
       {isExpanded && (
         <div className="border-t border-brand-beige-100 dark:border-[#5A3D2B] animate-in slide-in-from-top-1 duration-200">
-          {/* Banner */}
           <div className="relative isolate overflow-hidden">
             <div className="h-24 bg-gradient-to-r from-brand-amber-500 via-violet-600 to-purple-600" />
             <div className="px-6 pb-4 flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 relative z-10">
@@ -506,30 +387,40 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
             </div>
           </div>
 
-          {/* Content Grid */}
-          <div className="px-6 pb-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* COL 1: Academic */}
+          <div className="px-6 pb-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-4">
-              <Section title="Academic & Contact" icon={<GraduationCap size={12}/>}>
+              <Section title="Academics" icon={<GraduationCap size={12}/>}>
+                <div className="grid grid-cols-2 gap-3">
+                  {s.cgpa && !isNaN(cgpaNum) && <div className={`rounded-lg border p-3 text-center ${cgpaColor}`}><p className="text-[10px] font-bold uppercase tracking-widest opacity-70">CGPA</p><p className="text-xl font-black mt-0.5">{cgpaNum.toFixed(2)}</p></div>}
+                  {s.marks10th && <div className="rounded-lg border border-brand-beige-200 dark:border-[#5A3D2B] bg-brand-cream-50 dark:bg-[#1A0F08]/50 p-3 text-center"><p className="text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">10th</p><p className="text-xl font-black text-brand-brown-800 dark:text-brand-beige-200 mt-0.5">{s.marks10th}%</p></div>}
+                  {s.marks12th && <div className="rounded-lg border border-brand-beige-200 dark:border-[#5A3D2B] bg-brand-cream-50 dark:bg-[#1A0F08]/50 p-3 text-center"><p className="text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">12th</p><p className="text-xl font-black text-brand-brown-800 dark:text-brand-beige-200 mt-0.5">{s.marks12th}%</p></div>}
+                  <div className="rounded-lg border border-brand-beige-200 dark:border-[#5A3D2B] bg-brand-cream-50 dark:bg-[#1A0F08]/50 p-3 text-center"><p className="text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">Backlogs</p><p className="text-xl font-black text-brand-brown-800 dark:text-brand-beige-200 mt-0.5">{s.activeBacklogs || "0"}</p></div>
+                </div>
+              </Section>
+
+              <Section title="Contact & Info" icon={<Mail size={12}/>}>
                 <div className="space-y-2.5">
-                  {s.cgpa && !isNaN(cgpaNum) && <InfoRow icon={<Award size={14} className="text-emerald-500"/>} label="CGPA" value={cgpaNum.toFixed(2)} bold/>}
-                  {s.marks10th && <InfoRow icon={<Hash size={14} className="text-brand-amber-500/100"/>} label="10th Marks" value={`${s.marks10th}%`}/>}
-                  {s.marks12th && <InfoRow icon={<Hash size={14} className="text-violet-500"/>} label="12th Marks" value={`${s.marks12th}%`}/>}
-                  {s.branch && <InfoRow icon={<GraduationCap size={14} className="text-brand-amber-500/100"/>} label="Branch" value={s.branch.toUpperCase()}/>}
-                  {s.year && <InfoRow icon={<Calendar size={14} className="text-violet-500"/>} label="Graduation" value={`Batch ${s.year}`}/>}
-                  <InfoRow icon={<AlertTriangle size={14} className="text-amber-500"/>} label="Active Backlogs" value={s.activeBacklogs || "0"}/>
-                  <InfoRow icon={<AlertTriangle size={14} className="text-orange-500"/>} label="Backlog History" value={s.backlogHistory || "0"}/>
                   {s.email && <InfoRow icon={<Mail size={14} className="text-brand-amber-500/100"/>} label="Email" value={s.email} href={`mailto:${s.email}`}/>}
                   {s.phone && <InfoRow icon={<Phone size={14} className="text-green-500"/>} label="Phone" value={s.phone}/>}
                   {s.location && <InfoRow icon={<MapPin size={14} className="text-rose-500"/>} label="Location" value={s.location}/>}
                   {s.gender && <InfoRow icon={<UserCircle size={14} className="text-purple-500"/>} label="Gender" value={s.gender}/>}
+                  {s.branch && <InfoRow icon={<GraduationCap size={14} className="text-brand-amber-500/100"/>} label="Branch" value={s.branch.toUpperCase()}/>}
+                  {s.year && <InfoRow icon={<Calendar size={14} className="text-violet-500"/>} label="Graduation" value={`Batch ${s.year}`}/>}
                 </div>
               </Section>
+
               {s.about && <Section title="About" icon={<BookOpen size={12}/>}><p className="text-sm text-brand-brown-700 dark:text-brand-beige-300 leading-relaxed">{s.about}</p></Section>}
             </div>
 
-            {/* COL 2: Coding + Links */}
             <div className="space-y-4">
+              <div className={`rounded-xl border p-4 flex items-center justify-between ${tag.color}`}>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Placement Status</p>
+                  <p className="text-lg font-black mt-0.5">{tag.label}</p>
+                </div>
+                <Star size={28} className="opacity-20"/>
+              </div>
+
               <Section title="Coding Profiles" icon={<Code2 size={12} className="text-brand-amber-500/100"/>}>
                 {hasCoding ? (
                   <div className="space-y-2">
@@ -549,36 +440,10 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
                   </div>
                 ) : <EmptyState icon={<ExternalLink size={22}/>} text="No links available"/>}
               </Section>
-            </div>
 
-            {/* COL 3: Status + Notes */}
-            <div className="space-y-4">
-              {/* Pipeline Status */}
-              <Section title="Pipeline Status" icon={<Star size={12}/>}>
-                <div className="space-y-3">
-                  <select value={status} onChange={e => updateStatus(s.id, e.target.value)} className="w-full rounded-lg border border-brand-beige-200 bg-white dark:bg-[#2A1810] dark:border-[#5A3D2B] px-3 py-2.5 text-sm font-medium focus:border-brand-amber-500 focus:outline-none dark:text-white appearance-none cursor-pointer">
-                    {PIPELINE_STAGES.map(st => <option key={st.value} value={st.value}>{st.label}</option>)}
-                  </select>
-                  {status && <div className={`text-center rounded-lg px-3 py-2 text-xs font-bold ${stageObj.color}`}>Current: {stageObj.label}</div>}
-
-                  {/* Placement tag */}
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">Placement:</span>
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold border ${tag.color}`}>{tag.label}</span>
-                  </div>
-                </div>
-              </Section>
-
-              {/* Private Notes */}
-              <Section title="Private Notes" icon={<StickyNote size={12} className="text-amber-500"/>}>
-                <textarea
-                  value={note} onChange={e => updateNote(s.id, e.target.value)}
-                  placeholder="Add private notes about this candidate..."
-                  rows={4}
-                  className="w-full rounded-lg border border-brand-beige-200 bg-brand-cream-50 dark:bg-[#1A0F08]/50 dark:border-[#5A3D2B] p-3 text-sm text-brand-brown-700 dark:text-brand-beige-300 placeholder:text-brand-brown-400 focus:border-brand-amber-500 focus:outline-none resize-none"
-                />
-                {note && <p className="text-[10px] text-brand-brown-400 mt-1">Saved locally · Only visible to you</p>}
-              </Section>
+              {note && <Section title="Notes" icon={<StickyNote size={12} className="text-amber-500"/>}>
+                <p className="text-sm text-brand-brown-700 dark:text-brand-beige-300 leading-relaxed">{note}</p>
+              </Section>}
             </div>
           </div>
         </div>
@@ -587,7 +452,6 @@ function CandidateCard({ s, isExpanded, setExpandedId, isSelected, toggleSelect,
   );
 }
 
-/* ═══════════ Sub-Components ═══════════ */
 function Section({ title, icon, children }) {
   return (
     <div className="rounded-xl border border-brand-beige-200 dark:border-[#5A3D2B] bg-white dark:bg-[#1A0F08]/50 p-4">
@@ -626,162 +490,4 @@ function FilterSelect({ label, value, onChange, options }) {
 
 function FilterInput({ label, value, onChange, placeholder }) {
   return <div><label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">{label}</label><input type="number" step="any" value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-brand-beige-200 bg-white px-3 py-2 text-sm text-brand-brown-700 focus:border-brand-amber-500 focus:outline-none dark:border-[#7A543A] dark:bg-[#2A1810] dark:text-brand-beige-300"/></div>;
-}
-
-/* ═══════════ Email Compose Modal ═══════════ */
-const EMAIL_DRAFTS = [
-  {
-    label: "Accepted / Selected",
-    subject: "Congratulations! You have been selected",
-    body: `Dear Candidate,
-
-We are delighted to inform you that you have been selected for the role at our organization! Your performance throughout the selection process was outstanding.
-
-We will be reaching out shortly with further details regarding the offer letter and onboarding process.
-
-Congratulations once again!
-
-Best regards,
-The Recruitment Team`
-  },
-  {
-    label: "Shortlisted",
-    subject: "You've been shortlisted for the next round!",
-    body: `Dear Candidate,
-
-We are pleased to inform you that you have been shortlisted for the next round of our selection process.
-
-Please keep an eye on your email for further instructions regarding the schedule and format of the upcoming round.
-
-We wish you the best of luck!
-
-Best regards,
-The Recruitment Team`
-  },
-  {
-    label: "Rejected",
-    subject: "Application Status Update",
-    body: `Dear Candidate,
-
-Thank you for taking the time to participate in our selection process. We appreciate the effort you put in.
-
-After careful consideration, we regret to inform you that we will not be moving forward with your application at this time. We encourage you to continue developing your skills and apply again in the future.
-
-We wish you all the best in your career journey.
-
-Best regards,
-The Recruitment Team`
-  },
-  {
-    label: "Interview Scheduled",
-    subject: "Interview Invitation — Next Round Details",
-    body: `Dear Candidate,
-
-We are happy to inform you that you have been advanced to the interview round!
-
-Please find the details below:
-• Date: [DATE]
-• Time: [TIME]
-• Mode: [Online / Offline]
-• Platform/Venue: [DETAILS]
-
-Please ensure you are available at the scheduled time. If you have any concerns, do not hesitate to reach out.
-
-Best regards,
-The Recruitment Team`
-  },
-  {
-    label: "Custom (Blank)",
-    subject: "",
-    body: ""
-  },
-];
-
-function EmailComposeModal({ recipientCount, sending, onSend, onClose }) {
-  const [selectedDraft, setSelectedDraft] = useState(0);
-  const [subject, setSubject] = useState(EMAIL_DRAFTS[0].subject);
-  const [body, setBody] = useState(EMAIL_DRAFTS[0].body);
-
-  const handleDraftChange = (idx) => {
-    setSelectedDraft(idx);
-    setSubject(EMAIL_DRAFTS[idx].subject);
-    setBody(EMAIL_DRAFTS[idx].body);
-  };
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="relative w-[95vw] max-w-2xl max-h-[90vh] bg-white dark:bg-[#1A0F08] rounded-2xl shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-brand-beige-200 dark:border-[#5A3D2B] bg-gradient-to-r from-brand-amber-500 to-[#E89B60]">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
-              <Mail size={18} className="text-white"/>
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white">Compose Email</h3>
-              <p className="text-[11px] text-white/80">{recipientCount} recipient{recipientCount !== 1 ? "s" : ""} selected</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-white/80 hover:text-white hover:bg-white/10 transition">
-            <X size={18}/>
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          {/* Draft Selector */}
-          <div>
-            <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">Template</label>
-            <div className="flex flex-wrap gap-2">
-              {EMAIL_DRAFTS.map((d, i) => (
-                <button key={i} onClick={() => handleDraftChange(i)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${selectedDraft === i
-                    ? "bg-brand-amber-500 text-white shadow-sm"
-                    : "border border-brand-beige-200 text-brand-brown-600 hover:bg-brand-cream-50 dark:border-[#5A3D2B] dark:text-brand-beige-400 dark:hover:bg-brand-brown-700"
-                  }`}
-                >{d.label}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Subject */}
-          <div>
-            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">Subject</label>
-            <input type="text" value={subject} onChange={e => setSubject(e.target.value)}
-              placeholder="Enter email subject..."
-              className="w-full rounded-lg border border-brand-beige-200 bg-brand-cream-50 px-4 py-2.5 text-sm font-medium text-brand-brown-800 placeholder:text-brand-brown-400 focus:border-brand-amber-500 focus:outline-none focus:ring-2 focus:ring-brand-amber-500/20 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white dark:focus:ring-brand-amber-800/40"
-            />
-          </div>
-
-          {/* Body */}
-          <div>
-            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-widest text-brand-brown-400">Message Body</label>
-            <textarea value={body} onChange={e => setBody(e.target.value)}
-              placeholder="Write your email content here..."
-              rows={12}
-              className="w-full rounded-lg border border-brand-beige-200 bg-brand-cream-50 px-4 py-3 text-sm text-brand-brown-800 placeholder:text-brand-brown-400 focus:border-brand-amber-500 focus:outline-none focus:ring-2 focus:ring-brand-amber-500/20 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white dark:focus:ring-brand-amber-800/40 resize-none leading-relaxed"
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-brand-beige-200 dark:border-[#5A3D2B] bg-brand-cream-50/50 dark:bg-[#2A1810]/50">
-          <p className="text-xs text-brand-brown-400">
-            <Mail size={12} className="inline mr-1 -mt-0.5"/>Sending to <strong className="text-brand-brown-700 dark:text-brand-beige-300">{recipientCount}</strong> candidate{recipientCount !== 1 ? "s" : ""}
-          </p>
-          <div className="flex items-center gap-2">
-            <button onClick={onClose} className="rounded-lg border border-brand-beige-200 px-4 py-2 text-xs font-bold text-brand-brown-600 hover:bg-brand-beige-100 dark:border-[#5A3D2B] dark:text-brand-beige-400 dark:hover:bg-brand-brown-700 transition-all">
-              Cancel
-            </button>
-            <button onClick={() => onSend(subject, body)} disabled={sending || !subject.trim() || !body.trim()}
-              className="flex items-center gap-1.5 rounded-lg bg-brand-amber-500 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-brand-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {sending ? <Loader2 size={14} className="animate-spin"/> : <Mail size={14}/>}
-              {sending ? "Sending..." : "Send Email"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }

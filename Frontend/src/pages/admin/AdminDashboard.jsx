@@ -74,7 +74,6 @@ export default function AdminDashboard() {
     }
   ];
 
-  // Find the max total for bar scaling
   const maxTotal = branchData.length > 0 ? Math.max(...branchData.map(b => b.total)) : 1;
 
   return (
@@ -108,7 +107,6 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Branch Demographics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <div className="bg-white dark:bg-[#1A0F08] rounded-2xl border border-brand-beige-200 dark:border-[#3E2315] shadow-sm p-6 relative overflow-hidden">
             <h3 className="font-semibold text-brand-brown-900 dark:text-white mb-1 flex items-center gap-2">
@@ -151,7 +149,6 @@ export default function AdminDashboard() {
             )}
         </div>
 
-        {/* Placement Summary */}
         <div className="bg-white dark:bg-[#1A0F08] rounded-2xl border border-brand-beige-200 dark:border-[#3E2315] shadow-sm p-6 relative overflow-hidden">
             <h3 className="font-semibold text-brand-brown-900 dark:text-white mb-1 flex items-center gap-2">
                 <TrendingUp size={18} className="text-emerald-500" /> Placement Summary
@@ -159,7 +156,6 @@ export default function AdminDashboard() {
             <p className="text-xs text-brand-cream-500 dark:text-brand-beige-400 mb-5">Overall placement progress</p>
 
             <div className="flex items-center justify-center py-4">
-              {/* Donut-style progress */}
               <div className="relative w-40 h-40">
                 <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
                   <path

@@ -1,13 +1,4 @@
-// src/utils/calendarHelpers.js
-// ─────────────────────────────────────────────────────────────
-// Google Calendar URL builders + timeline construction.
-// Consolidated from Opportunities, Applications, Calendar.
-// ─────────────────────────────────────────────────────────────
 
-/**
- * Build a Google Calendar "add event" URL for a single date.
- * Used in Opportunities modal and Applications timeline.
- */
 export function gCalUrl(title, date, details) {
   const d = (date || "").replace(/-/g, "");
   if (!d) return "#";
@@ -20,10 +11,6 @@ export function gCalUrl(title, date, details) {
   return `https://calendar.google.com/calendar/render?${p}`;
 }
 
-/**
- * Build a Google Calendar URL from a timeline step object.
- * Used in Applications timeline rows.
- */
 export function buildGCalUrl(company, step) {
   const d = (step.date || "").replace(/-/g, "");
   if (!d) return "#";
@@ -36,10 +23,6 @@ export function buildGCalUrl(company, step) {
   return `https://calendar.google.com/calendar/render?${p}`;
 }
 
-/**
- * Build the application timeline array from an opportunity object.
- * Used when registering for an opportunity.
- */
 export function buildTimeline(opp) {
   const today = new Date().toISOString().slice(0, 10);
   return [

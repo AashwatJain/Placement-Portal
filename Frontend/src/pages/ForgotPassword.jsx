@@ -43,7 +43,6 @@ export default function ForgotPassword() {
       <div className="w-full max-w-md">
         <div className="rounded-2xl border border-brand-beige-200 bg-white p-8 shadow-lg dark:border-[#3E2315] dark:bg-[#2A1810]">
 
-          {/* Header */}
           <div className="mb-6 text-center">
             <img
               src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTat3s5vPAZPuPZtZnsD3QqoAKaqrluxbtLxA&s"
@@ -61,7 +60,6 @@ export default function ForgotPassword() {
           </div>
 
           {sent ? (
-            /* ── Success State ── */
             <div className="space-y-5 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
                 <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
@@ -78,7 +76,6 @@ export default function ForgotPassword() {
               </p>
             </div>
           ) : (
-            /* ── Email Form ── */
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-brand-brown-700 dark:text-brand-beige-300">Email Address</label>
@@ -99,7 +96,6 @@ export default function ForgotPassword() {
             </form>
           )}
 
-          {/* Back to login */}
           <Link to="/login"
             className="mt-6 flex items-center justify-center gap-1.5 text-sm font-medium text-brand-amber-500 hover:text-[#E89B60] hover:underline transition-colors">
             <ArrowLeft size={14} /> Back to Sign In

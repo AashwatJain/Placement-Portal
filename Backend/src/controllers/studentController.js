@@ -13,7 +13,6 @@ const updateStudentProfile = async (req, res) => {
       return res.status(400).json({ error: "UID is missing!" });
     }
 
-    // Firebase Realtime DB Update Logic
     await db.ref("users/" + uid).update({
       fullName: fullName || "",
       phone: phone || "",
@@ -43,7 +42,6 @@ const updateStudentProfile = async (req, res) => {
   }
 };
 
-// 2. Handles Profile Section: Uploading Avatar and Primary Resume
 const uploadDocuments = async (req, res) => {
   try {
     const { uid } = req.body;
@@ -52,14 +50,12 @@ const uploadDocuments = async (req, res) => {
       return res.status(400).json({ error: "UID is required!" });
     }
 
-    // Multer intercepts the multipart/form-data and places file details in req.files
     const avatarLocalPath = req.files?.avatar?.[0]?.path;
     const resumeLocalPath = req.files?.resume?.[0]?.path;
 
     let avatarUrl = "";
     let resumeUrl = "";
 
-    // Push to object storage (Cloudinary) and retrieve the permanent URLs
     if (avatarLocalPath) {
       const avatarUpload = await uploadOnCloudinary(avatarLocalPath);
       if (avatarUpload) avatarUrl = avatarUpload.secure_url;
@@ -70,7 +66,6 @@ const uploadDocuments = async (req, res) => {
       if (resumeUpload) resumeUrl = resumeUpload.secure_url;
     }
 
-    // Prepare the payload for the database update
     const updateData = {};
     if (avatarUrl) updateData.avatarUrl = avatarUrl;
     if (resumeUrl) updateData.resumeUrl = resumeUrl;
@@ -81,7 +76,6 @@ const uploadDocuments = async (req, res) => {
 
     updateData.updatedAt = Date.now();
 
-    // Save the resulting URLs into the specific user's database node (One-to-One relationship)
     await db.ref("users/" + uid).update(updateData);
 
     res.status(200).json({
@@ -96,21 +90,17 @@ const uploadDocuments = async (req, res) => {
   }
 };
 
-// 3. Handles Vault Section: Uploading Multiple Target-Specific Resumes
 const uploadVaultResume = async (req, res) => {
   try {
     const { uid } = req.body;
     if (!uid) return res.status(400).json({ error: "UID is required!" });
 
-    // Extract the single file passed by Multer (req.file, not req.files)
     const resumeLocalPath = req.file?.path;
     if (!resumeLocalPath) return res.status(400).json({ error: "No file received by server." });
 
-    // Push to Cloudinary
     const uploadResult = await uploadOnCloudinary(resumeLocalPath);
     if (!uploadResult) return res.status(500).json({ error: "Cloudinary upload failed." });
 
-    // Construct the Vault Object
     const resumeId = Date.now().toString();
     const newResume = {
       id: resumeId,
@@ -120,7 +110,6 @@ const uploadVaultResume = async (req, res) => {
       url: uploadResult.secure_url,
     };
 
-    // Write to the one-to-many structure in Firebase (users/uid/resumes/unique_id)
     await db.ref(`users/${uid}/resumes/${resumeId}`).set(newResume);
 
     res.status(200).json({ message: "Resume added to vault", resume: newResume });
@@ -130,13 +119,11 @@ const uploadVaultResume = async (req, res) => {
   }
 };
 
-// 4. Handles deleting a resume from the vault
 const deleteVaultResume = async (req, res) => {
   try {
     const { uid, id } = req.params;
     if (!uid || !id) return res.status(400).json({ error: "UID and Resume ID are required!" });
 
-    // Delete the resume node from Firebase Realtime Database
     await db.ref(`users/${uid}/resumes/${id}`).remove();
 
     res.status(200).json({ message: "Resume deleted successfully" });
@@ -145,13 +132,11 @@ const deleteVaultResume = async (req, res) => {
     res.status(500).json({ error: "Failed to delete resume." });
   }
 };
-// 5. Sets a vault resume as the primary resume (shown on profile)
 const setPrimaryResume = async (req, res) => {
   try {
     const { uid, resumeId } = req.body;
     if (!uid || !resumeId) return res.status(400).json({ error: "UID and Resume ID are required!" });
 
-    // Fetch the vault resume data
     const snapshot = await db.ref(`users/${uid}/resumes/${resumeId}`).once("value");
     if (!snapshot.exists()) {
       return res.status(404).json({ error: "Resume not found in vault." });
@@ -159,7 +144,6 @@ const setPrimaryResume = async (req, res) => {
 
     const resume = snapshot.val();
 
-    // Set the primary resume fields on the user node
     await db.ref(`users/${uid}`).update({
       primaryResumeUrl: resume.url,
       primaryResumeName: resume.name,

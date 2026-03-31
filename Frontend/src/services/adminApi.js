@@ -1,12 +1,6 @@
-// src/services/adminApi.js
-// ─────────────────────────────────────────────────────────────
-// API calls for Admin pages.
-// ─────────────────────────────────────────────────────────────
 
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
-
-// ── Students (used by Admin + Recruiter) ────────────────────
 
 export async function fetchAllStudents() {
     const response = await axios.get(`${API_BASE_URL}/api/admin/students`);
@@ -36,9 +30,6 @@ export async function updateStudentApplication(studentId, oppId, data) {
     return response.data;
 }
 
-
-// ── Questions (Admin Question Bank) ─────────────────────────
-
 export async function fetchQuestions() {
     const response = await axios.get(`${API_BASE_URL}/api/admin/questions`);
     return response.data;
@@ -58,8 +49,6 @@ export async function rejectQuestion(id, reason) {
     const response = await axios.post(`${API_BASE_URL}/api/admin/questions/${id}/reject`, { reason });
     return response.data;
 }
-
-// ── Company JAFs (Admin Company Management) ────────────────
 
 export async function fetchJafs(companyName) {
     const url = companyName ? `${API_BASE_URL}/api/admin/jafs?companyName=${encodeURIComponent(companyName)}` : `${API_BASE_URL}/api/admin/jafs`;
@@ -82,7 +71,6 @@ export async function deleteJaf(id) {
     return response.data;
 }
 
-// ── Admin Dashboard API ─────────
 export async function fetchPlacementOverview() {
     const response = await axios.get(`${API_BASE_URL}/api/admin/stats/placement-overview`);
     return response.data;
@@ -98,7 +86,6 @@ export async function fetchDashboardTrend() {
     return response.data;
 }
 
-// ── Admin Notifications ─────────
 export async function createNotification(data) {
     const response = await axios.post(`${API_BASE_URL}/api/admin/notifications`, data);
     return response.data;

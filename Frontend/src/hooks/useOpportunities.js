@@ -1,5 +1,3 @@
-// src/hooks/useOpportunities.js
-// Real-time listener on Firestore "opportunities" collection.
 import { useState, useEffect } from "react";
 import { fetchOpportunities } from "../services/studentApi";
 

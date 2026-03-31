@@ -9,8 +9,6 @@ import { API_BASE_URL } from "../../config/api";
 import { useAuth } from "../../context/AuthContext";
 import { useCompanies } from "../../hooks/useCompanies";
 
-/* ── Normalization (mirrors backend scoringUtil.js) ──────────────────────── */
-
 const toScore = (val, cap) =>
   Math.round(Math.min(100, Math.max(0, (val / cap) * 100)) * 100) / 100;
 
@@ -26,8 +24,6 @@ const computeProfileVector = (platforms) => {
   return [dsaScore, devScore, cpScore];
 };
 
-/* ── Helpers ─────────────────────────────────────────────────────────────── */
-
 const chanceTag = (s) =>
   s >= 75 ? { label: "Strong",   cls: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800" }
   : s >= 45 ? { label: "Moderate", cls: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800" }
@@ -40,8 +36,6 @@ const tipText = (s) =>
   s >= 75 ? "Your profile lines up well — focus on interview prep and resume polish."
   : s >= 45 ? "You're in the zone. Pushing your LeetCode or CF rating up a notch will help."
   : "Focus on your weakest area — more LC problems or CP contests can move the needle.";
-
-/* ── Animated Score Ring ─────────────────────────────────────────────────── */
 
 function ScoreRing({ value, size = 100, strokeWidth = 8, color, label, icon: Icon }) {
   const radius = (size - strokeWidth) / 2;
@@ -70,8 +64,6 @@ function ScoreRing({ value, size = 100, strokeWidth = 8, color, label, icon: Ico
   );
 }
 
-/* ── Rank Badge ──────────────────────────────────────────────────────────── */
-
 function RankBadge({ rank }) {
   const colors = {
     1: "from-yellow-400 to-amber-500 text-amber-950 shadow-amber-300/30",
@@ -87,12 +79,6 @@ function RankBadge({ rank }) {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════ */
-/* ── Main Page Component ────────────────────────────────────────────────── */
-/* ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Known company names for autocomplete ────────────────────────────────── */
-
 const COMPANY_NAMES = [
   "Google", "Microsoft", "Amazon", "Adobe", "Uber", "Directi",
   "DE Shaw", "Goldman Sachs", "JP Morgan Chase & Co.", "Morgan Stanley",
@@ -104,24 +90,20 @@ export default function PlacementInsights() {
   const { user } = useAuth();
   const { companies: allCompanies } = useCompanies();
 
-  // Profile
   const [studentProfile, setStudentProfile] = useState(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [scores, setScores] = useState({ dsa: 0, dev: 0, cp: 0 });
 
-  // Recommendations
   const [mlRecommendations, setMlRecommendations] = useState([]);
   const [isLoadingRecs, setIsLoadingRecs] = useState(false);
   const [recsError, setRecsError] = useState(null);
 
-  // Chances
   const [companyInput, setCompanyInput] = useState("");
   const [chance, setChance] = useState(null);
   const [isLoadingChance, setIsLoadingChance] = useState(false);
   const [chanceError, setChanceError] = useState(null);
   const [searched, setSearched] = useState(false);
 
-  // Autocomplete
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestions = companyInput.trim().length > 0
     ? COMPANY_NAMES.filter(name =>
@@ -129,7 +111,6 @@ export default function PlacementInsights() {
       )
     : [];
 
-  /* ── Fetch real profile ────────────────────────────────────────────────── */
   const fetchProfile = useCallback(async () => {
     if (!user?.uid) return;
     setIsLoadingProfile(true);
@@ -147,7 +128,6 @@ export default function PlacementInsights() {
 
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
-  /* ── Fetch recommendations ─────────────────────────────────────────────── */
   const fetchRecs = useCallback(async (vec) => {
     if (!vec) return;
     setIsLoadingRecs(true); setRecsError(null);
@@ -164,7 +144,6 @@ export default function PlacementInsights() {
 
   useEffect(() => { if (studentProfile) fetchRecs(studentProfile); }, [studentProfile, fetchRecs]);
 
-  /* ── Predict chance ────────────────────────────────────────────────────── */
   const predictChance = async () => {
     const name = companyInput.trim();
     if (!name || !studentProfile) return;
@@ -181,7 +160,6 @@ export default function PlacementInsights() {
     finally { setIsLoadingChance(false); }
   };
 
-  /* ── Build top 5 recommendations ───────────────────────────────────────── */
   const top5 = (() => {
     if (mlRecommendations.length === 0) return [];
 
@@ -190,13 +168,11 @@ export default function PlacementInsights() {
       mlMap[r.placedCompany.toLowerCase()] = r.confidenceScore;
     });
 
-    // Match ML recommendations with company details from DB
     const scored = allCompanies.map(c => ({
       ...c,
       matchScore: mlMap[c.name?.toLowerCase()] || 0,
     }));
 
-    // Also include ML recommendations not found in DB companies
     mlRecommendations.forEach(r => {
       const exists = scored.some(s => s.name?.toLowerCase() === r.placedCompany.toLowerCase());
       if (!exists) {
@@ -215,11 +191,9 @@ export default function PlacementInsights() {
   const tag = chance !== null ? chanceTag(chance) : null;
   const isLoading = isLoadingProfile || isLoadingRecs;
 
-  /* ── Render ────────────────────────────────────────────────────────────── */
   return (
     <div className="space-y-8">
 
-      {/* ── Page Header ──────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-brand-amber-500 text-white shadow-lg shadow-brand-amber-500/100/25">
@@ -240,8 +214,6 @@ export default function PlacementInsights() {
         </button>
       </div>
 
-
-      {/* ── Profile Score Cards ──────────────────────────────────────────── */}
       <section className="rounded-2xl border border-brand-beige-200 bg-gradient-to-br from-white via-white to-brand-amber-500/10/50 p-6 shadow-sm dark:border-[#3E2315] dark:from-[#1A0F08] dark:via-[#1A0F08] dark:to-brand-amber-900/20">
         <div className="mb-5 flex items-center gap-2">
           <Sparkles size={16} className="text-brand-amber-500/100" />
@@ -270,8 +242,6 @@ export default function PlacementInsights() {
         )}
       </section>
 
-
-      {/* ── Top 5 Recommended Companies ──────────────────────────────────── */}
       <section>
         <div className="mb-4 flex items-center gap-2">
           <Trophy size={18} className="text-amber-500" />
@@ -312,12 +282,10 @@ export default function PlacementInsights() {
                 <div key={c.id || c.name}
                   className="group relative rounded-xl border border-brand-beige-200 bg-white p-5 transition-all hover:shadow-lg hover:border-brand-beige-300 hover:-translate-y-0.5 dark:border-[#3E2315] dark:bg-[#1A0F08] dark:hover:border-brand-brown-700"
                 >
-                  {/* Rank Badge */}
                   <div className="absolute -top-3 -left-2">
                     <RankBadge rank={idx + 1} />
                   </div>
 
-                  {/* Company Info */}
                   <div className="ml-6 mb-4">
                     <div className="flex items-start justify-between">
                       <h3 className="font-bold text-brand-brown-900 dark:text-white text-base leading-tight">
@@ -334,7 +302,6 @@ export default function PlacementInsights() {
                     )}
                   </div>
 
-                  {/* Score Bar */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-medium text-brand-cream-500 dark:text-brand-beige-400">Match Score</span>
@@ -346,7 +313,6 @@ export default function PlacementInsights() {
                     </div>
                   </div>
 
-                  {/* CTA */}
                   {c.cgpaCutoff && (
                     <p className="mt-3 text-[11px] text-brand-brown-400 dark:text-brand-beige-500">
                       CGPA Cutoff: <span className="font-semibold text-brand-brown-600 dark:text-brand-beige-300">{c.cgpaCutoff}+</span>
@@ -380,8 +346,6 @@ export default function PlacementInsights() {
         )}
       </section>
 
-
-      {/* ── Check My Chances (with Autocomplete) ─────────────────────────── */}
       <section className="rounded-2xl border border-brand-beige-200 bg-white p-6 shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]">
         <div className="mb-4 flex items-center gap-2">
           <Search size={18} className="text-brand-cream-500 dark:text-brand-beige-400" />
@@ -403,7 +367,6 @@ export default function PlacementInsights() {
               autoComplete="off"
               className="w-full rounded-xl border border-brand-beige-200 bg-white py-2.5 pl-10 pr-4 text-sm text-brand-brown-900 placeholder:text-brand-brown-400 outline-none focus:border-brand-amber-500 focus:ring-2 focus:ring-brand-amber-500/20 dark:border-[#5A3D2B] dark:bg-[#2A1810] dark:text-white dark:placeholder:text-brand-cream-500 dark:focus:border-brand-amber-500/100 transition" />
 
-            {/* ── Autocomplete dropdown ── */}
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-52 overflow-y-auto rounded-xl border border-brand-beige-200 bg-white shadow-xl dark:border-[#5A3D2B] dark:bg-[#2A1810]">
                 {suggestions.map((name) => {
@@ -441,7 +404,6 @@ export default function PlacementInsights() {
           <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">{chanceError}</p>
         )}
 
-        {/* Result */}
         {!isLoadingChance && !chanceError && searched && chance !== null && (
           <div className="mt-5 rounded-xl border border-brand-beige-100 bg-gradient-to-br from-brand-cream-50 to-white p-5 dark:border-[#3E2315] dark:from-brand-brown-800/50 dark:to-[#1A0F08]">
             <div className="flex items-center justify-between mb-3">

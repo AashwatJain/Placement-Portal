@@ -5,7 +5,6 @@ import PageLoader from "../../components/ui/PageLoader";
 import { useToast } from "../../context/ToastContext";
 import { ArrowUpDown, X, FileText, Filter, Loader2, CheckCircle, AlertCircle, Save, CheckSquare, Square, Download, Bell, RefreshCw, Briefcase, ChevronDown, ChevronRight, Clock, Calendar as CalendarIcon } from "lucide-react";
 
-// Custom weights for specific columns
 const BRANCH_WEIGHTS = {
   CS: 8,
   IT: 7,
@@ -37,8 +36,6 @@ const getStatusStyles = (status) => {
   return "bg-brand-beige-100 text-brand-brown-700 dark:bg-[#2A1810] dark:text-brand-beige-400";
 };
 
-
-
 export default function StudentManagement() {
   const { showToast } = useToast();
   const [students, setStudents] = useState([]);
@@ -47,29 +44,23 @@ export default function StudentManagement() {
   const [search, setSearch] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
-  // Advanced Filter States
   const [statusFilter, setStatusFilter] = useState("All");
   const [branchFilter, setBranchFilter] = useState("All");
   const [yearFilter, setYearFilter] = useState("All");
   const [minCgpa, setMinCgpa] = useState("");
 
-
-  // Modal State
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [modalTab, setModalTab] = useState("applications"); // "applications" | "resume"
-  const [expandedApp, setExpandedApp] = useState(null); // oppId of expanded app
-  const [updatingStep, setUpdatingStep] = useState(null); // "oppId-stepIndex"
+  const [modalTab, setModalTab] = useState("applications");
+  const [expandedApp, setExpandedApp] = useState(null);
+  const [updatingStep, setUpdatingStep] = useState(null);
 
-  // Status Modal State
-  const [statusModal, setStatusModal] = useState(null); // { student, newStatus: 'Placed' }
+  const [statusModal, setStatusModal] = useState(null);
   const [placedCompany, setPlacedCompany] = useState("");
   const [placedOfferUrl, setPlacedOfferUrl] = useState("");
 
-  // Resume Review State
   const [resumeReview, setResumeReview] = useState({ isVerified: false, comment: "" });
   const [isUpdatingResume, setIsUpdatingResume] = useState(false);
 
-  // Bulk Selection State
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkStatus, setBulkStatus] = useState("");
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
@@ -91,7 +82,6 @@ export default function StudentManagement() {
         return;
     }
     
-    // Direct update for Unplaced / Opted-out
     try {
         await updateStudentStatus(student.id, { status: newStatus });
         setStudents(prev => prev.map(s => s.id === student.id ? { ...s, status: newStatus, companyName: null, offerLetterUrl: null } : s));
@@ -145,7 +135,6 @@ export default function StudentManagement() {
       }
   };
 
-  // Fetch students from API
   const loadStudents = useCallback(async (showSpinner = true) => {
     if (showSpinner) setLoading(true);
     setFetchError(false);
@@ -165,34 +154,25 @@ export default function StudentManagement() {
     loadStudents();
   }, [loadStudents]);
 
-  // Handle Filtering (Search + Advanced Filters)
   const filtered = useMemo(() => {
     return students.filter((s) => {
-      // 1. Search Match
       const matchesSearch =
         (s.name || "").toLowerCase().includes(search.toLowerCase()) ||
         (s.branch || "").toLowerCase().includes(search.toLowerCase());
 
-      // 2. Status Match
       const matchesStatus = statusFilter === "All" || s.status === statusFilter;
 
-      // 3. Branch Match
       const matchesBranch = branchFilter === "All" || (s.branch || "").toUpperCase() === branchFilter.toUpperCase();
 
-      // 4. Year Match
       const matchesYear = yearFilter === "All" || String(s.year) === String(yearFilter);
 
-      // 5. Custom Min CGPA Match
       const cgpaThreshold = parseFloat(minCgpa);
       const matchesCGPA = isNaN(cgpaThreshold) || s.cgpa >= cgpaThreshold;
-
-
 
       return matchesSearch && matchesStatus && matchesBranch && matchesYear && matchesCGPA;
     });
   }, [students, search, statusFilter, branchFilter, yearFilter, minCgpa]);
 
-  // Handle Custom Sorting
   const sortedStudents = useMemo(() => {
     let sortableItems = [...filtered];
 
@@ -200,7 +180,6 @@ export default function StudentManagement() {
       sortableItems.sort((a, b) => {
         let valA = a[sortConfig.key];
         let valB = b[sortConfig.key];
-
 
         if (sortConfig.key === "branch") {
           let weightA = BRANCH_WEIGHTS[valA?.toUpperCase()] || 0;
@@ -242,7 +221,6 @@ export default function StudentManagement() {
     setExpandedApp(null);
   };
 
-  // --- Application Timeline Step Toggle ---
   const handleToggleStep = async (oppId, stepIndex, currentDone, timeline) => {
     if (!selectedStudent) return;
     const newDone = !currentDone;
@@ -255,7 +233,6 @@ export default function StudentManagement() {
         date: newDone ? today : null,
         newStatus: newDone ? timeline[stepIndex]?.step : undefined,
       });
-      // Update local state
       setStudents(prev => prev.map(s => {
         if (s.id !== selectedStudent.id) return s;
         const apps = { ...s.applications };
@@ -318,7 +295,6 @@ export default function StudentManagement() {
     setMinCgpa("");
   };
 
-  // --- Bulk-Action Handlers ---
   const toggleSelectStudent = useCallback((id, e) => {
     e.stopPropagation();
     setSelectedIds(prev => {
@@ -387,10 +363,8 @@ export default function StudentManagement() {
         </div>
       </div>
 
-      {/* --- ADVANCED FILTER CONTROLS --- */}
       <div className="bg-white dark:bg-[#1A0F08] p-5 rounded-xl border border-brand-beige-200 dark:border-[#5A3D2B] shadow-sm space-y-4">
 
-        {/* Top Row: Search, Status, Branch */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-2">
             <label className="block text-xs font-semibold text-brand-cream-500 mb-1.5 uppercase">Search</label>
@@ -438,7 +412,6 @@ export default function StudentManagement() {
           </div>
         </div>
 
-        {/* Bottom Row: Year, Custom CGPA, Custom CF Rating */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-semibold text-brand-cream-500 mb-1.5 uppercase">Batch Year</label>
@@ -473,10 +446,8 @@ export default function StudentManagement() {
 
       </div>
 
-      {/* Loading State */}
       {loading && <PageLoader message="Loading students..." />}
 
-      {/* --- TABLE --- */}
       {!loading && (
         <div className="overflow-hidden rounded-xl border border-brand-beige-200 dark:border-[#5A3D2B] bg-white dark:bg-[#1A0F08] shadow-sm transition-colors">
           <div className="overflow-x-auto">
@@ -521,7 +492,6 @@ export default function StudentManagement() {
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-brand-brown-600 dark:text-brand-beige-400">
                       {s.branch}
                     </td>
-                    {/* SEPARATED YEAR COLUMN */}
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-brand-brown-600 dark:text-brand-beige-400">
                       {s.year}
                     </td>
@@ -572,7 +542,6 @@ export default function StudentManagement() {
         </div>
       )}
 
-      {/* --- BULK ACTION TOOLBAR (floating) --- */}
       {selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-brand-brown-900 dark:bg-white text-white dark:text-brand-brown-900 rounded-2xl shadow-2xl px-6 py-3.5 flex items-center gap-4 animate-in slide-in-from-bottom-4 fade-in duration-300">
             <span className="text-sm font-semibold">
@@ -580,7 +549,6 @@ export default function StudentManagement() {
             </span>
             <div className="h-5 w-px bg-brand-brown-600 dark:bg-brand-beige-300"></div>
 
-            {/* Bulk Status Change */}
             <div className="flex items-center gap-2">
                 <select
                     value={bulkStatus}
@@ -606,7 +574,6 @@ export default function StudentManagement() {
 
             <div className="h-5 w-px bg-brand-brown-600 dark:bg-brand-beige-300"></div>
 
-            {/* Export */}
             <button
                 onClick={handleExportCSV}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-md text-xs font-semibold transition-colors"
@@ -614,7 +581,6 @@ export default function StudentManagement() {
                 <Download size={13} /> Export CSV
             </button>
 
-            {/* Deselect */}
             <button
                 onClick={() => setSelectedIds(new Set())}
                 className="p-1.5 rounded-full hover:bg-brand-brown-700 dark:hover:bg-brand-beige-200 transition-colors ml-2"
@@ -625,7 +591,6 @@ export default function StudentManagement() {
         </div>
       )}
 
-      {/* --- STATUS UPDATE MODAL --- */}
       {statusModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-brown-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-[#1A0F08] border border-brand-beige-200 dark:border-[#5A3D2B] rounded-2xl shadow-2xl w-full max-w-md p-6">
@@ -649,12 +614,10 @@ export default function StudentManagement() {
         </div>
       )}
 
-      {/* --- STUDENT DETAIL MODAL (TABBED) --- */}
       {selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-brown-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#1A0F08] border border-brand-beige-200 dark:border-[#5A3D2B] rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
 
-            {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-brand-beige-100 dark:border-[#3E2315] bg-brand-cream-50 dark:bg-[#2A1810]/50">
               <div>
                 <h2 className="text-lg font-bold text-brand-brown-900 dark:text-white flex items-center gap-2">
@@ -673,7 +636,6 @@ export default function StudentManagement() {
               </button>
             </div>
 
-            {/* Tab Switcher */}
             <div className="flex border-b border-brand-beige-200 dark:border-[#5A3D2B] bg-white dark:bg-[#1A0F08]">
               <button
                 onClick={() => setModalTab("applications")}
@@ -702,10 +664,8 @@ export default function StudentManagement() {
               </button>
             </div>
 
-            {/* Tab Content */}
             <div className="flex-1 overflow-y-auto">
 
-              {/* ═══ APPLICATIONS TAB ═══ */}
               {modalTab === "applications" && (
                 <div className="p-6 space-y-3">
                   {!selectedStudent.applications || Object.keys(selectedStudent.applications).length === 0 ? (
@@ -723,7 +683,6 @@ export default function StudentManagement() {
 
                       return (
                         <div key={oppId} className="rounded-xl border border-brand-beige-200 dark:border-[#5A3D2B] overflow-hidden transition-all">
-                          {/* Company Row */}
                           <button
                             onClick={() => setExpandedApp(isExpanded ? null : oppId)}
                             className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-brand-cream-50 dark:hover:bg-brand-brown-800/50 transition-colors"
@@ -749,7 +708,6 @@ export default function StudentManagement() {
                             </div>
                           </button>
 
-                          {/* Expanded Timeline */}
                           {isExpanded && (
                             <div className="border-t border-brand-beige-200 dark:border-[#5A3D2B] bg-brand-cream-50/50 dark:bg-[#2A1810]/30 px-5 py-5">
                               {app.status === "Rejected" && (
@@ -764,13 +722,11 @@ export default function StudentManagement() {
                                   const isLoading = updatingStep === `${oppId}-${idx}`;
                                   return (
                                     <div key={idx} className="relative flex items-start gap-4 pb-5">
-                                      {/* Connecting line */}
                                       {!isLast && (
                                         <div className={`absolute left-[15px] top-8 w-0.5 h-[calc(100%-10px)] transition-colors ${
                                           step.done ? "bg-green-400 dark:bg-green-600" : "bg-brand-beige-200 dark:bg-brand-brown-700"
                                         }`} />
                                       )}
-                                      {/* Step dot / checkbox */}
                                       <button
                                         onClick={() => handleToggleStep(oppId, idx, step.done, timeline)}
                                         disabled={isLoading}
@@ -783,7 +739,6 @@ export default function StudentManagement() {
                                       >
                                         {isLoading ? <Loader2 size={14} className="animate-spin" /> : step.done ? <CheckCircle size={14} /> : <Clock size={14} />}
                                       </button>
-                                      {/* Step info */}
                                       <div className="flex-1 min-w-0 pt-1">
                                         <div className="flex items-center gap-2 flex-wrap">
                                           <p className={`text-sm font-bold ${step.done ? "text-brand-brown-900 dark:text-white" : "text-brand-brown-400 dark:text-brand-beige-500"}`}>{step.step}</p>
@@ -800,7 +755,6 @@ export default function StudentManagement() {
                                 })}
                               </div>
 
-                              {/* Action Buttons */}
                               <div className="flex items-center gap-3 mt-4 pt-4 border-t border-brand-beige-200 dark:border-[#5A3D2B]">
                                 <button
                                   onClick={() => handleRejectApplication(oppId)}
@@ -824,10 +778,8 @@ export default function StudentManagement() {
                 </div>
               )}
 
-              {/* ═══ RESUME TAB ═══ */}
               {modalTab === "resume" && (
                 <div className="flex-1 flex h-full" style={{ minHeight: "calc(85vh - 130px)" }}>
-                  {/* Resume Preview */}
                   <div className="flex-1 bg-brand-beige-100 dark:bg-[#1A0F08] p-4 relative overflow-hidden">
                     {selectedStudent.resumeUrl ? (
                       <iframe
@@ -844,7 +796,6 @@ export default function StudentManagement() {
                     )}
                   </div>
 
-                  {/* Admin Review Sidebar */}
                   <div className="w-80 border-l border-brand-beige-200 dark:border-[#5A3D2B] bg-white dark:bg-[#1A0F08] p-5 flex flex-col items-stretch overflow-y-auto">
                     <h3 className="text-sm font-bold text-brand-brown-900 dark:text-white mb-4 uppercase tracking-wider">Admin Review</h3>
                     

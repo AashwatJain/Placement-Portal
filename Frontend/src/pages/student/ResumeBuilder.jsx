@@ -31,7 +31,6 @@ export default function ResumeBuilder() {
 
   const [resumes, setResumes] = useState([]);
 
-  // ATS Match state
   const [atsFile, setAtsFile] = useState(null);
   const [atsScore, setAtsScore] = useState(null);
   const [isCalculatingAts, setIsCalculatingAts] = useState(false);
@@ -117,7 +116,6 @@ export default function ResumeBuilder() {
 
   const isPrimary = (resumeId) => user?.primaryResumeId === resumeId;
 
-  // ── Metrics handler ────────────────────────────────────────────────────────
   const handleMetrics = async (resume) => {
     setMetricsLoading(resume.id);
     try {
@@ -143,7 +141,6 @@ export default function ResumeBuilder() {
     }
   };
 
-  // ── ATS Match handler ──────────────────────────────────────────────────────
   const handleCalculateAts = async () => {
     if (!atsFile) return;
     setIsCalculatingAts(true);
@@ -186,53 +183,49 @@ export default function ResumeBuilder() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-16 relative">
+    <div className="mx-auto max-w-5xl space-y-8 pb-16 relative">
 
-      {/* ═══ HEADER ═══ */}
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">Resume Vault</h1>
-          <p className="mt-0.5 text-sm text-brand-brown-600 dark:text-brand-beige-400">Upload resumes, set your primary, and check ATS scores.</p>
+          <p className="mt-1 text-sm text-brand-brown-600 dark:text-brand-beige-400">Upload resumes, set your primary, and check ATS scores.</p>
         </div>
         <div className="hidden sm:flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-beige-100 px-2.5 py-1 text-xs font-medium text-brand-brown-700 dark:bg-[#3E2315] dark:text-brand-beige-300">
-            <FileText size={12} /> {resumes.length} file{resumes.length !== 1 ? "s" : ""}
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-beige-100 px-3 py-1.5 text-xs font-medium text-brand-brown-700 dark:bg-[#3E2315] dark:text-brand-beige-300">
+            <FileText size={13} /> {resumes.length} file{resumes.length !== 1 ? "s" : ""}
           </span>
         </div>
       </div>
 
-      {/* ═══ UPLOAD ═══ */}
-      <div className="grid gap-5 lg:grid-cols-2">
-
-        {/* Upload Card */}
-        <div
-          onClick={handleBoxClick}
-          className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-brand-beige-300 bg-white py-10 transition-all hover:border-brand-amber-500 hover:shadow-lg hover:shadow-brand-amber-500/5 dark:border-[#5A3D2B] dark:bg-[#1A0F08] dark:hover:border-[#E89B60] ${isAnalyzing ? 'pointer-events-none opacity-70' : ''}`}
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            accept=".pdf,.doc,.docx"
-          />
-          <div className="mb-3 rounded-2xl bg-brand-amber-500/10 p-4 transition-transform group-hover:scale-110 dark:bg-[#E89B60]/20">
-            {isAnalyzing ? (
-              <Loader2 className="animate-spin text-brand-amber-500 dark:text-[#E89B60]" size={28} />
-            ) : (
-              <UploadCloud className="text-brand-amber-500 dark:text-[#E89B60]" size={28} />
-            )}
-          </div>
-          <p className="text-sm font-semibold text-brand-brown-900 dark:text-white">
-            {isAnalyzing ? "Uploading..." : "Upload Resume"}
-          </p>
-          <p className="mt-0.5 text-xs text-brand-brown-600 dark:text-brand-beige-400">PDF, DOCX up to 5MB</p>
+      <div
+        onClick={handleBoxClick}
+        className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-brand-beige-300 bg-white px-6 py-12 transition-all hover:border-brand-amber-500 hover:shadow-xl hover:shadow-brand-amber-500/10 dark:border-[#5A3D2B] dark:bg-[#1A0F08] dark:hover:border-[#E89B60] overflow-hidden ${isAnalyzing ? 'pointer-events-none opacity-70' : ''}`}
+      >
+        <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-brand-amber-500/5 blur-2xl group-hover:bg-brand-amber-500/10 transition-all dark:bg-[#E89B60]/5 dark:group-hover:bg-[#E89B60]/10" />
+        <div className="absolute -left-6 -bottom-6 h-20 w-20 rounded-full bg-brand-amber-500/5 blur-xl group-hover:bg-brand-amber-500/10 transition-all dark:bg-[#E89B60]/5" />
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept=".pdf,.doc,.docx"
+        />
+        <div className="relative mb-4 rounded-2xl bg-gradient-to-br from-brand-amber-500/15 to-brand-amber-500/5 p-5 transition-transform group-hover:scale-110 dark:from-[#E89B60]/20 dark:to-[#E89B60]/5">
+          {isAnalyzing ? (
+            <Loader2 className="animate-spin text-brand-amber-500 dark:text-[#E89B60]" size={32} />
+          ) : (
+            <UploadCloud className="text-brand-amber-500 dark:text-[#E89B60]" size={32} />
+          )}
+        </div>
+        <p className="relative text-sm font-bold text-brand-brown-900 dark:text-white">
+          {isAnalyzing ? "Uploading..." : "Upload Resume"}
+        </p>
+        <p className="relative mt-1 text-xs text-brand-brown-500 dark:text-brand-beige-400">PDF, DOCX up to 5MB</p>
+        <div className="relative mt-4 flex items-center gap-2 rounded-full bg-brand-amber-500/10 px-3 py-1.5 text-[10px] font-semibold text-brand-amber-600 uppercase tracking-wider dark:bg-[#E89B60]/15 dark:text-[#E89B60]">
+          <Sparkles size={10} /> Drag & drop or click
         </div>
       </div>
 
-
-
-      {/* ═══ MY RESUMES ═══ */}
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-brand-brown-900 dark:text-white">My Resumes</h2>
@@ -240,12 +233,23 @@ export default function ResumeBuilder() {
         </div>
 
         {resumes.length === 0 ? (
-          <div className="rounded-2xl border-2 border-dashed border-brand-beige-200 bg-brand-cream-50 py-16 text-center dark:border-[#3E2315] dark:bg-[#1A0F08]">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white dark:bg-[#2A1810]">
-              <FileText size={24} className="text-brand-brown-400 dark:text-brand-beige-500" />
+          <div className="relative rounded-2xl border-2 border-dashed border-brand-beige-200 bg-gradient-to-b from-brand-cream-50 to-white py-14 text-center dark:border-[#3E2315] dark:from-[#1A0F08] dark:to-[#1A0F08] overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] dark:opacity-[0.02]">
+              <FileText size={200} className="text-brand-brown-900 dark:text-white" />
             </div>
-            <p className="text-sm font-medium text-brand-brown-600 dark:text-brand-beige-400">No resumes yet</p>
-            <p className="text-xs text-brand-brown-400 mt-1 dark:text-brand-beige-500">Upload your first resume to get started</p>
+            <div className="relative">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-beige-100 to-white shadow-sm dark:from-[#2A1810] dark:to-[#1A0F08]">
+                <FileText size={28} className="text-brand-brown-400 dark:text-brand-beige-500" />
+              </div>
+              <p className="text-sm font-semibold text-brand-brown-700 dark:text-brand-beige-300">No resumes yet</p>
+              <p className="text-xs text-brand-brown-400 mt-1.5 dark:text-brand-beige-500">Upload your first resume to get started</p>
+              <button
+                onClick={handleBoxClick}
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-amber-500 to-[#E89B60] px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-brand-amber-500/20 hover:shadow-lg hover:shadow-brand-amber-500/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <UploadCloud size={14} /> Upload Your Resume
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -261,7 +265,6 @@ export default function ResumeBuilder() {
                       : "border-brand-beige-200 bg-white hover:border-brand-beige-300 dark:border-[#3E2315] dark:bg-[#1A0F08] dark:hover:border-[#5A3D2B]"
                   }`}
                 >
-                  {/* Left: Icon */}
                   <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
                     primary
                       ? "bg-brand-amber-500/20 text-brand-amber-500 dark:bg-[#E89B60]/20 dark:text-[#E89B60]"
@@ -270,7 +273,6 @@ export default function ResumeBuilder() {
                     <FileText size={20} />
                   </div>
 
-                  {/* Middle: Info */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h4 className="truncate text-sm font-semibold text-brand-brown-900 dark:text-white" title={resume.name}>
@@ -289,7 +291,6 @@ export default function ResumeBuilder() {
                     </div>
                   </div>
 
-                  {/* Right: Actions */}
                   <div className="flex shrink-0 items-center gap-1.5">
                     <button
                       onClick={() => handleMetrics(resume)}
@@ -342,7 +343,6 @@ export default function ResumeBuilder() {
         )}
       </div>
 
-      {/* ═══ ATS SCORE MODAL ═══ */}
       {selectedAnalysis && (() => {
         const score = selectedAnalysis.score;
         const info = getScoreInfo(score);
@@ -353,7 +353,6 @@ export default function ResumeBuilder() {
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setSelectedAnalysis(null)}>
             <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl dark:bg-[#1A0F08] border border-brand-beige-200 dark:border-[#3E2315] overflow-hidden animate-in" onClick={(e) => e.stopPropagation()}>
 
-              {/* Modal Header */}
               <div className="relative overflow-hidden bg-gradient-to-br from-brand-amber-500 to-[#E89B60] px-6 py-5 text-white">
                 <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl" />
                 <div className="relative z-10 flex items-center justify-between">
@@ -367,7 +366,6 @@ export default function ResumeBuilder() {
                 </div>
               </div>
 
-              {/* Score Ring */}
               <div className="flex flex-col items-center py-8">
                 <div className="relative">
                   <svg width="150" height="150" className="-rotate-90">
@@ -413,7 +411,6 @@ export default function ResumeBuilder() {
                 )}
               </div>
 
-              {/* Footer */}
               <div className="border-t border-brand-beige-100 px-5 py-3 bg-brand-cream-50 dark:border-[#3E2315] dark:bg-[#2A1810] flex justify-end gap-2">
                 <button
                   onClick={() => setSelectedAnalysis(null)}

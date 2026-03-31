@@ -26,7 +26,6 @@ export default function CompanyAdd() {
   const [saved, setSaved] = useState(false);
   const [editId, setEditId] = useState(null);
 
-  // Shortlist Manager State
   const [shortlistModal, setShortlistModal] = useState(null);
   const [shortlistTab, setShortlistTab] = useState("auto");
   const [autoFilter, setAutoFilter] = useState({ branch: "", minCgpa: "" });
@@ -34,13 +33,11 @@ export default function CompanyAdd() {
   const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Filter States
   const [search, setSearch] = useState("");
   const [offerTypeFilter, setOfferTypeFilter] = useState("All");
   const [driveTypeFilter, setDriveTypeFilter] = useState("All");
   const [cgpaFilter, setCgpaFilter] = useState("All");
 
-  // Load companies from backend on mount
   useEffect(() => {
     const load = async () => {
       try {
@@ -117,7 +114,6 @@ export default function CompanyAdd() {
     }
   };
 
-  // --- FILTERING LOGIC ---
   const filteredCompanies = useMemo(() => {
     return companies.filter((c) => {
       const matchesSearch = 
@@ -145,7 +141,6 @@ export default function CompanyAdd() {
     setCgpaFilter("All");
   };
 
-  // --- SHORTLIST MANAGER LOGIC ---
   const handleOpenShortlist = (company) => {
       setShortlistModal(company);
       setAutoFilter({ branch: "", minCgpa: company.cgpaCutoff || "" });
@@ -207,13 +202,11 @@ export default function CompanyAdd() {
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-10">
       
-      {/* HEADER */}
       <div>
         <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white">Manage Companies</h1>
         <p className="text-brand-brown-600 dark:text-brand-beige-400">Add new companies, filter drives, and update placement details.</p>
       </div>
 
-      {/* ADD / EDIT FORM */}
       <form 
         onSubmit={handleSubmit} 
         className={`rounded-xl border bg-white p-6 shadow-sm transition-all duration-300 dark:bg-[#1A0F08] ${
@@ -290,7 +283,6 @@ export default function CompanyAdd() {
             />
           </div>
 
-          {/* Eligibility Rules */}
           <div className="sm:col-span-2 lg:col-span-3 mt-4 border-t border-brand-beige-100 dark:border-[#3E2315] pt-4">
               <label className="block text-xs font-semibold uppercase text-brand-cream-500 dark:text-brand-beige-400 mb-3">Eligibility Rules</label>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -433,7 +425,6 @@ export default function CompanyAdd() {
         </div>
       </form>
 
-      {/* FILTER SECTION */}
       <div className="pt-6">
         <h2 className="text-lg font-bold text-brand-brown-900 dark:text-white mb-4">Available Companies</h2>
         
@@ -489,7 +480,6 @@ export default function CompanyAdd() {
           </div>
         </div>
 
-        {/* TABLE */}
         <div className="overflow-hidden rounded-xl border border-brand-beige-200 dark:border-[#5A3D2B] bg-white dark:bg-[#1A0F08] shadow-sm transition-colors">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-brand-beige-200 dark:divide-brand-brown-700">
@@ -591,7 +581,6 @@ export default function CompanyAdd() {
         </div>
       </div>
 
-      {/* SHORTLIST SETTINGS MODAL */}
       {shortlistModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-brown-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-[#1A0F08] border border-brand-beige-200 dark:border-[#5A3D2B] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
@@ -608,10 +597,8 @@ export default function CompanyAdd() {
                 </div>
 
                 <div className="flex flex-1 overflow-hidden">
-                    {/* Left Sidebar: Controls */}
                     <div className="w-80 border-r border-brand-beige-200 dark:border-[#5A3D2B] bg-brand-cream-50 dark:bg-[#2A1810]/30 p-5 flex flex-col gap-6 overflow-y-auto">
                         
-                        {/* Tabs */}
                         <div className="flex bg-brand-beige-200/50 dark:bg-[#2A1810] p-1 rounded-lg">
                             <button 
                                 onClick={() => setShortlistTab("auto")} 
@@ -699,7 +686,6 @@ export default function CompanyAdd() {
                         </div>
                     </div>
 
-                    {/* Right Content: Candidate List */}
                     <div className="flex-1 bg-white dark:bg-[#1A0F08] p-5 overflow-y-auto">
                         {shortlistCandidates.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-brand-brown-400">

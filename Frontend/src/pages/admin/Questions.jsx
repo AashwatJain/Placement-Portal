@@ -13,7 +13,6 @@ export default function AdminQuestions() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("pending");
 
-  // State for the Admin "Add Question" form
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     companyId: "",
@@ -23,14 +22,12 @@ export default function AdminQuestions() {
     tagsInput: ""
   });
 
-  // State for Edit/Reject modals
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [editFormData, setEditFormData] = useState({ text: "", tagsInput: "", difficulty: "Medium" });
   
   const [rejectingQuestionId, setRejectingQuestionId] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
 
-  // Fetch questions and companies on mount
   useEffect(() => {
     const load = async () => {
       try {
@@ -48,7 +45,6 @@ export default function AdminQuestions() {
 
   const getCompanyName = (id) => companies.find((c) => String(c.id) === String(id))?.name ?? "Unknown Company";
 
-  // --- Handlers for Student Submissions ---
   const handleApprove = async (id, overrideData = null) => {
     try {
       await apiApprove(id, overrideData || {});
@@ -83,7 +79,6 @@ export default function AdminQuestions() {
     }
   };
 
-  // --- Handler for Admin Adding a Question ---
   const handleAdminAddQuestion = async (e) => {
     e.preventDefault();
 
@@ -115,7 +110,6 @@ export default function AdminQuestions() {
     }
   };
 
-  // Filter questions based on the active tab
   const displayedQuestions = questions.filter(q =>
     activeTab === "pending" ? (q.status !== "approved") : (q.status === "approved")
   );
@@ -123,14 +117,12 @@ export default function AdminQuestions() {
   return (
     <div className="space-y-6 pb-10">
 
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-brand-brown-900 dark:text-white transition-colors">Question Bank</h1>
           <p className="text-brand-brown-600 dark:text-brand-beige-400 transition-colors">Review student submissions and add past year questions.</p>
         </div>
 
-        {/* Controls: Status Tabs & Add Button */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex bg-white dark:bg-[#2A1810] p-1 rounded-lg border border-brand-beige-200 dark:border-[#5A3D2B] w-fit">
             <button
@@ -166,7 +158,6 @@ export default function AdminQuestions() {
         </div>
       </div>
 
-      {/* --- ADMIN "ADD QUESTION" FORM --- */}
       {showAddForm && (
         <form
           onSubmit={handleAdminAddQuestion}
@@ -251,7 +242,6 @@ export default function AdminQuestions() {
         </form>
       )}
 
-      {/* --- TABLE --- */}
       {loading ? (
         <PageLoader message="Loading questions..." />
       ) : (
@@ -299,7 +289,6 @@ export default function AdminQuestions() {
                         )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-4 text-sm">
-                        {/* Highlight if it's an official Admin PYQ */}
                         <span className={q.author.includes("Admin") ? "font-semibold text-brand-amber-500 dark:text-brand-amber-500" : "text-brand-brown-600 dark:text-brand-beige-400"}>
                           {q.author}
                         </span>
@@ -352,7 +341,6 @@ export default function AdminQuestions() {
         </div>
       )}
 
-      {/* --- EDIT AND APPROVE MODAL --- */}
       {editingQuestion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-brown-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-[#1A0F08] border border-brand-beige-200 dark:border-[#5A3D2B] rounded-2xl shadow-2xl w-full max-w-2xl p-6">
@@ -406,7 +394,6 @@ export default function AdminQuestions() {
         </div>
       )}
 
-      {/* --- REJECT REASON MODAL --- */}
       {rejectingQuestionId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-brown-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-[#1A0F08] border border-brand-beige-200 dark:border-[#5A3D2B] rounded-2xl shadow-2xl w-full max-w-md p-6">

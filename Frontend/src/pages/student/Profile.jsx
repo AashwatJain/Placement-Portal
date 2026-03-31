@@ -28,7 +28,6 @@ export default function Profile() {
     gender: "", marks10th: "", marks12th: "", activeBacklogs: "0"
   });
 
-  // Re-fetch user data from DB when component mounts
   useEffect(() => {
     if (refreshUser) refreshUser();
   }, []);
@@ -62,7 +61,6 @@ export default function Profile() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    // Clear error for the field being edited
     if (errors[name]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -105,13 +103,11 @@ export default function Profile() {
 
     setLoading(true);
     try {
-      // Step 1: Push text data via standard JSON PUT request
       const textPayload = { ...formData, uid: user.uid };
       await axios.put(`${API_BASE_URL}/api/student/update-profile`, textPayload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Step 2: Push binary data via multipart/form-data POST request
       if (avatarFile) {
         setAvatarUploading(true);
         const filePayload = new FormData();
@@ -125,14 +121,12 @@ export default function Profile() {
           }
         });
 
-        // Use the Cloudinary URL from the response immediately
         if (uploadRes.data?.avatarUrl) {
           setFormData(prev => ({ ...prev, avatar: uploadRes.data.avatarUrl }));
         }
         setAvatarUploading(false);
       }
 
-      // Step 3: Refresh user data
       if (refreshUser) await refreshUser();
       setAvatarFile(null);
 
@@ -144,14 +138,12 @@ export default function Profile() {
     }
   };
 
-  // Determine the primary resume from user data
   const primaryResumeName = user?.primaryResumeName;
   const primaryResumeUrl = user?.primaryResumeUrl || user?.resumeUrl;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-10 text-brand-brown-900 dark:text-brand-beige-100">
 
-      {/* HEADER SECTION */}
       <div className="relative overflow-hidden rounded-2xl border border-brand-beige-200 bg-white shadow-sm dark:border-[#3E2315] dark:bg-[#1A0F08]">
         <div className="h-32 w-full bg-gradient-to-r from-brand-amber-500 to-brand-amber-500 opacity-90"></div>
         <div className="px-6 pb-6 flex items-center sm:flex-row sm:items-end sm:gap-6 relative">
@@ -274,7 +266,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Primary Resume (Read-Only Display) */}
             <div className="pt-6 border-t border-brand-beige-100 dark:border-[#3E2315]">
               <h4 className="mb-5 text-xs font-bold uppercase tracking-widest text-brand-brown-400">Primary Resume</h4>
               {primaryResumeUrl ? (
@@ -304,7 +295,6 @@ export default function Profile() {
   );
 }
 
-// Sub-components
 function InputGroup({ label, name, value, onChange, icon: Icon, disabled = false, required = false, error }) {
   return (
     <div>
