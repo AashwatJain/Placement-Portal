@@ -128,7 +128,7 @@ export default function ResumeBuilder() {
 
       const atsResponse = await axios.post(`${API_BASE_URL}/api/ats/calculate`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        timeout: 25000,
+        timeout: 60000,
       });
 
       setSelectedAnalysis({ ...resume, score: atsResponse.data.atsScore ?? null });
@@ -151,7 +151,7 @@ export default function ResumeBuilder() {
       formData.append("resumeFile", atsFile);
       const response = await axios.post(`${API_BASE_URL}/api/ats/calculate`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        timeout: 20000,
+        timeout: 60000,
       });
       setAtsScore(response.data.atsScore ?? null);
     } catch (err) {
