@@ -1,8 +1,10 @@
-
 import axios from "axios";
 import FormData from "form-data";
 
-const mlServiceUrl = "http://127.0.0.1:5006";
+// ✅ Naya URL Logic
+const mlServiceUrl = process.env.ML_SERVICE_URL 
+  ? process.env.ML_SERVICE_URL.replace(/\/$/, "") 
+  : "http://127.0.0.1:5006";
 
 const calculateAtsScore = async (req, res) => {
   try {
@@ -23,7 +25,7 @@ const calculateAtsScore = async (req, res) => {
       form,
       {
         headers: { ...form.getHeaders() },
-        timeout: 60000,
+        timeout: 45000, // ✅ Timeout badhaya hai
       }
     );
 
@@ -31,9 +33,10 @@ const calculateAtsScore = async (req, res) => {
   } catch (error) {
     console.error("calculateAtsScore error:", error.message);
 
-    if (error.code === "ECONNREFUSED") {
+    if (error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
       return res.status(503).json({
-        error: "ML service is unavailable. Make sure mlServer.py is running on port 5006.",
+        // ✅ Naya Error Message (Isse confirm hoga ki naya code deploy hua hai)
+        error: "ATS Service is currently starting up or unreachable. Please try again in 30 seconds.",
       });
     }
 
