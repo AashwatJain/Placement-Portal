@@ -23,7 +23,7 @@ const calculateAtsScore = async (req, res) => {
       form,
       {
         headers: { ...form.getHeaders() },
-        timeout: 15000,
+        timeout: 60000,
       }
     );
 
