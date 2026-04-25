@@ -142,7 +142,7 @@ export default function PlacementInsights() {
     finally { setIsLoadingRecs(false); }
   }, []);
 
-  useEffect(() => { if (studentProfile) fetchRecs(studentProfile); }, [studentProfile, fetchRecs]);
+  useEffect(() => { if (studentProfile) fetchRecs(studentProfile); }, [studentProfile?.id, fetchRecs]);
 
   const predictChance = async () => {
     const name = companyInput.trim();
