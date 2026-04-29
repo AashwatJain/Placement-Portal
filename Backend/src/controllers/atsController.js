@@ -31,7 +31,7 @@ const calculateAtsScore = async (req, res) => {
 
     return res.status(200).json(mlResponse.data);
   } catch (error) {
-    console.error("calculateAtsScore error:", error.message);
+    console.error("calculateAtsScore error message:", error.message);
 
     if (error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
       return res.status(503).json({
@@ -40,9 +40,20 @@ const calculateAtsScore = async (req, res) => {
       });
     }
 
-    if (error.response?.data?.error) {
-      return res.status(error.response.status || 500).json({
-        error: error.response.data.error,
+    // ✅ NAYA LOGIC: Handle actual HTTP errors from the ML Service
+    if (error.response) {
+      // 1. Log the full data so you can see WHY the ML service is rejecting it
+      console.error("ML Service Error Data:", error.response.data);
+      console.error("ML Service Status Code:", error.response.status);
+
+      // 2. Extract whatever text or message the ML service sent
+      const mlErrorMessage = error.response.data?.error 
+        || error.response.data?.message 
+        || (typeof error.response.data === 'string' ? error.response.data : "ML Service rejected the request.");
+
+      // 3. Forward the exact status code (429) back to the React frontend
+      return res.status(error.response.status).json({
+        error: mlErrorMessage,
       });
     }
 
