@@ -121,8 +121,17 @@ export default function PlacementInsights() {
         const v = computeProfileVector(data.platforms);
         setStudentProfile(v);
         setScores({ dsa: v[0], dev: v[1], cp: v[2] });
+      } else {
+        // No coding profiles connected yet — use defaults so recommendations still work
+        const fallback = [50, 50, 50];
+        setStudentProfile(fallback);
+        setScores({ dsa: fallback[0], dev: fallback[1], cp: fallback[2] });
       }
-    } catch { setStudentProfile([50, 50, 50]); }
+    } catch {
+      const fallback = [50, 50, 50];
+      setStudentProfile(fallback);
+      setScores({ dsa: fallback[0], dev: fallback[1], cp: fallback[2] });
+    }
     finally  { setIsLoadingProfile(false); }
   }, [user?.uid]);
 
@@ -157,8 +166,9 @@ export default function PlacementInsights() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentProfile, targetCompany: name }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
-      setChance((await res.json()).selectionChance ?? null);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.status);
+      setChance(data.selectionChance ?? null);
     } catch (e) { setChanceError(e.message); }
     finally { setIsLoadingChance(false); }
   };
