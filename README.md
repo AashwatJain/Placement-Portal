@@ -2,6 +2,10 @@
 
 A comprehensive, full-stack Placement Portal designed to manage and streamline the campus placement process. The project is divided into three main microservices: a modern React frontend, a robust Node.js backend, and a Python-based Machine Learning service for advanced features such as resume parsing and candidate evaluation.
 
+## 🌐 Live Demo
+
+**[Placement Portal Frontend](https://placement-portal-frontend-x18d.onrender.com/)**
+
 ## 🚀 Project Structure
 
 The repository is organized into a monorepo-like structure with three main directories:
