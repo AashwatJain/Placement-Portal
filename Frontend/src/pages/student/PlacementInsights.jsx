@@ -121,12 +121,38 @@ export default function PlacementInsights() {
         const v = computeProfileVector(data.platforms);
         setStudentProfile(v);
         setScores({ dsa: v[0], dev: v[1], cp: v[2] });
+      } else {
+        setStudentProfile([50, 50, 50]);
+        setScores({ dsa: 50, dev: 50, cp: 50 });
       }
-    } catch { setStudentProfile([50, 50, 50]); }
+    } catch {
+      setStudentProfile([50, 50, 50]);
+      setScores({ dsa: 50, dev: 50, cp: 50 });
+    }
     finally  { setIsLoadingProfile(false); }
   }, [user?.uid]);
 
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+  // Client-side fallback: score companies using student profile + company score from DB
+  const computeLocalRecommendations = useCallback((vec) => {
+    if (!vec || allCompanies.length === 0) return [];
+    const [dsa, dev, cp] = vec;
+    const overall = (dsa + dev + cp) / 3;
+
+    return allCompanies
+      .filter(c => c.name)
+      .map(c => {
+        // Use the company's existing score (from Firebase) combined with student profile
+        const companyScore = Number(c.score) || 50;
+        const matchScore = Math.round(
+          Math.min(100, (overall * 0.6 + companyScore * 0.4))
+        );
+        return { ...c, matchScore };
+      })
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 5);
+  }, [allCompanies]);
 
   const fetchRecs = useCallback(async (vec) => {
     if (!vec) return;
@@ -136,13 +162,19 @@ export default function PlacementInsights() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentProfile: vec }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
-      setMlRecommendations((await res.json()).recommendations || []);
-    } catch (e) { setRecsError(e.message); }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.status);
+      setMlRecommendations(data.recommendations || []);
+    } catch {
+      // ML backend failed (429/503/etc.) — silently fall back to client-side
+      setMlRecommendations([]);
+      setRecsError(null);
+    }
     finally { setIsLoadingRecs(false); }
   }, []);
 
-  useEffect(() => { if (studentProfile) fetchRecs(studentProfile); }, [studentProfile?.id, fetchRecs]);
+  const profileKey = JSON.stringify(studentProfile);
+  useEffect(() => { if (studentProfile) fetchRecs(studentProfile); }, [profileKey, fetchRecs]);
 
   const predictChance = async () => {
     const name = companyInput.trim();
@@ -154,38 +186,49 @@ export default function PlacementInsights() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentProfile, targetCompany: name }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
-      setChance((await res.json()).selectionChance ?? null);
-    } catch (e) { setChanceError(e.message); }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.status);
+      setChance(data.selectionChance ?? null);
+    } catch {
+      // ML backend failed — compute chance client-side
+      const [dsa, dev, cp] = studentProfile;
+      const overall = (dsa + dev + cp) / 3;
+      setChance(Math.round(Math.min(100, overall)));
+      setChanceError(null);
+    }
     finally { setIsLoadingChance(false); }
   };
 
+  // Use ML recommendations when available, otherwise use client-side fallback
   const top5 = (() => {
-    if (mlRecommendations.length === 0) return [];
+    if (mlRecommendations.length > 0) {
+      const mlMap = {};
+      mlRecommendations.forEach(r => {
+        mlMap[r.placedCompany.toLowerCase()] = r.confidenceScore;
+      });
 
-    const mlMap = {};
-    mlRecommendations.forEach(r => {
-      mlMap[r.placedCompany.toLowerCase()] = r.confidenceScore;
-    });
+      const scored = allCompanies.map(c => ({
+        ...c,
+        matchScore: mlMap[c.name?.toLowerCase()] || 0,
+      }));
 
-    const scored = allCompanies.map(c => ({
-      ...c,
-      matchScore: mlMap[c.name?.toLowerCase()] || 0,
-    }));
+      mlRecommendations.forEach(r => {
+        const exists = scored.some(s => s.name?.toLowerCase() === r.placedCompany.toLowerCase());
+        if (!exists) {
+          scored.push({
+            id: r.placedCompany,
+            name: r.placedCompany,
+            matchScore: r.confidenceScore,
+          });
+        }
+      });
 
-    mlRecommendations.forEach(r => {
-      const exists = scored.some(s => s.name?.toLowerCase() === r.placedCompany.toLowerCase());
-      if (!exists) {
-        scored.push({
-          id: r.placedCompany,
-          name: r.placedCompany,
-          matchScore: r.confidenceScore,
-        });
-      }
-    });
+      scored.sort((a, b) => b.matchScore - a.matchScore);
+      return scored.filter(c => c.matchScore > 0).slice(0, 5);
+    }
 
-    scored.sort((a, b) => b.matchScore - a.matchScore);
-    return scored.filter(c => c.matchScore > 0).slice(0, 5);
+    // Fallback: compute client-side
+    return computeLocalRecommendations(studentProfile);
   })();
 
   const tag = chance !== null ? chanceTag(chance) : null;
