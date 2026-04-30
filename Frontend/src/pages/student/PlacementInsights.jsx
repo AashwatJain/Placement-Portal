@@ -136,13 +136,16 @@ export default function PlacementInsights() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentProfile: vec }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
-      setMlRecommendations((await res.json()).recommendations || []);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.status);
+      setMlRecommendations(data.recommendations || []);
     } catch (e) { setRecsError(e.message); }
     finally { setIsLoadingRecs(false); }
   }, []);
 
-  useEffect(() => { if (studentProfile) fetchRecs(studentProfile); }, [studentProfile?.id, fetchRecs]);
+  // studentProfile is an array [dsa, dev, cp] — serialize to detect changes
+  const profileKey = JSON.stringify(studentProfile);
+  useEffect(() => { if (studentProfile) fetchRecs(studentProfile); }, [profileKey, fetchRecs]);
 
   const predictChance = async () => {
     const name = companyInput.trim();
